@@ -1,0 +1,23 @@
+data:
+  config:
+    accessKeyId:
+      - AKIAQREMEI3PYIN7AL7N
+    secretAccessKey:
+      - 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
+
+  randomSecretKey:
+    secretKey:
+      - Sotr07eb7iph1R+tAdOy  
+  sendOtpArn:
+    arn:
+      - arn:aws:sns:ap-south-1:036801103583:testing-upschool-sendOTP
+
+  mathPix:
+    MP_APP_ID:
+      - krupa_rajkumar_rhibhus_com_236157_9944b5
+    MP_APP_KEY:
+      - 443901cf2b4556f2b8e82667d403f88f54115223fe5d1af08b9954f81a490b3b
+      
+  pdfMake:
+    generate_url:
+      - http://13.233.9.196:3002/v1

@@ -1,0 +1,39 @@
+image: node:latest
+dev_job:
+  stage: deploy
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "dev"'
+  before_script:
+    - echo "Before Script in $CI_COMMIT_BRANCH"
+    - npm install
+  script:
+    - echo "Script in $CI_COMMIT_BRANCH"
+    - npx sls deploy --region ap-south-1 --stage $CI_COMMIT_BRANCH --verbose
+  environment:
+    name: $CI_COMMIT_BRANCH
+
+testing_job:
+  stage: deploy
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "testing"'
+  before_script:
+    - echo "Before Script in $CI_COMMIT_BRANCH"
+    - npm install
+  script:
+    - echo "Script in $CI_COMMIT_BRANCH"
+    - npx sls deploy --region ap-south-1 --stage $CI_COMMIT_BRANCH --verbose
+  environment:
+    name: $CI_COMMIT_BRANCH
+
+uat_job:
+  stage: deploy
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "uat"'
+  before_script:
+    - echo "Before Script in $CI_COMMIT_BRANCH"
+    - npm install
+  script:
+    - echo "Script in $CI_COMMIT_BRANCH"
+    - npx sls deploy --region ap-south-1 --stage $CI_COMMIT_BRANCH --verbose
+  environment:
+    name: $CI_COMMIT_BRANCH
