@@ -1,0 +1,102 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - dev
+      - testing
+      - uat
+
+jobs:
+  dev_job:
+    if: github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 'latest'
+        
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+
+      - name: Before Script
+        run: |
+          echo "Before Script in dev"
+          npm install
+        
+      - name: Deploy
+        run: |
+          echo "Script in dev"
+          npx sls deploy --region ap-south-1 --stage dev --verbose
+        env:
+          CI_COMMIT_BRANCH: dev
+
+  testing_job:
+    if: github.ref == 'refs/heads/testing'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 'latest'
+        
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+
+      - name: Before Script
+        run: |
+          echo "Before Script in testing"
+          npm install
+        
+      - name: Deploy
+        run: |
+          echo "Script in testing"
+          npx sls deploy --region ap-south-1 --stage testing --verbose
+        env:
+          CI_COMMIT_BRANCH: testing
+
+  uat_job:
+    if: github.ref == 'refs/heads/uat'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 'latest'
+        
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}
+
+      - name: Before Script
+        run: |
+          echo "Before Script in uat"
+          npm install
+        
+      - name: Deploy
+        run: |
+          echo "Script in uat"
+          npx sls deploy --region ap-south-1 --stage uat --verbose
+        env:
+          CI_COMMIT_BRANCH: uat
