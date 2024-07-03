@@ -331,3 +331,20 @@ functions:
           path: /v1/toggleSchoolAdminStatus
           method: POST
           cors: true    
+      - http:
+          path: /v1/getTargetedLearningExpectation
+          method: POST
+          cors: true    
+      - http:
+          path: /v1/getTargetedLearningExpectationDetails
+          method: POST
+          cors: true   
+      - http:
+          path: /v1/getAssesmentSummaryDetails
+          method: POST
+          cors: true  
+      - http:
+          path: /v1/preLearningSummaryDetails
+          method: POST
+          cors: true 
+
