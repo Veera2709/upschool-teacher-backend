@@ -686,10 +686,14 @@ exports.preLearningSummaryDetails = (request, callback) => {
                                                       // Push the quiz_id to the prelearning_topic_id array
                                                       chapter.quiz_id = quiz.quiz_id;
                                                       chapter.startDate = quiz.quizStartDate.dd_mm_yyyy;
-                                                      
+    
                                                   }
                                               }
                                           });
+
+                                          console.log("=================================================================");
+                                          console.log(chapter_res);
+                                          console.log("=================================================================");
                                           await Promise.all(
                                             chapter_res.Items.map(val => {
                                               val.totalStrength = studentsCount;
@@ -750,6 +754,172 @@ exports.preLearningSummaryDetails = (request, callback) => {
         callback(error);
       }
     }
+
+
+exports.postLearningSummaryDetails = (request, callback) => {
+      try{
+        schoolRepository.getSchoolDetailsById(
+          request,
+          (schoolDataErr, schoolDataRes) => {
+            if (schoolDataErr) {
+              console.log(schoolDataErr);
+              callback(schoolDataErr, schoolDataRes);
+            } else {
+              const classPercentagePre =
+                schoolDataRes.Items[0].pre_quiz_config.class_percentage_for_report;
+              const classPercentagePost =
+                schoolDataRes.Items[0].post_quiz_config.class_percentage_for_report;
+      
+              studentRepository.getStudentsData(
+                request,
+                function (
+                  fetch_teacher_section_students_err,
+                  fetch_teacher_section_students_response
+                ) {
+                  if (fetch_teacher_section_students_err) {
+                    console.log(fetch_teacher_section_students_err);
+                    callback(
+                      fetch_teacher_section_students_err,
+                      fetch_teacher_section_students_response
+                    );
+                  } else {
+      
+                    const studentsCount = fetch_teacher_section_students_response.Items.length;
+      
+                    subjectRepository.getSubjetById(
+                      request,
+                      function (subject_err, subject_res) {
+                        if (subject_err) {
+                          console.log(subject_err);
+                          console.log("----------------getSubjetById-------------------");
+      
+                          callback(subject_err, subject_res);
+                        } else {
+                          if (subject_res.Items.length > 0) {
+                            let subject_unit_id =
+                              subject_res.Items[0].subject_unit_id;
+      
+                            unitRepository.fetchUnitData(
+                              { subject_unit_id: subject_unit_id },
+                              async function (unit_err, unit_res) {
+                                if (unit_err) {
+                                  console.log(unit_err);
+                                  console.log("----------------fetchUnitData-------------------");
+      
+                                  callback(unit_err, unit_res);
+                                } else {
+                                  if (unit_res.Items.length > 0) {
+                                    let unit_chapter_id = [];
+      
+                                    await unit_res.Items.forEach((e) =>
+                                      unit_chapter_id.push(...e.unit_chapter_id)
+                                    );
+      
+                                    chapterRepository.fetchBulkChaptersIDName(
+                                      { unit_chapter_id: unit_chapter_id },
+                                      function (chapter_err, chapter_res) {
+                                        if (chapter_err) {
+      
+                                          // console.log("----------------fetchBulkChaptersIDName-------------------");
+                                          console.log(chapter_err);
+                                          callback(chapter_err, chapter_res);
+                                        } else {
+                                          quizRepository.fetchAllQuizBasedonSubject(
+                                            request,
+                                            async (quizDataErr, quizDataRes) => {
+                                              if (quizDataErr) {
+                                                console.log(quizDataErr);
+                                                callback(quizDataErr, quizDataRes);
+                                              } else {
+                                                console.log("---------------------------quizDataRes-------------------------------------");
+                                                console.log("---------------------",quizDataRes);
+                                                // chapter_res.items.map(val =>)
+                                                // const quiz =  quizDataRes.Items.find(val => val.learningType == 'preLearning');
+                                                quizDataRes.Items.forEach(quiz => {
+                                                  // if (quiz.learningType === 'preLearning') {
+                                                    if (quiz.learningType === request.data.type) {
+                                                      // Find the matching chapter by chapter_id
+                                                      const chapter = chapter_res.Items.find(ch => ch.chapter_id === quiz.chapter_id);
+                                                      if (chapter) {
+                                                          // Push the quiz_id to the prelearning_topic_id array
+                                                          if(!chapter.quiz_id)
+                                                          chapter.quiz_id = [];
+                                                          // chapter.quiz_id.push(quiz.quiz_id);
+                                                          chapter.quiz_id.push({
+                                                            id: quiz.quiz_id,
+                                                            name: quiz.quiz_name,
+                                                          })
+                                                          // chapter.quiz_id= quiz.quiz_id;
+                                                          chapter.startDate = quiz.quizStartDate.dd_mm_yyyy;
+        
+                                                      }
+                                                  }
+                                              });
+    
+                                            await Promise.all(
+                                            chapter_res.Items.map(async val => {
+                                              val.totalStrength = studentsCount;
+                                              
+                                              if (Array.isArray(val.quiz_id) && val.quiz_id.length > 0) {
+                                  
+                                                  // Process each quiz ID object
+                                                  await Promise.all(val.quiz_id.map(quiz => {
+                                                      return new Promise((resolve, reject) => {
+                                                          quizResultRepository.fetchQuizResultByQuizId(
+                                                              { data: { quiz_id: quiz.id } },
+                                                              (quizResultDataErr, quizResultDataRes) => {
+                                                                  if (quizResultDataErr) {
+                                                                      console.log(quizResultDataErr);
+                                                                      return reject(quizResultDataErr);
+                                                                  } else {
+                                                                    let totalmarks = 0;
+                                                                    let totalAttendance = 0;
+                                                                      totalAttendance += quizResultDataRes.Items.length;
+                                                                      
+                                                                      quizResultDataRes.Items.forEach(result => {
+                                                                          totalmarks += result.marks_details[0].totalMark || 0;
+                                                                      });
+                                                                      quiz.student_attendance = totalAttendance;
+                                                                      quiz.avgMarks = totalAttendance > 0 ? (totalmarks / totalAttendance) : 0;
+                                                                      resolve();
+                                                                  }
+                                                              }
+                                                          );
+                                                      });
+                                                  }));
+                                  
+
+                                              } 
+                                              }));
+    
+                                                // console.log(quiz);
+                                                callback(0, chapter_res);
+                                                
+                                              }
+                                            }
+                                          )
+                                        }
+                                      }
+                                    )
+                                  }
+                                }
+                              }
+                            )
+                          }
+                        }
+                      }
+                    )
+                  }
+                })
+              }
+            }
+           )
+          }
+          catch (error) {
+            console.error(error);
+            callback(error);
+          }
+        }
 
 
 
