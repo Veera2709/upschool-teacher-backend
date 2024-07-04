@@ -678,7 +678,8 @@ exports.preLearningSummaryDetails = (request, callback) => {
                                             // chapter_res.items.map(val =>)
                                             // const quiz =  quizDataRes.Items.find(val => val.learningType == 'preLearning');
                                             quizDataRes.Items.forEach(quiz => {
-                                              if (quiz.learningType === 'preLearning') {
+                                              // if (quiz.learningType === 'preLearning') {
+                                                if (quiz.learningType === request.data.type) {
                                                   // Find the matching chapter by chapter_id
                                                   const chapter = chapter_res.Items.find(ch => ch.chapter_id === quiz.chapter_id);
                                                   if (chapter) {
