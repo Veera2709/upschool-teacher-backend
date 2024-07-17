@@ -90,7 +90,6 @@ exports.addDigicardExtension = (req, res, next) => {
 
 exports.generatePrePostQuiz = (req, res, next) => {
     let request = req.body;    
-    console.log("request.data.learningType : ", request.data);
     
     if(request.data.learningType === constant.prePostConstans.preLearningVal)
     {

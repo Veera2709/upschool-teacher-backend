@@ -181,8 +181,6 @@ exports.fetchTopicIDDisplayTitleData = function (request, callback) {
 }
 exports.fetchTopicConceptIDData = function (request, callback) {
 
-    console.log("fetchTopicConceptIdData : ", request);
-
     dynamoDbCon.getDB(function (DBErr, dynamoDBCall) {
         if (DBErr) {
             console.log("Class Data Database Error");
