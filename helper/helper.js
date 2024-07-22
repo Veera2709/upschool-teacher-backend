@@ -1006,7 +1006,9 @@ exports.getQuestionTrackForAutomatic = (selectedTopics, topic_response, concepts
                 questionTrackData.push(...trackPerQUestion); 
 
                 // check if topic is nonAssigned based on selected questions count 
-                !exports.isEmptyArray(pickedQtnsFromGrp) && (non_considered_topic_data[topic.id] = false)
+                if(!exports.isEmptyArray(pickedQtnsFromGrp)){
+                    non_considered_topic_data[topic.topic_id] = false; 
+                }
             }; 
         });  
     }); 
@@ -1042,8 +1044,9 @@ exports.getQuestionTrackForExpress = (topic, topic_response, concepts_response, 
             questionTrackData.push(...trackPerQUestion); 
             
             // check if topic is nonAssigned based on selected questions count 
-            !exports.isEmptyArray(pickedQtnsFromGrp) && ( non_considered_topic_data[topic.id] = false ) 
-
+            if(!exports.isEmptyArray(pickedQtnsFromGrp)){
+                non_considered_topic_data[topic.topic_id] = false; 
+            }
         }; 
         }); 
     }); 
@@ -1077,7 +1080,9 @@ exports.getQuestionTrackForManual = async (topicId, concepts_response, questions
             questionTrackData.push(...trackPerQUestion);
 
             // check if topic is nonAssigned based on selected questions count 
-            !exports.isEmptyArray(pickedQtnsFromGrp) && ( non_considered_topic_data[topicId] = false )
+            if(!exports.isEmptyArray(pickedQtnsFromGrp)){
+                non_considered_topic_data[topicId] = false; 
+            }
         }; 
         }); 
     }); 
