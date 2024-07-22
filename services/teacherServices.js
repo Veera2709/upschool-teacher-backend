@@ -788,18 +788,15 @@ exports.addAutomatedQuizBasedonVarient = async (request, callback) => {
                                         non_considered_topic_data[i] && (request.data.not_considered_topics.push(i)); 
                                       }; 
 
-                                      console.log("non considered topics : ", JSON.stringify(request.data.not_considered_topics));
-                                      console.log("quiz_question_details : ", JSON.stringify(request.data.question_track_details));
-
-                                      //   quizRepository.addQuiz(request, async function (addQuiz_err, addQuiz_response) {
-                                    //     if (addQuiz_err) {
-                                    //         console.log(addQuiz_err);
-                                    //         callback(addQuiz_err, addQuiz_response);
-                                    //     } else {
-                                    //         console.log("QUIZ GENERATED!");
-                                    //         callback(0, 200);
-                                    //     }
-                                    // })
+                                        quizRepository.addQuiz(request, async function (addQuiz_err, addQuiz_response) {
+                                        if (addQuiz_err) {
+                                            console.log(addQuiz_err);
+                                            callback(addQuiz_err, addQuiz_response);
+                                        } else {
+                                            console.log("QUIZ GENERATED!");
+                                            callback(0, 200);
+                                        }
+                                    })
                   
                                     }
                                 }; 
@@ -854,7 +851,7 @@ exports.addAutomatedQuizBasedonVarient = async (request, callback) => {
                                     }else{
 
                                           // Formatting Topic-Concept-Group-Question level DS 
-                                          let {res_questionTrackData, res_non_considered_topic_data} = helper.getQuestionTrackForAutomatic(request.data.selectedTopics, fetch_topics_response.Items, fetch_concepts_response.Items, questions_list, non_considered_topic_data, data.group_list); 
+                                          let {res_questionTrackData, res_non_considered_topic_data} = await helper.getQuestionTrackForAutomatic(request.data.selectedTopics, fetch_topics_response.Items, fetch_concepts_response.Items, questions_list, non_considered_topic_data, data.group_list); 
 
                                           res_questionTrackData = await helper.removeDuplicatesFromArrayOfObj(res_questionTrackData, 'question_id'); 
 
@@ -883,19 +880,16 @@ exports.addAutomatedQuizBasedonVarient = async (request, callback) => {
                                 non_considered_topic_data[i] && (request.data.not_considered_topics.push(i)); 
                               }; 
 
-                              console.log("non considered topics : ", JSON.stringify(request.data.not_considered_topics));
-                              console.log("quiz_question_details : ", JSON.stringify(request.data.question_track_details));
-
-                              //  // Add Quiz : 
-                              // quizRepository.addQuiz(request, async function (addQuiz_err, addQuiz_response) {
-                              //   if (addQuiz_err) {
-                              //       console.log(addQuiz_err);
-                              //       callback(addQuiz_err, addQuiz_response);
-                              //   } else {
-                              //       console.log("QUIZ GENERATED!");
-                              //       callback(0, 200);
-                              //   }
-                              //   })
+                               // Add Quiz : 
+                              quizRepository.addQuiz(request, async function (addQuiz_err, addQuiz_response) {
+                                if (addQuiz_err) {
+                                    console.log(addQuiz_err);
+                                    callback(addQuiz_err, addQuiz_response);
+                                } else {
+                                    console.log("QUIZ GENERATED!");
+                                    callback(0, 200);
+                                }
+                                })
                                
                             }
                           }
