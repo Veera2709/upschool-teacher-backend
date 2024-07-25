@@ -60,3 +60,27 @@ exports.preLearningSummaryDetails = (req, res, next) => {
         }
     });
 };
+
+exports.postLearningSummaryDetails = (req, res, next) => {
+    let request = req.body;
+    dashboardServices.postLearningSummaryDetails(request, function (postLearningSummary_details_err, postLearningSummary_details_res) {
+        if (postLearningSummary_details_err) {
+            res.status(postLearningSummary_details_err).json(postLearningSummary_details_res);
+        } else {
+            console.log("pre Learning Summary for the subject!");
+            res.json(postLearningSummary_details_res);
+        }
+    });
+};
+
+exports.preLearningBlueprintDetails = (req, res, next) => {
+    let request = req.body;
+    dashboardServices.preLearningBlueprintDetails(request, function (postLearningBlueprint_details_err, postLearningBlueprint_details_res) {
+        if (postLearningBlueprint_details_err) {
+            res.status(postLearningBlueprint_details_err).json(postLearningBlueprint_details_res);
+        } else {
+            console.log("pre Learning Summary for the subject!");
+            res.json(postLearningBlueprint_details_res);
+        }
+    });
+};

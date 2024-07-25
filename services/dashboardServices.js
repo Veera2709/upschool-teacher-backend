@@ -38,6 +38,8 @@ exports.getAssessmentDetails = (request, callback) => {
         const classPercentagePost =
           schoolDataRes.Items[0].post_quiz_config.class_percentage_for_report;
 
+         
+
         studentRepository.getStudentsData(
           request,
           function (
@@ -97,6 +99,8 @@ exports.getAssessmentDetails = (request, callback) => {
                                     let postLearningTopicsCount = 0;
                                     let preLearningCompletedTopicsCount = 0;
                                     let postLearningCompletedTopicsCount = 0;
+                                    let notConsideredTopicsPre = 0;
+                                    let notConsideredTopicsPost = 0;
                                     chapter_res.Items.map(ele=>
                                     {
                                       preLearningTopicsCount += ele.prelearning_topic_id.length;
@@ -121,7 +125,6 @@ exports.getAssessmentDetails = (request, callback) => {
                                           {
                                             
                                             return new Promise((resolve, reject) => {
-
                                               quizResultRepository.fetchQuizResultByQuizId( { data: { quiz_id: val.quiz_id } }, async (quizResultDataErr, quizResultDataRes) => {
                                                 if (quizResultDataErr) {
                                                   console.log(quizResultDataErr);
@@ -131,12 +134,16 @@ exports.getAssessmentDetails = (request, callback) => {
                                                   let studentsAttendedQuiz = quizResultDataRes.Items.length
                                                   if(val.learningType == "preLearning")
                                                   {
+                                                    if(val.not_considered_topics)
+                                                          notConsideredTopicsPre += val.not_considered_topics;
                                                     if(studentsAttendedQuiz >= (classPercentagePre * studentsCount * 0.01))
                                                     {
                                                       preLearningCompletedTopicsCount += val.selectedTopics.length
                                                     }
                                                   }
                                                   else{
+                                                    if(val.not_considered_topics)
+                                                          notConsideredTopicsPost += val.not_considered_topics;
                                                     if(studentsAttendedQuiz >= (classPercentagePost * studentsCount * 0.01))
                                                     {
                                                       postLearningCompletedTopicsCount += val.selectedTopics.length
@@ -157,14 +164,16 @@ exports.getAssessmentDetails = (request, callback) => {
                                         totalTopics: preLearningTopicsCount,
                                         completedTopics: preLearningCompletedTopicsCount,
                                         // skippedTopics: 5,
-                                        remainingTopics: preLearningTopicsCount - preLearningCompletedTopicsCount,
+                                        notConsideredTopics : notConsideredTopicsPre,
+                                        remainingTopics: preLearningTopicsCount - preLearningCompletedTopicsCount - notConsideredTopicsPre,
                                       },
                                       postLearningTopics: {
                                         content: ((postLearningCompletedTopicsCount / postLearningTopicsCount) * 100).toFixed(1) + "%",
                                         totalTopics: postLearningTopicsCount,
                                         completedTopics: postLearningCompletedTopicsCount,
+                                        notConsideredTopics : notConsideredTopicsPost,
                                         // skippedTopics: 5,
-                                        remainingTopics: postLearningTopicsCount - postLearningCompletedTopicsCount ,
+                                        remainingTopics: postLearningTopicsCount - postLearningCompletedTopicsCount - notConsideredTopicsPost ,
                                       },
                                       WorksheetsGenerated: {
                                         content: 28,
@@ -297,7 +306,7 @@ exports.getTargetedLearningExpectation = async (request, callback) => {
               });
               console.log("---totalTopics------", totalTopics , " reachedTopics  - ",reachedTopics ,"");
 
-              callback(0, { totalTopics, reached: reachedTopics , classPercentagePre ,  classPercentagePost});
+              callback(0, { totalTopics, reached: reachedTopics , classPercentagePre ,  classPercentagePost , totalStrength  : classStrength});
             }
           }
         );
@@ -596,160 +605,708 @@ exports.getAssesmentSummaryDetails = (request, callback) => {
   callback(0, data);
 };
 
-exports.preLearningSummaryDetails = (request, callback) => {
+// exports.preLearningSummaryDetails = (request, callback) => {
 
-  try{
-    schoolRepository.getSchoolDetailsById(
-      request,
-      (schoolDataErr, schoolDataRes) => {
-        if (schoolDataErr) {
-          console.log(schoolDataErr);
-          callback(schoolDataErr, schoolDataRes);
-        } else {
-          console.log("----------------coming-------------------",request);
-          const classPercentagePre =
-            schoolDataRes.Items[0].pre_quiz_config.class_percentage_for_report;
-          const classPercentagePost =
-            schoolDataRes.Items[0].post_quiz_config.class_percentage_for_report;
+//   try{
+//     schoolRepository.getSchoolDetailsById(
+//       request,
+//       (schoolDataErr, schoolDataRes) => {
+//         if (schoolDataErr) {
+//           console.log(schoolDataErr);
+//           callback(schoolDataErr, schoolDataRes);
+//         } else {
+//           console.log("----------------coming-------------------",request);
+//           // const classPercentagePre =
+//           //   schoolDataRes.Items[0].pre_quiz_config.class_percentage_for_report;
+//           // const classPercentagePost =
+//           //   schoolDataRes.Items[0].post_quiz_config.class_percentage_for_report;
   
-          studentRepository.getStudentsData(
-            request,
-            function (
-              fetch_teacher_section_students_err,
-              fetch_teacher_section_students_response
-            ) {
-              if (fetch_teacher_section_students_err) {
-                console.log(fetch_teacher_section_students_err);
-                callback(
-                  fetch_teacher_section_students_err,
-                  fetch_teacher_section_students_response
-                );
-              } else {
+//           studentRepository.getStudentsData(
+//             request,
+//             function (
+//               fetch_teacher_section_students_err,
+//               fetch_teacher_section_students_response
+//             ) {
+//               if (fetch_teacher_section_students_err) {
+//                 console.log(fetch_teacher_section_students_err);
+//                 callback(
+//                   fetch_teacher_section_students_err,
+//                   fetch_teacher_section_students_response
+//                 );
+//               } else {
   
-                const studentsCount = fetch_teacher_section_students_response.Items.length;
+//                 const studentsCount = fetch_teacher_section_students_response.Items.length;
   
-                subjectRepository.getSubjetById(
-                  request,
-                  function (subject_err, subject_res) {
-                    if (subject_err) {
-                      console.log(subject_err);
-                      console.log("----------------getSubjetById-------------------");
+//                 subjectRepository.getSubjetById(
+//                   request,
+//                   function (subject_err, subject_res) {
+//                     if (subject_err) {
+//                       console.log(subject_err);
+//                       console.log("----------------getSubjetById-------------------");
   
-                      callback(subject_err, subject_res);
-                    } else {
-                      if (subject_res.Items.length > 0) {
-                        let subject_unit_id =
-                          subject_res.Items[0].subject_unit_id;
+//                       callback(subject_err, subject_res);
+//                     } else {
+//                       if (subject_res.Items.length > 0) {
+//                         let subject_unit_id =
+//                           subject_res.Items[0].subject_unit_id;
   
-                        unitRepository.fetchUnitData(
-                          { subject_unit_id: subject_unit_id },
-                          async function (unit_err, unit_res) {
-                            if (unit_err) {
-                              console.log(unit_err);
-                              console.log("----------------fetchUnitData-------------------");
+//                         unitRepository.fetchUnitData(
+//                           { subject_unit_id: subject_unit_id },
+//                           async function (unit_err, unit_res) {
+//                             if (unit_err) {
+//                               console.log(unit_err);
+//                               console.log("----------------fetchUnitData-------------------");
   
-                              callback(unit_err, unit_res);
-                            } else {
-                              if (unit_res.Items.length > 0) {
-                                let unit_chapter_id = [];
+//                               callback(unit_err, unit_res);
+//                             } else {
+//                               if (unit_res.Items.length > 0) {
+//                                 let unit_chapter_id = [];
   
-                                await unit_res.Items.forEach((e) =>
-                                  unit_chapter_id.push(...e.unit_chapter_id)
-                                );
+//                                 await unit_res.Items.forEach((e) =>
+//                                   unit_chapter_id.push(...e.unit_chapter_id)
+//                                 );
   
-                                chapterRepository.fetchBulkChaptersIDName(
-                                  { unit_chapter_id: unit_chapter_id },
-                                  function (chapter_err, chapter_res) {
-                                    if (chapter_err) {
+//                                 chapterRepository.fetchBulkChaptersIDName(
+//                                   { unit_chapter_id: unit_chapter_id },
+//                                   function (chapter_err, chapter_res) {
+//                                     if (chapter_err) {
   
-                                      // console.log("----------------fetchBulkChaptersIDName-------------------");
-                                      console.log(chapter_err);
-                                      callback(chapter_err, chapter_res);
-                                    } else {
-                                      quizRepository.fetchAllQuizBasedonSubject(
-                                        request,
-                                        async (quizDataErr, quizDataRes) => {
-                                          if (quizDataErr) {
-                                            console.log(quizDataErr);
-                                            callback(quizDataErr, quizDataRes);
-                                          } else {
-                                            console.log("---------------------------quizDataRes-------------------------------------");
-                                            console.log("---------------------",quizDataRes);
-                                            // chapter_res.items.map(val =>)
-                                            // const quiz =  quizDataRes.Items.find(val => val.learningType == 'preLearning');
-                                            quizDataRes.Items.forEach(quiz => {
-                                              // if (quiz.learningType === 'preLearning') {
-                                                if (quiz.learningType === request.data.type) {
-                                                  // Find the matching chapter by chapter_id
-                                                  const chapter = chapter_res.Items.find(ch => ch.chapter_id === quiz.chapter_id);
-                                                  if (chapter) {
-                                                      // Push the quiz_id to the prelearning_topic_id array
-                                                      chapter.quiz_id = quiz.quiz_id;
-                                                      chapter.startDate = quiz.quizStartDate.dd_mm_yyyy;
-                                                      
-                                                  }
-                                              }
-                                          });
-                                          await Promise.all(
-                                            chapter_res.Items.map(val => {
-                                              val.totalStrength = studentsCount;
-                                                if (val.quiz_id) {
-                                                    return new Promise((resolve, reject) => {
-                                                        quizResultRepository.fetchQuizResultByQuizId(
-                                                            { data: { quiz_id: val.quiz_id } },
-                                                            (quizResultDataErr, quizResultDataRes) => {
-                                                                if (quizResultDataErr) {
-                                                                    console.log(quizResultDataErr);
-                                                                    return reject(quizResultDataErr);
-                                                                } else {
-                                                                    let totalmarks = 0;
-                                                                    val.student_attendance = quizResultDataRes.Items.length;
+//                                       // console.log("----------------fetchBulkChaptersIDName-------------------");
+//                                       console.log(chapter_err);
+//                                       callback(chapter_err, chapter_res);
+//                                     } else {
+//                                       quizRepository.fetchAllQuizBasedonSubject(
+//                                         request,
+//                                         async (quizDataErr, quizDataRes) => {
+//                                           if (quizDataErr) {
+//                                             console.log(quizDataErr);
+//                                             callback(quizDataErr, quizDataRes);
+//                                           } else {
+//                                             console.log("---------------------------quizDataRes-------------------------------------");
+//                                             console.log("---------------------",quizDataRes);
+//                                             // chapter_res.items.map(val =>)
+//                                             // const quiz =  quizDataRes.Items.find(val => val.learningType == 'preLearning');
+//                                             quizDataRes.Items.forEach(quiz => {
+//                                               // if (quiz.learningType === 'preLearning') {
+//                                                 if (quiz.learningType === request.data.type) {
+//                                                   // Find the matching chapter by chapter_id
+//                                                   const chapter = chapter_res.Items.find(ch => ch.chapter_id === quiz.chapter_id);
+//                                                   if (chapter) {
+//                                                       // Push the quiz_id to the prelearning_topic_id array
+//                                                       chapter.quiz_id = quiz.quiz_id;
+//                                                       chapter.startDate = quiz.quizStartDate.dd_mm_yyyy;
+//                                                       chapter.notConsideredTopics = ["c39e9703-cf72-5f20-baf9-7f1efe2a5212",
+//                                                       "95224b24-aa14-5077-89ed-512c2ce0e061",
+//                                                       "166879e9-91b7-564d-ac84-b86c7b922f93",];
+//                                                       // chapter.notConsideredTopics = quiz.not_considered_topics;
+//                                                       // console.log("___________________",quiz.not_considered_topics);
+    
+//                                                   }
+//                                               }
+//                                           });
+
+//                                           console.log("=================================================================");
+//                                           console.log(chapter_res);
+//                                           console.log("=================================================================");
+//                                           const topicIds = [];
+//                                           await Promise.all(
+//                                             chapter_res.Items.map(val => {
+//                                               val.totalStrength = studentsCount;
+//                                                  if(val.notConsideredTopics)
+//                                                    topicIds.concat(val.notConsideredTopics);
+//                                                 if (val.quiz_id) {
+//                                                     return new Promise((resolve, reject) => {
+//                                                         quizResultRepository.fetchQuizResultByQuizId(
+//                                                             { data: { quiz_id: val.quiz_id } },
+//                                                             (quizResultDataErr, quizResultDataRes) => {
+//                                                                 if (quizResultDataErr) { 
+//                                                                     console.log(quizResultDataErr);
+//                                                                     return reject(quizResultDataErr);
+//                                                                 } else {
+//                                                                     let totalmarks = 0;
+//                                                                     val.student_attendance = quizResultDataRes.Items.length;
                                         
-                                                                    quizResultDataRes.Items.forEach(result => {
-                                                                        totalmarks += result.marks_details[0].totalMark || 0;
-                                                                    });
+//                                                                     quizResultDataRes.Items.forEach(result => {
+//                                                                         totalmarks += result.marks_details[0].totalMark || 0;
+//                                                                     });
                                         
-                                                                    val.avgMarks = quizResultDataRes.Items.length > 0 ? (totalmarks / quizResultDataRes.Items.length) : 0;
+//                                                                     val.avgMarks = quizResultDataRes.Items.length > 0 ? (totalmarks / quizResultDataRes.Items.length) : 0;
                                                                     
-                                                                    resolve();
-                                                                }
-                                                            }
-                                                        );
-                                                    });
-                                                } else {
-                                                    return Promise.resolve();
-                                                }
-                                            })
-                                        );
+//                                                                     resolve();
+//                                                                 }
+//                                                             }
+//                                                         );
+//                                                     });
+//                                                 } else {
+//                                                     return Promise.resolve();
+//                                                 }
+//                                             })
+//                                         );
 
-                                            // console.log(quiz);
-                                            callback(0, chapter_res);
+//                                         if(topicIds.length >0)
+//                                         await new Promise((resolve, reject) => {
+//                                           topicRepository.fetchBulkTopicsIDName(
+//                                             { unit_Topic_id: topicIds },
+//                                             (topicDataErr, topicDataRes) => {
+//                                               if (topicDataErr) {
+//                                                 console.log(topicDataErr);
+//                                                 return reject(topicDataErr);
+//                                               } else {
+
+//                                                 console.log("__________",topicDataRes);
+//                                                 chapter_res.Items.map(val => {
+//                                                   if(val.notConsideredTopics)
+//                                                   {
+//                                                     val.notConsideredTopics.map(id => {
+//                                                       const topic = topicDataRes.find(item => item.topic_id === id);
+//                                                       return topic ? topic.topic_title : id;
+//                                                   });
+//                                                   }
+//                                                 })
+//                                                 resolve();
+
+
+//                                               }})});
+
+//                                             // console.log(quiz);
+
+//                                             callback(0, chapter_res);
                                             
-                                          }
-                                        }
-                                      )
-                                    }
-                                  }
-                                )
-                              }
-                            }
-                          }
-                        )
-                      }
-                    }
-                  }
-                )
-              }
-            })
-          }
+//                                           }
+//                                         }
+//                                       )
+//                                     }
+//                                   }
+//                                 )
+//                               }
+//                             }
+//                           }
+//                         )
+//                       }
+//                     }
+//                   }
+//                 )
+//               }
+//             })
+//           }
+//         }
+//        )
+//       }
+//       catch (error) {
+//         console.error(error);
+//         callback(error);
+//       }
+//     }
+
+exports.preLearningSummaryDetails = async (request, callback) => {
+  try {
+    const schoolDataRes = await new Promise((resolve, reject) => {
+      schoolRepository.getSchoolDetailsById(request, (err, res) => {
+        if (err) {
+          console.log(err);
+          return reject(err);
         }
-       )
-      }
-      catch (error) {
-        console.error(error);
-        callback(error);
+        resolve(res);
+      });
+    });
+
+    const studentsDataRes = await new Promise((resolve, reject) => {
+      studentRepository.getStudentsData(request, (err, res) => {
+        if (err) {
+          console.log(err);
+          return reject(err);
+        }
+        resolve(res);
+      });
+    });
+
+    const studentsCount = studentsDataRes.Items.length;
+
+    const subjectDataRes = await new Promise((resolve, reject) => {
+      subjectRepository.getSubjetById(request, (err, res) => {
+        if (err) {
+          console.log(err);
+          return reject(err);
+        }
+        resolve(res);
+      });
+    });
+
+    if (subjectDataRes.Items.length > 0) {
+      const subject_unit_id = subjectDataRes.Items[0].subject_unit_id;
+
+      const unitDataRes = await new Promise((resolve, reject) => {
+        unitRepository.fetchUnitData({ subject_unit_id }, (err, res) => {
+          if (err) {
+            console.log(err);
+            return reject(err);
+          }
+          resolve(res);
+        });
+      });
+
+      if (unitDataRes.Items.length > 0) {
+        let unit_chapter_id = [];
+        unitDataRes.Items.forEach((e) => unit_chapter_id.push(...e.unit_chapter_id));
+
+        const chapterDataRes = await new Promise((resolve, reject) => {
+          chapterRepository.fetchBulkChaptersIDName({ unit_chapter_id }, (err, res) => {
+            if (err) {
+              console.log(err);
+              return reject(err);
+            }
+            resolve(res);
+          });
+        });
+
+        const quizDataRes = await new Promise((resolve, reject) => {
+          quizRepository.fetchAllQuizBasedonSubject(request, (err, res) => {
+            if (err) {
+              console.log(err);
+              return reject(err);
+            }
+            resolve(res);
+          });
+        });
+
+        quizDataRes.Items.forEach((quiz) => {
+          if (quiz.learningType === request.data.type) {
+            const chapter = chapterDataRes.Items.find((ch) => ch.chapter_id === quiz.chapter_id);
+            if (chapter) {
+              chapter.quiz_id = quiz.quiz_id;
+              chapter.startDate = quiz.quizStartDate.dd_mm_yyyy;
+              chapter.notConsideredTopics = quiz.not_considered_topics;
+            }
+          }
+        });
+
+        const topicIds = [];
+        await Promise.all(
+          chapterDataRes.Items.map(async (val) => {
+            val.totalStrength = studentsCount;
+            if (val.notConsideredTopics) {
+              topicIds.push(...val.notConsideredTopics);
+            }
+            if (val.quiz_id) {
+              const quizResultDataRes = await new Promise((resolve, reject) => {
+                quizResultRepository.fetchQuizResultByQuizId(
+                  { data: { quiz_id: val.quiz_id } },
+                  (err, res) => {
+                    if (err) {
+                      console.log(err);
+                      return reject(err);
+                    }
+                    resolve(res);
+                  }
+                );
+              });
+
+              let totalMarks = 0;
+              val.student_attendance = quizResultDataRes.Items.length;
+
+              quizResultDataRes.Items.forEach((result) => {
+                totalMarks += result.marks_details[0].totalMark || 0;
+              });
+
+              val.avgMarks = quizResultDataRes.Items.length > 0 ? totalMarks / quizResultDataRes.Items.length : 0;
+            }
+          })
+        );
+
+        if (topicIds.length > 0) {
+          const topicDataRes = await new Promise((resolve, reject) => {
+            topicRepository.fetchBulkTopicsIDName({ unit_Topic_id: topicIds }, (err, res) => {
+              if (err) {
+                console.log(err);
+                return reject(err);
+              }
+              resolve(res);
+            });
+          });
+
+          chapterDataRes.Items.forEach((val) => {
+            if (val.notConsideredTopics) {
+              val.notConsideredTopics = val.notConsideredTopics.map((id) => {
+                const topic = topicDataRes.Items.find((item) => item.topic_id === id);
+                return topic ? topic.topic_title : id;
+              });
+            }
+          });
+        }
+
+        callback(null, chapterDataRes);
       }
     }
+  } catch (error) {
+    console.error(error);
+    callback(error);
+  }
+};
+
+
+
+// exports.postLearningSummaryDetails = (request, callback) => {
+//       try{
+//         schoolRepository.getSchoolDetailsById(
+//           request,
+//           (schoolDataErr, schoolDataRes) => {
+//             if (schoolDataErr) {
+//               console.log(schoolDataErr);
+//               callback(schoolDataErr, schoolDataRes);
+//             } else {
+//               // const classPercentagePre =
+//               //   schoolDataRes.Items[0].pre_quiz_config.class_percentage_for_report;
+//               // const classPercentagePost =
+//               //   schoolDataRes.Items[0].post_quiz_config.class_percentage_for_report;
+      
+//               studentRepository.getStudentsData(
+//                 request,
+//                 function (
+//                   fetch_teacher_section_students_err,
+//                   fetch_teacher_section_students_response
+//                 ) {
+//                   if (fetch_teacher_section_students_err) {
+//                     console.log(fetch_teacher_section_students_err);
+//                     callback(
+//                       fetch_teacher_section_students_err,
+//                       fetch_teacher_section_students_response
+//                     );
+//                   } else {
+      
+//                     const studentsCount = fetch_teacher_section_students_response.Items.length;
+//                     console.log("-===================3========================");
+      
+//                     subjectRepository.getSubjetById(
+//                       request,
+//                       function (subject_err, subject_res) {
+//                         if (subject_err) {
+//                           console.log(subject_err);
+//                           console.log("----------------getSubjetById-------------------");
+      
+//                           callback(subject_err, subject_res);
+//                         } else {
+//                           if (subject_res.Items.length > 0) {
+//                             let subject_unit_id =
+//                               subject_res.Items[0].subject_unit_id;
+      
+//                             unitRepository.fetchUnitData(
+//                               { subject_unit_id: subject_unit_id },
+//                               async function (unit_err, unit_res) {
+//                                 if (unit_err) {
+//                                   console.log(unit_err);
+//                                   console.log("----------------fetchUnitData-------------------");
+      
+//                                   callback(unit_err, unit_res);
+//                                 } else {
+//                                   if (unit_res.Items.length > 0) {
+//                                     let unit_chapter_id = [];
+      
+//                                     await unit_res.Items.forEach((e) =>
+//                                       unit_chapter_id.push(...e.unit_chapter_id)
+//                                     );
+      
+//                                     chapterRepository.fetchBulkChaptersIDName(
+//                                       { unit_chapter_id: unit_chapter_id },
+//                                       function (chapter_err, chapter_res) {
+//                                         if (chapter_err) {
+      
+//                                           // console.log("----------------fetchBulkChaptersIDName-------------------");
+//                                           console.log(chapter_err);
+//                                           callback(chapter_err, chapter_res);
+//                                         } else {
+
+//                                           const topicIds = [];
+//                                           quizRepository.fetchAllQuizBasedonSubject(
+//                                             request,
+//                                             async (quizDataErr, quizDataRes) => {
+//                                               if (quizDataErr) {
+//                                                 console.log(quizDataErr);
+//                                                 callback(quizDataErr, quizDataRes);
+//                                               } else {
+//                                                 console.log("---------------------------quizDataRes-------------------------------------");
+//                                                 console.log("---------------------",quizDataRes);
+                                              
+//                                                 // chapter_res.items.map(val =>)
+//                                                 // const quiz =  quizDataRes.Items.find(val => val.learningType == 'preLearning');
+//                                                 quizDataRes.Items.forEach(quiz => {
+//                                                   // if (quiz.learningType === 'preLearning') {
+
+//                                                   if (quiz.not_considered_topics) {
+//                                                     topicIds.push(...quiz.not_considered_topics);
+//                                                   }
+//                                                     if (quiz.learningType === request.data.type) {
+//                                                       // Find the matching chapter by chapter_id
+//                                                       const chapter = chapter_res.Items.find(ch => ch.chapter_id === quiz.chapter_id);
+//                                                       if (chapter) {
+//                                                           // Push the quiz_id to the prelearning_topic_id array
+//                                                           if(!chapter.quiz_id)
+//                                                           {
+//                                                             chapter.quiz_id = [];
+//                                                             chapter.notConsideredTopics = [  "c39e9703-cf72-5f20-baf9-7f1efe2a5212",
+//                                                             "95224b24-aa14-5077-89ed-512c2ce0e061",];
+//                                                           }
+//                                                           // chapter.quiz_id.push(quiz.quiz_id);
+//                                                           chapter.quiz_id.push({
+//                                                             id: quiz.quiz_id,
+//                                                             name: quiz.quiz_name,
+//                                                           })
+//                                                           if (quiz.not_considered_topics) 
+//                                                           chapter.notConsideredTopics.push(...quiz.not_considered_topics);
+//                                                           // chapter.quiz_id= quiz.quiz_id;
+//                                                           chapter.startDate = quiz.quizStartDate.dd_mm_yyyy;
+        
+//                                                       }
+//                                                   }
+//                                               });
+    
+//                                             await Promise.all(
+//                                             chapter_res.Items.map(async val => {
+//                                               val.totalStrength = studentsCount;
+                                              
+//                                               if (Array.isArray(val.quiz_id) && val.quiz_id.length > 0) {
+                                  
+//                                                   // Process each quiz ID object
+//                                                   await Promise.all(val.quiz_id.map(quiz => {
+//                                                       return new Promise((resolve, reject) => {
+//                                                           quizResultRepository.fetchQuizResultByQuizId(
+//                                                               { data: { quiz_id: quiz.id } },
+//                                                               (quizResultDataErr, quizResultDataRes) => {
+//                                                                   if (quizResultDataErr) {
+//                                                                       console.log(quizResultDataErr);
+//                                                                       return reject(quizResultDataErr);
+//                                                                   } else {
+//                                                                     let totalmarks = 0;
+//                                                                     let totalAttendance = 0;
+//                                                                       totalAttendance += quizResultDataRes.Items.length;
+                                                                      
+//                                                                       quizResultDataRes.Items.forEach(result => {
+//                                                                           totalmarks += result.marks_details[0].totalMark || 0;
+//                                                                       });
+//                                                                       quiz.student_attendance = totalAttendance;
+//                                                                       quiz.avgMarks = totalAttendance > 0 ? (totalmarks / totalAttendance) : 0;
+//                                                                       resolve();
+//                                                                   }
+//                                                               }
+//                                                           );
+//                                                       });
+//                                                   }));
+                                  
+
+//                                               } 
+//                                               }));
+    
+//                                                 console.log("_______________________________",chapter_res);
+
+//                                                 if (topicIds.length > 0) {
+//                                                   const topicDataRes = await new Promise((resolve, reject) => {
+//                                                     topicRepository.fetchBulkTopicsIDName({ unit_Topic_id: topicIds }, (err, res) => {
+//                                                       if (err) {
+//                                                         console.log(err);
+//                                                         return reject(err);
+//                                                       }
+//                                                       resolve(res);
+//                                                     });
+//                                                   });
+                                        
+//                                                   chapter_res.Items.forEach((val) => {
+//                                                     if (val.notConsideredTopics) {
+//                                                       val.notConsideredTopics = val.notConsideredTopics.map((id) => {
+//                                                         const topic = topicDataRes.Items.find((item) => item.topic_id === id);
+//                                                         return topic ? topic.topic_title : id;
+//                                                       });
+//                                                     }
+//                                                   });
+//                                                 }
+
+//                                                 callback(0, chapter_res);
+                                                
+//                                               }
+//                                             }
+//                                           )
+//                                         }
+//                                       }
+//                                     )
+//                                   }
+//                                 }
+//                               }
+//                             )
+//                           }
+//                         }
+//                       }
+//                     )
+//                   }
+//                 })
+//               }
+//             }
+//            )
+//           }
+//           catch (error) {
+//             console.error(error);
+//             callback(error);
+//           }
+//         }
+
+exports.postLearningSummaryDetails = async (request, callback) => {
+  try {
+    const schoolDataRes = await new Promise((resolve, reject) => {
+      schoolRepository.getSchoolDetailsById(request, (err, res) => {
+        if (err) {
+          console.log(err);
+          return reject(err);
+        }
+        resolve(res);
+      });
+    });
+
+    const studentsDataRes = await new Promise((resolve, reject) => {
+      studentRepository.getStudentsData(request, (err, res) => {
+        if (err) {
+          console.log(err);
+          return reject(err);
+        }
+        resolve(res);
+      });
+    });
+
+    const studentsCount = studentsDataRes.Items.length;
+
+    const subjectDataRes = await new Promise((resolve, reject) => {
+      subjectRepository.getSubjetById(request, (err, res) => {
+        if (err) {
+          console.log(err);
+          return reject(err);
+        }
+        resolve(res);
+      });
+    });
+
+    if (subjectDataRes.Items.length > 0) {
+      const subject_unit_id = subjectDataRes.Items[0].subject_unit_id;
+
+      const unitDataRes = await new Promise((resolve, reject) => {
+        unitRepository.fetchUnitData({ subject_unit_id }, (err, res) => {
+          if (err) {
+            console.log(err);
+            return reject(err);
+          }
+          resolve(res);
+        });
+      });
+
+      if (unitDataRes.Items.length > 0) {
+        let unit_chapter_id = [];
+        unitDataRes.Items.forEach((e) => unit_chapter_id.push(...e.unit_chapter_id));
+
+        const chapterDataRes = await new Promise((resolve, reject) => {
+          chapterRepository.fetchBulkChaptersIDName({ unit_chapter_id }, (err, res) => {
+            if (err) {
+              console.log(err);
+              return reject(err);
+            }
+            resolve(res);
+          });
+        });
+
+        const topicIds = [];
+        const quizDataRes = await new Promise((resolve, reject) => {
+          quizRepository.fetchAllQuizBasedonSubject(request, (err, res) => {
+            if (err) {
+              console.log(err);
+              return reject(err);
+            }
+            resolve(res);
+          });
+        });
+
+        quizDataRes.Items.forEach((quiz) => {
+          if (quiz.not_considered_topics) {
+            topicIds.push(...quiz.not_considered_topics);
+          }
+          if (quiz.learningType === request.data.type) {
+            const chapter = chapterDataRes.Items.find((ch) => ch.chapter_id === quiz.chapter_id);
+            if (chapter) {
+              if (!chapter.quiz_id) {
+                chapter.quiz_id = [];
+                chapter.notConsideredTopics = [];
+              }
+              chapter.quiz_id.push({
+                id: quiz.quiz_id,
+                name: quiz.quiz_name,
+              });
+              if (quiz.not_considered_topics) {
+                chapter.notConsideredTopics.push(...quiz.not_considered_topics);
+              }
+              chapter.startDate = quiz.quizStartDate.dd_mm_yyyy;
+            }
+          }
+        });
+
+        await Promise.all(
+          chapterDataRes.Items.map(async (val) => {
+            val.totalStrength = studentsCount;
+
+            if (Array.isArray(val.quiz_id) && val.quiz_id.length > 0) {
+              await Promise.all(
+                val.quiz_id.map((quiz) => {
+                  return new Promise((resolve, reject) => {
+                    quizResultRepository.fetchQuizResultByQuizId(
+                      { data: { quiz_id: quiz.id } },
+                      (err, res) => {
+                        if (err) {
+                          console.log(err);
+                          return reject(err);
+                        }
+                        let totalmarks = 0;
+                        let totalAttendance = 0;
+                        totalAttendance += res.Items.length;
+
+                        res.Items.forEach((result) => {
+                          totalmarks += result.marks_details[0].totalMark || 0;
+                        });
+
+                        quiz.student_attendance = totalAttendance;
+                        quiz.avgMarks = totalAttendance > 0 ? totalmarks / totalAttendance : 0;
+                        resolve();
+                      }
+                    );
+                  });
+                })
+              );
+            }
+          })
+        );
+
+        if (topicIds.length > 0) {
+          const topicDataRes = await new Promise((resolve, reject) => {
+            topicRepository.fetchBulkTopicsIDName({ unit_Topic_id: topicIds }, (err, res) => {
+              if (err) {
+                console.log(err);
+                return reject(err);
+              }
+              resolve(res);
+            });
+          });
+
+          chapterDataRes.Items.forEach((val) => {
+            if (val.notConsideredTopics) {
+              val.notConsideredTopics = val.notConsideredTopics.map((id) => {
+                const topic = topicDataRes.Items.find((item) => item.topic_id === id);
+                return topic ? topic.topic_title : id;
+              });
+            }
+          });
+        }
+
+        callback(null, chapterDataRes);
+      }
+    }
+  } catch (error) {
+    console.error(error);
+    callback(error);
+  }
+};
+
+
 
 
 
