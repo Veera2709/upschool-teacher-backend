@@ -304,24 +304,24 @@ exports.calculateMatrix = function (basic_groups, intermediate_groups, advanced_
 exports.calculateCountUsingMatrix = function (basic_groups, intermediate_groups, advanced_groups, pre_post_quiz_config, callback) {  
 
    
-    console.log("Groups : ", basic_groups, intermediate_groups, advanced_groups);
+    // console.log("Groups : ", basic_groups, intermediate_groups, advanced_groups);
     // Matrix : 
     let basic_percent = pre_post_quiz_config.test_matrix.Basic
     let intermediate_percent = pre_post_quiz_config.test_matrix.Intermediate
     let advanced_percent = pre_post_quiz_config.test_matrix.Advanced
-    console.log("Percentage : ", basic_percent, intermediate_percent, advanced_percent);
+    // console.log("Percentage : ", basic_percent, intermediate_percent, advanced_percent);
 
     let basic_count = Math.round((basic_groups.length/100) * basic_percent); 
     let intermediate_count = Math.round((intermediate_groups.length/100) * intermediate_percent); 
     let advance_count = Math.round((advanced_groups.length/100) * advanced_percent); 
-    console.log("Count : ", basic_count, intermediate_count, advance_count);
+    // console.log("Count : ", basic_count, intermediate_count, advance_count);
     
     let questionsCount = {
         basic_count, 
         intermediate_count, 
         advance_count
     }
-    console.log("questionsCount : ", questionsCount); 
+    // console.log("questionsCount : ", questionsCount); 
 
     callback(0, questionsCount); 
 }
