@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const jwt_decode = require('jwt-decode');
 const dynamoDbCon = require('../awsConfig');
 const constant = require('../constants/constant');
+const {groupTypes } = require('../constants/constant');
 const { constants } = require("buffer");
 
 const excelEpoc = new Date(1900, 0, 0).getTime();
@@ -1090,6 +1091,6 @@ exports.getQuestionTrackForManual = async (topicId, concepts_response, questions
 };
 
 exports.filterGroupType = (groupId, allGroups) => {
-    return allGroups.basic.includes(groupId) ? 'basic' : allGroups.intermediate.includes(groupId) ? 'intermediate' : allGroups.advanced.includes(groupId) ? 'advanced' : 'N.A.'
+    return allGroups.basic.includes(groupId) ? groupTypes.Basic : allGroups.intermediate.includes(groupId) ? groupTypes.Intermediate : allGroups.advanced.includes(groupId) ? groupTypes.Advanced : 'N.A.'
 }; 
 

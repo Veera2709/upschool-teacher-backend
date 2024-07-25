@@ -278,3 +278,9 @@ exports.quizSetDetails = [
         fieldName: "answerPapersSetC"  
     }
 ];
+
+exports.groupTypes = {
+    Basic: "Basic", 
+    Intermediate: "Intermediate", 
+    Advanced: "Advanced"
+}; 
