@@ -16,10 +16,8 @@ exports.fetchConceptData = function (request, callback) {
             let docClient = dynamoDBCall;
             let FilterExpressionDynamic = "";
             let ExpressionAttributeValuesDynamic = {};
-            console.log("fetchConceptData request : ", request);
             let topic_concept_id = request.topic_concept_id;
 
-            console.log("topic_concept_id : ", topic_concept_id);
             if(topic_concept_id.length === 1){ 
                 let read_params = {
                     TableName: TABLE_NAMES.upschool_concept_blocks_table,

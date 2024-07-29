@@ -11,9 +11,9 @@ const studentController = require('./controller/studentController');
 const topicController = require('./controller/topicController');
 const chapterController = require('./controller/chapterController');
 const blueprintController = require('./controller/blueprintController');
-const classController = require('./controller/classController');
-const schoolController = require('./controller/schoolController');
-const userController = require('./controller/userController');
+// const classController = require('./controller/classController');
+// const schoolController = require('./controller/schoolController');
+// const userController = require('./controller/userController');
 const conceptController = require('./controller/conceptController');
 const subjectController = require('./controller/subjectController');
 const teacherController = require('./controller/teacherController');
@@ -145,6 +145,8 @@ app.post("/v1/getTargetedLearningExpectation",dashboardController.getTargetedLea
 app.post("/v1/getTargetedLearningExpectationDetails",dashboardController.getTargetedLearningExpectationDetails);
 app.post("/v1/getAssesmentSummaryDetails",dashboardController.getAssesmentSummaryDetails);
 app.post("/v1/preLearningSummaryDetails",dashboardController.preLearningSummaryDetails);
+app.post("/v1/postLearningSummaryDetails",dashboardController.postLearningSummaryDetails);
+app.post("/v1/preLearningBlueprintDetails",dashboardController.preLearningBlueprintDetails);
 
 
 const NODE_ENV = process.env.NODE_ENV || 'development';
