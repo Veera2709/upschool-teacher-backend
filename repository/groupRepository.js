@@ -18,7 +18,6 @@ exports.fetchGroupsData = function (request, callback) {
             let FilterExpressionDynamic = "";
             let ExpressionAttributeValuesDynamic = {}; 
             let group_array = request.group_array; 
-            console.log("group_array : ", group_array);
             
             if (group_array.length === 0) { 
 
@@ -28,17 +27,14 @@ exports.fetchGroupsData = function (request, callback) {
                 let read_params = { 
                     TableName: TABLE_NAMES.upschool_group_table,
                     KeyConditionExpression: "group_id = :group_id", 
-                    // FilterExpression: "digicard_status = :digicard_status", 
                     ExpressionAttributeValues: {
                         ":group_id": group_array[0],
-                        // ":digicard_status": "Active",
                     }, 
                 }
     
                 DATABASE_TABLE.queryRecord(docClient, read_params, callback);
 
             } else { 
-                console.log("Else");
                 group_array.forEach((element, index) => { 
                     if(index < group_array.length-1){ 
                         FilterExpressionDynamic = FilterExpressionDynamic + "(group_id = :group_id"+ index +") OR "
@@ -48,14 +44,12 @@ exports.fetchGroupsData = function (request, callback) {
                         ExpressionAttributeValuesDynamic[':group_id'+ index] = element;
                     }
                 }); 
-                // ExpressionAttributeValuesDynamic[':digicard_status'] = 'Active'
 
                 let read_params = {
                     TableName: TABLE_NAMES.upschool_group_table,
                     FilterExpression: FilterExpressionDynamic,
                     ExpressionAttributeValues: ExpressionAttributeValuesDynamic,
                 }
-                console.log("read_params : ", read_params); 
 
                 DATABASE_TABLE.scanRecord(docClient, read_params, callback);
 

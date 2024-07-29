@@ -423,7 +423,7 @@ exports.startQuizEvaluationProcess = (request, callback) => {
             callback(quizTestErr, quizTestRes);
         } else {
             console.log("QUIZ DATA : ", quizTestRes);
-            if(quizTestRes.Item.quiz_status === "Active")
+            if(quizTestRes && quizTestRes.Item && quizTestRes.Item.quiz_status === "Active")
             {
                 /** FETCH SCHOOL DATA **/
                 schoolRepository.getSchoolDetailsById(request, async(schoolDataErr, SchoolDataRes) => {
