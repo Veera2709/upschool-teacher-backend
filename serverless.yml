@@ -82,7 +82,15 @@ functions:
       - http:
           path: /v1/fetchAllStudents
           method: POST
-          cors: true   
+          cors: true  
+      - http:
+          path: /v1/fetchAllQuizDetails
+          method: POST
+          cors: true  
+      - http:
+          path: /v1/getIndividualReport
+          method: POST
+          cors: true  
       - http:
           path: /v1/chapterUnlock
           method: POST

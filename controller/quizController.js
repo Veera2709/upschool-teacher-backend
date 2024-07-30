@@ -112,5 +112,32 @@ exports.startQuizEvaluation = (req, res, next) => {
         }
     });
 };
+exports.fetchAllQuizDetails = (req, res, next) => {
+    let request = req.body;
+    request["token"] = req.header('Authorization');
+    
+    quizServices.fetchAllQuizDetails(request, function (fetch_all_quiz_err, fetch_all_quiz_response) {
+        if (fetch_all_quiz_err) {
+            res.status(fetch_all_quiz_err).json(fetch_all_quiz_response);
+        } else {
+            console.log("Fetch All Quiz Successfully");
+            res.json(fetch_all_quiz_response);
+        }
+    });
+};
+
+exports.getIndividualQuizReport = (req, res, next) => {
+    let request = req.body;
+    request["token"] = req.header('Authorization');
+    
+    quizServices.fetchIndividualQuizReport(request, function (fetch_all_quiz_err, fetch_all_quiz_response) {
+        if (fetch_all_quiz_err) {
+            res.status(fetch_all_quiz_err).json(fetch_all_quiz_response);
+        } else {
+            console.log("Fetch All Quiz Successfully");
+            res.json(fetch_all_quiz_response);
+        }
+    });
+};
 
 
