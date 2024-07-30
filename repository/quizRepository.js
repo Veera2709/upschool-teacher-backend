@@ -366,3 +366,31 @@ exports.fetchAllQuizBasedonSubject = function(request, callback){
     });
 }
 
+exports.getAllQuizData = function (request, callback) {
+
+    dynamoDbCon.getDB(function (DBErr, dynamoDBCall) {
+        if (DBErr) {
+            console.log("Test Result Database Error");
+            console.log(DBErr);
+            callback(500, constant.messages.QUIZ_RESULT_DATA_DATABASE_ERROR);
+        } else {
+            let docClient = dynamoDBCall;
+            console.log("request : ", request);
+
+            let read_params = {
+                TableName: TABLE_NAMES.upschool_quiz_result,
+                IndexName: indexName.Indexes.common_id_index,
+                KeyConditionExpression: "common_id = :common_id",
+                FilterExpression: "quiz_id = :quiz_id ",
+                ExpressionAttributeValues: {
+                    ":common_id": constant.constValues.common_id,
+                    ":quiz_id": request.data.quiz_id,
+                },
+            }
+
+            DATABASE_TABLE.queryRecord(docClient, read_params, callback);
+
+        }
+    });
+}
+

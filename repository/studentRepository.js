@@ -65,5 +65,35 @@ exports.fetchStudentDataByRollNoClassSection = function (request, callback) {
     });
 }
 
+exports.getAllStudents = function (request, callback) {
+
+    dynamoDbCon.getDB(function (DBErr, dynamoDBCall) {
+        if (DBErr) {
+            console.log("Database Error : Fetch All Active Students");
+            console.log(DBErr);
+            callback(500, constant.messages.DATABASE_ERROR);
+        } else {
+
+            let docClient = dynamoDBCall;
+
+            let read_params = {
+                TableName: TABLE_NAMES.upschool_student_info,
+                IndexName: indexName.Indexes.common_id_index,
+                KeyConditionExpression: "common_id = :common_id",
+                FilterExpression: "user_status = :user_status AND student_id = :student_id",
+                ExpressionAttributeValues: {
+                    ":common_id": constant.constValues.common_id,
+                    ":user_status": "Active",
+                    ":student_id": request,
+
+                }
+            }
+
+            DATABASE_TABLE.queryRecord(docClient, read_params, callback);
+
+        }
+    });
+}
+
 
 
