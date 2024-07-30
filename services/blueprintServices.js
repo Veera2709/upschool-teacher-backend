@@ -138,7 +138,7 @@ exports.setBlueprintFinalData = (questionSection, catData, skillData, callback) 
     setCatCog(0)
 }
 
-/** NEW **/
+/** NEW **/ 
 exports.fetchBlueprintQuestions = (request, callback) => {    
     blueprintRepository.fetchBlueprintById(request, function (blueprint_err, blueprint_res) {
         if (blueprint_err) {
@@ -229,7 +229,7 @@ exports.fetchBlueprintQuestions = (request, callback) => {
 
                                     workQuesIds = await helper.removeDuplicates(workQuesIds);
                                     console.log("WORKSHEET QUESTION ID : ", workQuesIds);
-
+                                    
                                     /** FETCH QUESTION DATA **/
                                     let fetchBulkquesReq = {
                                         IdArray : workQuesIds,
@@ -246,7 +246,8 @@ exports.fetchBlueprintQuestions = (request, callback) => {
                                             callback(questionsData_err, questionsData_res);
                                         } else {
                                             console.log("PUBLISHED QUESTION DATA");
-                                            console.log(questionsData_res.Items);
+
+                                            questionsData_res.Items = await questionsData_res.Items.filter((qtn) => request.data.source_ids.includes(qtn.question_source));
 
                                             let priorities = [];
                                             await helper.checkPriorityQuestions(request.data.question_details).then((priData) => {

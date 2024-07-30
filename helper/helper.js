@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const jwt_decode = require('jwt-decode');
 const dynamoDbCon = require('../awsConfig');
 const constant = require('../constants/constant');
+const {groupTypes } = require('../constants/constant');
 const { constants } = require("buffer");
 
 const excelEpoc = new Date(1900, 0, 0).getTime();
@@ -964,4 +965,132 @@ exports.assignNumberofQuestions = async (fetchResponse, selectedTopics, param) =
           return fetchResponse; 
     }
 }
+
+exports.reduceKeys = (data, keysToRetain) => {
+    const filteredData = data.map(item =>
+        keysToRetain.reduce((obj, key) => {
+            if (item.hasOwnProperty(key)) {
+                obj[key] = item[key];
+            }
+            return obj;
+        }, {})
+    ); 
+    return filteredData; 
+}; 
+
+exports.getQuestionTrackForAutomatic = (selectedTopics, topic_response, concepts_response, questions_list, non_considered_topic_data, group_list) => {
+    
+    let questionTrackData = []; 
+    selectedTopics.forEach((topic) => {
+    
+    let topic_concept_id = (topic_response.find((top) => top.topic_id === topic.topic_id)).topic_concept_id; 
+
+        topic_concept_id.forEach((concept) => {
+
+        let rawGroupDetails = (concepts_response.find((con) => con.concept_id === concept)).concept_group_id; 
+
+        let groupDetails = [...rawGroupDetails.basic, ...rawGroupDetails.intermediate, ...rawGroupDetails.advanced]; 
+
+        groupDetails.forEach((grp) => {
+            let grpPicked = group_list.filter((grpList) => grpList.group_id === grp); 
+
+            if(!exports.isEmptyArray(grpPicked)){
+                let pickedQtnsFromGrp = grpPicked[0].group_question_id.filter((grpQtn) => questions_list.includes(grpQtn)); 
+
+                let trackPerQUestion = pickedQtnsFromGrp.map((qtn) => ({
+                    topic_id: topic.topic_id,
+                    question_id: qtn,
+                    concept_id: concept,
+                    group_id: grpPicked[0].group_id,
+                    type: exports.filterGroupType(grpPicked[0].group_id, rawGroupDetails)
+                }) ); 
+                questionTrackData.push(...trackPerQUestion); 
+
+                // check if topic is nonAssigned based on selected questions count 
+                if(!exports.isEmptyArray(pickedQtnsFromGrp)){
+                    non_considered_topic_data[topic.topic_id] = false; 
+                }
+            }; 
+        });  
+    }); 
+});
+return {res_questionTrackData: questionTrackData, res_non_considered_topic_data: non_considered_topic_data}; 
+
+}
+
+exports.getQuestionTrackForExpress = (topic, topic_response, concepts_response, questions_list, non_considered_topic_data, group_list) => {
+
+    // Formatting Topic-Concept-Group-Question level DS : 
+    let questionTrackData = []; 
+    let topic_concept_id = (topic_response.find((top) => top.topic_id === topic.topic_id)).topic_concept_id; 
+
+    topic_concept_id.forEach((concept) => {
+
+        let rawGroupDetails = (concepts_response.find((con) => con.concept_id === concept)).concept_group_id
+        let groupDetails = [...rawGroupDetails.basic, ...rawGroupDetails.intermediate, ...rawGroupDetails.advanced]; 
+
+        groupDetails.forEach((grp) => {
+        let grpPicked = group_list.filter((grpList) => grpList.group_id === grp); 
+
+        if(!exports.isEmptyArray(grpPicked)){
+            let pickedQtnsFromGrp = grpPicked[0].group_question_id.filter((grpQtn) => questions_list.includes(grpQtn))
+
+            let trackPerQUestion = pickedQtnsFromGrp.map((qtn) => ({
+                topic_id: topic.topic_id,
+                question_id: qtn,
+                concept_id: concept,
+                group_id: grpPicked[0].group_id,
+                type: exports.filterGroupType(grpPicked[0].group_id, rawGroupDetails)
+            }) ); 
+            questionTrackData.push(...trackPerQUestion); 
+            
+            // check if topic is nonAssigned based on selected questions count 
+            if(!exports.isEmptyArray(pickedQtnsFromGrp)){
+                non_considered_topic_data[topic.topic_id] = false; 
+            }
+        }; 
+        }); 
+    }); 
+
+    return {res_topic: questionTrackData, res_non_considered_topic_data: non_considered_topic_data}
+}
+
+exports.getQuestionTrackForManual = async (topicId, concepts_response, questions_list, non_considered_topic_data, group_list) => {
+
+    // Formatting Topic-Concept-Group-Question level DS 
+    let questionTrackData = []; 
+    await concepts_response.forEach((concept) => {
+
+        let rawGroupDetails = concept.concept_group_id
+        let groupDetails = [...rawGroupDetails.basic, ...rawGroupDetails.intermediate, ...rawGroupDetails.advanced]; 
+
+        groupDetails.forEach((grp) => {
+        let grpPicked = group_list.filter((grpList) => grpList.group_id === grp); 
+
+        if(!exports.isEmptyArray(grpPicked)){
+            let pickedQtnsFromGrp = grpPicked[0].group_question_id.filter((grpQtn) => questions_list.includes(grpQtn))
+
+            let trackPerQUestion = pickedQtnsFromGrp.map((qtn) => ({
+                topic_id: topicId,
+                question_id: qtn,
+                concept_id: concept.concept_id,
+                group_id: grpPicked[0].group_id,
+                type: exports.filterGroupType(grpPicked[0].group_id, rawGroupDetails)
+            }) ); 
+
+            questionTrackData.push(...trackPerQUestion);
+
+            // check if topic is nonAssigned based on selected questions count 
+            if(!exports.isEmptyArray(pickedQtnsFromGrp)){
+                non_considered_topic_data[topicId] = false; 
+            }
+        }; 
+        }); 
+    }); 
+    return {res_concept: questionTrackData, res_non_considered_topic_data: non_considered_topic_data}; 
+};
+
+exports.filterGroupType = (groupId, allGroups) => {
+    return allGroups.basic.includes(groupId) ? groupTypes.Basic : allGroups.intermediate.includes(groupId) ? groupTypes.Intermediate : allGroups.advanced.includes(groupId) ? groupTypes.Advanced : 'N.A.'
+}; 
 

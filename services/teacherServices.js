@@ -788,7 +788,7 @@ exports.addAutomatedQuizBasedonVarient = async (request, callback) => {
                                         non_considered_topic_data[i] && (request.data.not_considered_topics.push(i)); 
                                       }; 
 
-                                      quizRepository.addQuiz(request, async function (addQuiz_err, addQuiz_response) {
+                                        quizRepository.addQuiz(request, async function (addQuiz_err, addQuiz_response) {
                                         if (addQuiz_err) {
                                             console.log(addQuiz_err);
                                             callback(addQuiz_err, addQuiz_response);
@@ -851,7 +851,7 @@ exports.addAutomatedQuizBasedonVarient = async (request, callback) => {
                                     }else{
 
                                           // Formatting Topic-Concept-Group-Question level DS 
-                                          let {res_questionTrackData, res_non_considered_topic_data} = helper.getQuestionTrackForAutomatic(request.data.selectedTopics, fetch_topics_response.Items, fetch_concepts_response.Items, questions_list, non_considered_topic_data, data.group_list); 
+                                          let {res_questionTrackData, res_non_considered_topic_data} = await helper.getQuestionTrackForAutomatic(request.data.selectedTopics, fetch_topics_response.Items, fetch_concepts_response.Items, questions_list, non_considered_topic_data, data.group_list); 
 
                                           res_questionTrackData = await helper.removeDuplicatesFromArrayOfObj(res_questionTrackData, 'question_id'); 
 
@@ -1487,7 +1487,6 @@ exports.generateQuizForPostLearning = (request, callback) => {
                                             console.log(teachActivity_err);
                                             callback(teachActivity_err, teachActivity_response);
                                         } else {
-                                            console.log("TEACHER ACTIVITY : ", teachActivity_response);
                                             let chapterActivity = teachActivity_response.Items.length > 0 ? teachActivity_response.Items[0].chapter_data.filter(ce => ce.chapter_id === request.data.chapter_id) : [];
                                             let archivedTopics = chapterActivity.length > 0 ? chapterActivity[0].post_learning.archivedTopics : [];
                     
@@ -1497,7 +1496,6 @@ exports.generateQuizForPostLearning = (request, callback) => {
                                                     console.log(chapterData_err);
                                                     callback(chapterData_err, chapterData_response);
                                                 } else {
-                                                    console.log("CHAPTER DATA : ", chapterData_response);
                                                     let postLearningTopicIds = chapterData_response.Items.length > 0 ? chapterData_response.Items[0].postlearning_topic_id : [];
     
                                                     let AcitveTopics = await helper.getDifferenceValueFromTwoArray(postLearningTopicIds, archivedTopics);
@@ -1519,7 +1517,6 @@ exports.generateQuizForPostLearning = (request, callback) => {
                                                             if(add_quiz_basedon_varient_response === 200){
 
                                                               if(request.data.quizMode === "offline"){
-                                                                console.log("test 5");
 
                                                                 exports.createPDFandUpdateTemplateDetails(request, (create_pdf_and_update_details_err, create_pdf_and_update_details_response) => {
                                                                   if(create_pdf_and_update_details_err){
@@ -1667,8 +1664,6 @@ exports.generateQuizForPostLearning = (request, callback) => {
                                     })
                                     }
                                   })
-
-                                  
                             }
                         }
                     }
