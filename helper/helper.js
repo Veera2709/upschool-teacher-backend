@@ -860,7 +860,7 @@ exports.getRandomQuestionsFromGroups = (group_response, noOfQuestions, randomDup
                          
                       }else{
 
-                        resolve({questions_list, randomDupCheck, quiz_duration, group_list}); 
+                        resolve({questions_list, randomDupCheck, quiz_duration}); 
     
                       }
                   }; 
