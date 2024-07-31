@@ -101,7 +101,7 @@ app.post("/v1/toggleQuestionPaper", validator.validUser, testQuestionPaperContro
 
 /** BLUE PRINT **/
 app.post("/v1/fetchBlueprintById", validator.validUser, blueprintController.fetchBlueprintById);
-app.post("/v1/fetchQuestionBasedOnBlueprint", blueprintController.fetchQuestionBasedOnBlueprint); // validator.validUser,
+app.post("/v1/fetchQuestionBasedOnBlueprint", validator.validUser, blueprintController.fetchQuestionBasedOnBlueprint);
 app.post("/v1/fetchAllBluePrints", validator.validUser, blueprintController.fetchAllBluePrints);
 
 // CLASS TEST : 
