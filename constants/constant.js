@@ -154,8 +154,11 @@ exports.messages = {
     INVALID_OTP: "Invalid OTP!",
 
     // School Admin
-    SCHOOL_USER_EXISTS_ALREADY: 'User exists already, please use a different email Id!'
+    SCHOOL_USER_EXISTS_ALREADY: 'User exists already, please use a different email Id!', 
 
+    // Athena
+    QUERY_FAILED: "Query failed with status: **status**", 
+    QUERY_EXECUTION_FAILED: "Error executing query: **error**"
 }
 
 exports.constValues = {
