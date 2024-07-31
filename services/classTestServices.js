@@ -278,10 +278,10 @@ exports.comparingAnswer = async (studAns, markDetails, questionPaper, quesAns) =
     })
 }
 
-exports.setQaDetails = (qaDetails, indAns, quesAns,questionPaperTrack) => {
+exports.setQaDetails = (qaDetails, indAns, quesAns) => {
     let localQuestion = "";
     let localType = "";
-    console.log( "checkedtrack",questionPaperTrack);
+    
     return new Promise(async (resolve, reject) => {
         async function qaLoop(i)
         {
@@ -290,14 +290,12 @@ exports.setQaDetails = (qaDetails, indAns, quesAns,questionPaperTrack) => {
  
                 localQuestion = quesAns.filter(ques => ques.question_id === qaDetails[i].question_id);
  
-                localType = questionPaperTrack.filter(ques => ques.question_id === qaDetails[i].question_id);
                 if(localQuestion.length > 0 && indAns[i])
                 {
                     await exports.compareAnswer(localQuestion[0], indAns[i],).then((obMark) => {
                         console.log("OBTAINED MARKS : ", obMark);
                         qaDetails[i].obtained_marks = obMark;
                         qaDetails[i].student_answer = indAns[i];
-                        qaDetails[i].type = localType[0].type;
                     })
                 }
                 i++;

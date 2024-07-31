@@ -695,7 +695,7 @@ exports.comparingQuizAnswer = async (studAns, markDetails, questionPaper, quesAn
                 {
                     if(splitedAns[i].individualAns && splitedAns[i].individualAns.length > 0)
                     {
-                        await classTestServices.setQaDetails(markDetails[i].qa_details, splitedAns[i].individualAns, quesAns,questionPaperTrack).then(async(secQaDetails) => {
+                        await exports.setQizQaDetails(markDetails[i].qa_details, splitedAns[i].individualAns, quesAns, questionPaperTrack).then(async(secQaDetails) => {
                             console.log("SECTION QA DETAILS : ", secQaDetails);
                             markDetails[i].qa_details = secQaDetails;
 
@@ -721,6 +721,41 @@ exports.comparingQuizAnswer = async (studAns, markDetails, questionPaper, quesAn
             }
             sectionLoop(0);
         })  
+    })
+}
+
+exports.setQizQaDetails = (qaDetails, indAns, quesAns, questionPaperTrack) => {
+    let localQuestion = "";
+    let localType = "";
+    console.log( "checkedtrack",questionPaperTrack);
+    return new Promise(async (resolve, reject) => {
+        async function qaLoop(i)
+        {
+            if(i < qaDetails.length)
+            {
+ 
+                localQuestion = quesAns.filter(ques => ques.question_id === qaDetails[i].question_id);
+ 
+                localType = questionPaperTrack.filter(ques => ques.question_id === qaDetails[i].question_id);
+                if(localQuestion.length > 0 && indAns[i])
+                {
+                    await exports.compareAnswer(localQuestion[0], indAns[i],).then((obMark) => {
+                        console.log("OBTAINED MARKS : ", obMark);
+                        qaDetails[i].obtained_marks = obMark;
+                        qaDetails[i].student_answer = indAns[i];
+                        qaDetails[i].type = localType[0].type;
+                    })
+                }
+                i++;
+                qaLoop(i);
+            }
+            else
+            {
+                console.log("End setQaDetails");
+                resolve(qaDetails);
+            }          
+        }
+        qaLoop(0)
     })
 }
 

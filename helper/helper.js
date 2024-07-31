@@ -1094,3 +1094,18 @@ exports.filterGroupType = (groupId, allGroups) => {
     return allGroups.basic.includes(groupId) ? groupTypes.Basic : allGroups.intermediate.includes(groupId) ? groupTypes.Intermediate : allGroups.advanced.includes(groupId) ? groupTypes.Advanced : 'N.A.'
 }; 
 
+// Function to build an array of rows from the Athena query results
+exports.processRows = (resultsData) => {
+    // Build an array of columns from the Athena query results
+    let cols = resultsData.ResultSet.ResultSetMetadata.ColumnInfo.map(c => c.Name);
+
+    let rows = [];
+    resultsData.ResultSet.Rows.map((result) => {
+      let row = {};
+      result.Data.map((r, i) => {
+        row[cols[i]] = r.VarCharValue;
+      });
+      rows.push(row);
+    });
+    return rows;
+  }
