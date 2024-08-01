@@ -280,15 +280,19 @@ exports.comparingAnswer = async (studAns, markDetails, questionPaper, quesAns) =
 
 exports.setQaDetails = (qaDetails, indAns, quesAns) => {
     let localQuestion = "";
+    let localType = "";
+    
     return new Promise(async (resolve, reject) => {
         async function qaLoop(i)
         {
             if(i < qaDetails.length)
             {
+ 
                 localQuestion = quesAns.filter(ques => ques.question_id === qaDetails[i].question_id);
+ 
                 if(localQuestion.length > 0 && indAns[i])
                 {
-                    await exports.compareAnswer(localQuestion[0], indAns[i]).then((obMark) => {
+                    await exports.compareAnswer(localQuestion[0], indAns[i],).then((obMark) => {
                         console.log("OBTAINED MARKS : ", obMark);
                         qaDetails[i].obtained_marks = obMark;
                         qaDetails[i].student_answer = indAns[i];
@@ -301,7 +305,7 @@ exports.setQaDetails = (qaDetails, indAns, quesAns) => {
             {
                 console.log("End setQaDetails");
                 resolve(qaDetails);
-            }
+            }          
         }
         qaLoop(0)
     })

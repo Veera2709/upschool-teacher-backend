@@ -58,7 +58,9 @@ app.post("/v1/fetchDigicardsBasedonTopic", validator.validUser, topicController.
 app.post("/v1/fetchIndividualDigiCard", validator.validUser, digicardController.fetchIndividualDigiCard);
 app.post("/v1/fetchRelatedDigiCards", validator.validUser, digicardController.fetchRelatedDigiCards);
 app.post("/v1/fetchTopicAndNoOfQuestions", validator.validUser, subjectController.fetchTopicAndNoOfQuestions);
-app.post("/v1/fetchAllStudents", validator.validUser, studentController.fetchAllStudents);
+app.post("/v1/fetchAllStudents",  studentController.fetchAllStudents);
+app.post("/v1/fetchAllQuizDetails", quizController.fetchAllQuizDetails);
+
 
 app.post("/v1/unlockChapterPreLearning", validator.validUser, chapterController.unlockChapterPreLearning);
 app.post("/v1/chapterUnlock", validator.validUser, chapterController.chapterUnlock);
@@ -99,7 +101,7 @@ app.post("/v1/toggleQuestionPaper", validator.validUser, testQuestionPaperContro
 
 /** BLUE PRINT **/
 app.post("/v1/fetchBlueprintById", validator.validUser, blueprintController.fetchBlueprintById);
-app.post("/v1/fetchQuestionBasedOnBlueprint", blueprintController.fetchQuestionBasedOnBlueprint); // validator.validUser,
+app.post("/v1/fetchQuestionBasedOnBlueprint", validator.validUser, blueprintController.fetchQuestionBasedOnBlueprint);
 app.post("/v1/fetchAllBluePrints", validator.validUser, blueprintController.fetchAllBluePrints);
 
 // CLASS TEST : 
@@ -133,6 +135,8 @@ app.post("/v1/updateStudentQuizMarks", quizController.updateStudentQuizMarks); /
 app.post("/v1/fetchQuizTemplates", validator.validUser, quizController.fetchQuizTemplates);
 app.post("/v1/resetQuizEvaluationStatus", validator.validUser, quizController.resetQuizEvaluationStatus);
 app.post("/v1/startQuizEvaluation", quizController.startQuizEvaluation); // validator.validUser,
+
+app.post("/v1/getIndividualQuizReport",quizController.getIndividualQuizReport)
 
 // School admin
 app.post("/v1/createSchoolAdmin", validator.validUser, schoolAdminController.createSchoolAdmin);
