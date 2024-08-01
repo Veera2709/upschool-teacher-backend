@@ -6,10 +6,13 @@ const subjectRepository = require("../repository/subjectRepository");
 const teacherRepository = require("../repository/teacherRepository");
 const unitRepository = require("../repository/unitRepository");
 const quizRepository = require("../repository/quizRepository");
+const settingsRepository = require("../repository/settingsRepository");
+const questionRepository = require("../repository/questionRepository");
 const quizResultRepository = require("../repository/quizResultRepository");
 const chapterRepository = require("../repository/chapterRepository");
 const topicRepository = require("../repository/topicRepository");
 const userRepository = require("../repository/userRepository");
+const { getS3SignedUrl } = require("../helper/helper");
 
 exports.getAssessmentDetails = (request, callback) => {
   // get the class % to generate reports using school_id
@@ -1148,15 +1151,6 @@ exports.preLearningSummaryDetails = async (request, callback) => {
 
 exports.postLearningSummaryDetails = async (request, callback) => {
   try {
-    const schoolDataRes = await new Promise((resolve, reject) => {
-      schoolRepository.getSchoolDetailsById(request, (err, res) => {
-        if (err) {
-          console.log(err);
-          return reject(err);
-        }
-        resolve(res);
-      });
-    });
 
     const studentsDataRes = await new Promise((resolve, reject) => {
       studentRepository.getStudentsData(request, (err, res) => {
@@ -1305,6 +1299,365 @@ exports.postLearningSummaryDetails = async (request, callback) => {
     callback(error);
   }
 };
+
+
+exports.viewAnalysisIndividualReport = async (request, callback) =>
+{
+  try{
+       const request2 = {
+        data : {
+        student_id : "a6dcd932-36b9-570b-87da-6f854624a1ad",
+        quiz_id : "6597a41e-617b-5e38-a9ab-f47bb27240bd"
+        }
+       }
+
+      //  const quizData = await new Promise((resolve, reject) => {
+      //   quizRepository.fetchQuizDataById(request2, (err, res) => {
+      //     if (err) {
+      //       console.log(err);
+      //       return reject(err);
+      //     }
+      //     console.log("-------------------res-------------------------------");
+      //     resolve(res);
+      //   });
+      // });
+
+      const quizData = {
+        Item : {
+        "quiz_id": "6597a41e-617b-5e38-a9ab-f47bb27240bd",
+        "chapter_id": "313d007a-fde7-5e76-b19c-f6a3e03c2395",
+        "client_class_id": "1df5eb4b-1186-57a1-8984-f36fcfbfcb8b",
+        "common_id": "61692656",
+        "created_ts": "2024-07-19T10:09:49.853Z",
+        "lc_quiz_name": "test-sunil",
+        "learningType": "preLearning",
+        "noOfQuestionsForAuto": 1,
+        "not_considered_topics": [
+         "32a03e5e-db31-5381-81a9-05e93c692949",
+         "166879e9-91b7-564d-ac84-b86c7b922f93",
+         "804ef086-9f30-51dd-b15d-e2a24ece8603",
+         "03fc5402-ac95-5350-8089-6a1171ff5e88",
+        ],
+        "question_track_details": {
+         "qp_set_a": [
+          {
+           "concept_id": "cca2abf9-a1cb-58cc-b1e2-d6df02a97b7c",
+           "group_id": "f64a1e5e-67bb-5880-9e01-eee3bc029b20",
+           "question_id": "7902c1c4-b791-50f1-bde8-34e2f54332a9",
+           "topic_id": "32a03e5e-db31-5381-81a9-05e93c692949",
+           "type": "advanced"
+          }
+         ],
+         "qp_set_b": [
+          {
+           "concept_id": "cca2abf9-a1cb-58cc-b1e2-d6df02a97b7c",
+           "group_id": "f64a1e5e-67bb-5880-9e01-eee3bc029b20",
+           "question_id": "7902c1c4-b791-50f1-bde8-34e2f54332a9",
+           "topic_id": "32a03e5e-db31-5381-81a9-05e93c692949",
+           "type": "advanced"
+          }
+         ],
+         "qp_set_c": [
+          {
+           "concept_id": "cca2abf9-a1cb-58cc-b1e2-d6df02a97b7c",
+           "group_id": "f64a1e5e-67bb-5880-9e01-eee3bc029b20",
+           "question_id": "7902c1c4-b791-50f1-bde8-34e2f54332a9",
+           "topic_id": "32a03e5e-db31-5381-81a9-05e93c692949",
+           "type": "advanced"
+          }
+         ]
+        },
+        "quizEndDate": {
+         "dd_mm_yyyy": "00-00-0000",
+         "yyyy_mm_dd": "N.A."
+        },
+        "quizEndTime": "N.A.",
+        "quizMode": "offline",
+        "quizStartDate": {
+         "dd_mm_yyyy": "00-00-0000",
+         "yyyy_mm_dd": "N.A."
+        },
+        "quizStartTime": "N.A.",
+        "quizType": "automated",
+        "quiz_duration": 6,
+        "quiz_name": "Test-Sunil",
+        "quiz_question_details": {
+         "qp_set_a": [
+          "7902c1c4-b791-50f1-bde8-34e2f54332a9"
+         ],
+         "qp_set_b": [
+          "7902c1c4-b791-50f1-bde8-34e2f54332a9"
+         ],
+         "qp_set_c": [
+          "7902c1c4-b791-50f1-bde8-34e2f54332a9"
+         ]
+        },
+        "quiz_status": "Active",
+        "quiz_template_details": {
+         "set_a": {
+          "answer_sheet": "quiz_uploads/6597a41e-617b-5e38-a9ab-f47bb27240bd/answer_sheet_template/set_a/6b7f4bec-b59b-593f-81d8-f1fcacbd27e6.pdf",
+          "question_sheet": "quiz_uploads/6597a41e-617b-5e38-a9ab-f47bb27240bd/question_paper_template/set_a/60917515-178e-51fa-941d-5a87d2e30ebe.pdf"
+         },
+         "set_b": {
+          "answer_sheet": "quiz_uploads/6597a41e-617b-5e38-a9ab-f47bb27240bd/answer_sheet_template/set_b/4f9621c0-df7c-5002-b0d6-d5dcafb8e30c.pdf",
+          "question_sheet": "quiz_uploads/6597a41e-617b-5e38-a9ab-f47bb27240bd/question_paper_template/set_b/2a6b0a83-a369-5503-be5d-12de9bd05bcd.pdf"
+         },
+         "set_c": {
+          "answer_sheet": "quiz_uploads/6597a41e-617b-5e38-a9ab-f47bb27240bd/answer_sheet_template/set_c/d68f5dce-d0b9-5475-80c8-9bbd44cce24b.pdf",
+          "question_sheet": "quiz_uploads/6597a41e-617b-5e38-a9ab-f47bb27240bd/question_paper_template/set_c/2d3fd833-1bf6-59a3-b118-4a858c62fb00.pdf"
+         }
+        },
+        "section_id": "f0d3d2ea-e1b6-5a1d-829d-83aefbe7a065",
+        "selectedTopics": [
+         {
+          "noOfQuestions": "N.A.",
+          "topic_id": "32a03e5e-db31-5381-81a9-05e93c692949"
+         },
+         {
+          "noOfQuestions": "N.A.",
+          "topic_id": "166879e9-91b7-564d-ac84-b86c7b922f93"
+         },
+         {
+          "noOfQuestions": "N.A.",
+          "topic_id": "804ef086-9f30-51dd-b15d-e2a24ece8603"
+         },
+         {
+          "noOfQuestions": "N.A.",
+          "topic_id": "03fc5402-ac95-5350-8089-6a1171ff5e88"
+         },
+         {
+          "noOfQuestions": "N.A.",
+          "topic_id": "b79dceae-2b3b-5efe-bce4-ef938c9d9858"
+         },
+         {
+          "noOfQuestions": "N.A.",
+          "topic_id": "15df6a6f-666c-5b9d-88b4-8cede28452df"
+         },
+         {
+          "noOfQuestions": "N.A.",
+          "topic_id": "c39e9703-cf72-5f20-baf9-7f1efe2a5212"
+         }
+        ],
+        "subject_id": "331c1f7f-b3fd-5ae3-b361-11cf90ba3675",
+        "updated_ts": "2024-07-19T10:10:02.621Z",
+        "varient": "randomOrder"
+       }
+      }
+
+
+    // const studentsDataRes = await new Promise((resolve, reject) => {
+    //   quizResultRepository.fetchQuizResultDataOfStudent(request2, (err, res) => {
+    //     if (err) {
+    //       console.log(err);
+    //       return reject(err);
+    //     }
+    //     resolve(res);
+    //   });
+    // });
+
+
+   const studentsDataRes =  {
+    Items : [{
+      "result_id": "80ca1dc4-e986-564b-b3a6-e94c9a2884d3",
+      "common_id": "61692656",
+      "created_ts": "2023-09-21T11:02:32.529Z",
+      "evaluated": "Yes",
+      "isPassed": true,
+      "marks_details": {
+       "qa_details": [
+        {
+         "modified_marks": "N.A.",
+         "obtained_marks": 3,
+         "question_id": "e82ebc83-9245-514f-aa41-605358ff959a",
+         "student_answer": "It is a vector quantity,it is not velocity"
+        },
+        {
+         "modified_marks": "N.A.",
+         "obtained_marks": 4,
+         "question_id": "698829b1-1cb8-58a1-b2a8-2c97d70aa55b",
+         "student_answer": "Sunil"
+        },
+        {
+         "modified_marks": "N.A.",
+         "obtained_marks": 7.01,
+         "question_id": "7902c1c4-b791-50f1-bde8-34e2f54332a9",
+         "student_answer": "is Wrong,be,care"
+        },
+        {
+         "modified_marks": "N.A.",
+         "obtained_marks": 0,
+         "question_id": "7aa5fb14-ce57-583f-9d07-eb2b47cf817a",
+         "student_answer": ""
+        },
+        {
+         "modified_marks": "N.A.",
+         "obtained_marks": 2,
+         "question_id": "01605b03-31be-59b2-bf42-61c80f76dba7",
+         "student_answer": "Yes,No"
+        },
+        {
+         "modified_marks": "N.A.",
+         "obtained_marks": 0,
+         "question_id": "52a78ca0-bc80-5924-bcd9-1f3ab7077f66",
+         "student_answer": ""
+        },
+        {
+         "modified_marks": "N.A.",
+         "obtained_marks": 0,
+         "question_id": "097c55f7-5dc8-5d3a-b2e6-0989e936b401",
+         "student_answer": "sdsasdas Wrong"
+        }
+       ],
+       "set_key": "qp_set_c",
+       "set_name": "C"
+      },
+      "quiz_id": "615584c2-0864-5f03-9397-62d5e148a6bc",
+      "quiz_set": "c",
+      "student_id": "a6dcd932-36b9-570b-87da-6f854624a1ad",
+      "updated_ts": "2023-09-21T11:02:32.529Z"
+     }]
+    }
+
+
+if(quizData.Item && studentsDataRes.Items[0] )
+{
+  let questionIds =  quizData.Item.question_track_details[studentsDataRes.Items[0].marks_details.set_key].map((val)=>
+  {
+    return val.question_id;
+  })
+
+    const topicIds =  quizData.Item.question_track_details[studentsDataRes.Items[0].marks_details.set_key].map((val)=>
+    {
+   return val.topic_id;
+    })
+
+
+    const questions = await new Promise((resolve, reject) => {
+      questionRepository.fetchBulkQuestionsNameById({question_id : questionIds }, (err, res) => {
+        if (err) {
+          console.log(err);
+          return reject(err);
+        }
+        resolve(res);
+      });
+    });
+
+    questions.Items.push({
+      "question_id": "7902c1c4-b791-50f1-bde8-34e2f54332a9",
+      "question_content": "<p>Because the Equipmet $$Blank12$$ very delicate. It must $$Blank22$$ handle with $$Blank32$$.&nbsp;</p>",
+      "answers_of_question": [
+          {
+              "answer_weightage": "5",
+              "answer_display": "Yes",
+              "answer_content": "is",
+              "answer_option": "Blank12",
+              "answer_type": "Words"
+          },
+          {
+              "answer_weightage": "5",
+              "answer_display": "Yes",
+              "answer_content": "be",
+              "answer_option": "Blank22",
+              "answer_type": "Words"
+          },
+          {
+              "answer_weightage": "2.01",
+              "answer_display": "Yes",
+              "answer_content": "care",
+              "answer_option": "Blank32",
+              "answer_type": "Words"
+          },
+          {
+          "answer_content": "question_uploads/5e8c4e49-a8f0-582f-b512-1d680c3f9974.jpg",
+          "answer_display": "Yes",
+          "answer_option": "Options",
+          "answer_type": "Image",
+          "answer_weightage": "12"
+         },
+         {
+          "answer_content": "question_uploads/7964d66d-194d-5450-84b7-a51a5d07de76.wav",
+          "answer_display": "NO",
+          "answer_option": "",
+          "answer_type": "Audio File",
+          "answer_weightage": ""
+         }
+      ],
+      "question_type": "Subjective",
+      "cognitive_skill": "cog cog io",
+      "marks": 15,
+      "topic_title": "T9",
+      "obtained_marks": 7.01
+  });
+
+
+
+    console.log("----------------------------------------");
+    console.log(questions);
+
+    const topicNames = await new Promise((resolve, reject) => {
+      topicRepository.fetchBulkTopicsIDName({ unit_Topic_id: topicIds }, (err, res) => {
+        if (err) {
+          console.log(err);
+          return reject(err);
+        }
+        resolve(res);
+      });
+    });
+
+
+    const cognitive_id = questions.Items.map(que => que.cognitive_skill )
+
+    const cognitiveSkillNames = await new Promise((resolve, reject) => {
+      settingsRepository.fetchBulkCognitiveSkillNameById({ cognitive_id: cognitive_id }, (err, res) => {
+        if (err) {
+          console.log(err);
+          return reject(err);
+        }
+        resolve(res);
+      });
+    });
+    console.log("----cognitive_id--------",cognitiveSkillNames);
+    questions.Items.map(async que =>
+      {
+        const ans = quizData.Item.question_track_details[studentsDataRes.Items[0].marks_details.set_key].find((val)=> val.question_id == que.question_id );
+        console.log("----------ans-------",ans);
+
+        que.topic_title = topicNames.Items.find(val =>
+            val.topic_id == ans.topic_id
+          ).topic_title;
+
+          que.cognitive_skill = cognitiveSkillNames.Items.find(val =>
+            val.cognitive_id == que.cognitive_skill
+          )
+          que.cognitive_skill = que.cognitive_skill ? que.cognitive_skill.cognitive_name : "" ;
+
+
+          que.obtained_marks = studentsDataRes.Items[0].marks_details.qa_details.find(val =>
+            val.question_id == que.question_id
+          ).obtained_marks;
+
+          await Promise.all(
+            que.answers_of_question.map(async ans => {
+                if (ans.answer_type === "Image" || ans.answer_type === "Audio File") {
+                    ans.answer_content = await getS3SignedUrl(ans.answer_content);
+                }
+                return ans; // Make sure to return the updated answer
+            })
+        );
+      }
+    )
+    console.log("0-==================");
+    console.log(await getS3SignedUrl("question_uploads/7c70deb3-fdac-5cdd-9c89-f35324dfd412.jpg"));
+    callback(null , questions)
+}
+else
+callback(null , [])
+  } 
+  catch (error) {
+  console.error(error);
+  callback(error);
+  }
+}
 
 
 

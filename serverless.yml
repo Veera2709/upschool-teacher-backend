@@ -351,4 +351,12 @@ functions:
           path: /v1/postLearningSummaryDetails
           method: POST
           cors: true 
+      - http:
+          path: /v1/viewAnalysisIndividualReport
+          method: POST
+          cors: true         
+      - http:
+          path: /v1/preLearningBlueprintDetails
+          method: POST
+          cors: true   
 

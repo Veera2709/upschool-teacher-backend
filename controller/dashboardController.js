@@ -84,3 +84,14 @@ exports.preLearningBlueprintDetails = (req, res, next) => {
         }
     });
 };
+exports.viewAnalysisIndividualReport = (req, res, next) => {
+    let request = req.body;
+    dashboardServices.viewAnalysisIndividualReport(request, function (individualReport_details_err, individualReport_details_res) {
+        if (individualReport_details_err) {
+            res.status(individualReport_details_err).json(individualReport_details_res);
+        } else {
+            console.log("pre Learning Summary for the subject!");
+            res.json(individualReport_details_res);
+        }
+    });
+};

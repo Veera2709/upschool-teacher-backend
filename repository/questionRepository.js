@@ -296,4 +296,58 @@ exports.fetchBulkQuestionsWithPublishStatusAndProjection = function (request, ca
 //     });
 // }
 
+exports.fetchBulkQuestionsNameById = function (request, callback) {
+
+    dynamoDbCon.getDB(function (DBErr, dynamoDBCall) {
+        if (DBErr) {
+            console.log("Class Data Database Error");
+            console.log(DBErr);
+            callback(500, constant.messages.DATABASE_ERROR);
+        } else {
+            let docClient = dynamoDBCall;
+            let FilterExpressionDynamic = "";
+            let ExpressionAttributeValuesDynamic = {}; 
+            console.log("fetchChapterData request : ", request);
+            let question_id = request.question_id;
+            console.log("question_id : ", question_id);
+            if(question_id.length === 1){
+                let read_params = {
+                    TableName: TABLE_NAMES.upschool_question_table,
+                    KeyConditionExpression: "question_id = :question_id",
+                    ExpressionAttributeValues: { 
+                        ":question_id": question_id[0]
+                    },
+                    ProjectionExpression: ["answers_of_question", "cognitive_skill", "question_id" ,"question_type" , "marks" , "difficulty_level" , "question_content"],
+                }
+    
+                DATABASE_TABLE.queryRecord(docClient, read_params, callback);
+
+            }else{
+                console.log(" Chapter Else");
+                question_id.forEach((element, index) => { 
+                    console.log("element : ", element);
+
+                    if(index < question_id.length-1){ 
+                        FilterExpressionDynamic = FilterExpressionDynamic + "question_id = :question_id"+ index +" OR "
+                        ExpressionAttributeValuesDynamic[':question_id'+ index] = element
+                    } else{
+                        FilterExpressionDynamic = FilterExpressionDynamic + "question_id = :question_id"+ index
+                        ExpressionAttributeValuesDynamic[':question_id'+ index] = element;
+                    }
+                });
+
+                let read_params = {
+                    TableName: TABLE_NAMES.upschool_question_table,
+                    FilterExpression: FilterExpressionDynamic,
+                    ExpressionAttributeValues: ExpressionAttributeValuesDynamic,
+                    ProjectionExpression: ["answers_of_question", "cognitive_skill", "question_id" ,"question_type" , "marks" , "difficulty_level" , "question_content"],
+                }
+                DATABASE_TABLE.scanRecord(docClient, read_params, callback);
+            }
+        }
+    });
+}
+
+
+
 
