@@ -1961,8 +1961,8 @@ exports.getTeacherPostLearningPermissions = function (request, callback) {
           }  
           else
           {
-              console.log(constant.messages.SCHOOL_DOESNT_HAVE_PREQUIZ_CONFIG);
-              callback(400, constant.messages.SCHOOL_DOESNT_HAVE_PREQUIZ_CONFIG);
+              console.log(constant.messages.SCHOOL_DOESNT_HAVE_POSTQUIZ_CONFIG);
+              callback(400, constant.messages.SCHOOL_DOESNT_HAVE_POSTQUIZ_CONFIG);
           }     
       }
   })
