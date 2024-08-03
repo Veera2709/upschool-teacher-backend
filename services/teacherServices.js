@@ -1812,7 +1812,6 @@ exports.getTeacherPostLearningPermissions = function (request, callback) {
                                 let quizGenerated = "No"; 
                                 console.log("quizData_res.Items : ", quizData_res.Items)
                                 console.log("requestTopics : ", requestTopics)
-                                console.log("testselectedTopics",selectedTopics);
 
                                 await quizData_res.Items.length > 0 && quizData_res.Items.forEach((e) => {
                                   e.selectedTopics.length > 0 && e.selectedTopics.forEach((a) => 
