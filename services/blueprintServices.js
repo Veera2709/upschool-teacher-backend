@@ -246,8 +246,8 @@ exports.fetchBlueprintQuestions = (request, callback) => {
                                             callback(questionsData_err, questionsData_res);
                                         } else {
                                             console.log("PUBLISHED QUESTION DATA");
-
-                                            questionsData_res.Items = await questionsData_res.Items.filter((qtn) => request.data.source_ids.includes(qtn.question_source));
+                                            
+                                            let filteredQuestionData = await questionsData_res.Items.filter((qtn) => request.data.source_ids.includes(qtn.question_source));
 
                                             let priorities = [];
                                             await helper.checkPriorityQuestions(request.data.question_details).then((priData) => {
@@ -257,7 +257,7 @@ exports.fetchBlueprintQuestions = (request, callback) => {
                                             console.log("PRIORITY : ", priorities);
 
                                             /** GET QUESTION PAPER **/
-                                            exports.createQuestionPaper(priorities, request, blueprint_res.Items[0], chapData_res.Items, topicData_res.Items, conceptData_res.Items, questionsData_res.Items, (createQues_err, createQues_data) => {
+                                            exports.createQuestionPaper(priorities, request, blueprint_res.Items[0], chapData_res.Items, topicData_res.Items, conceptData_res.Items, filteredQuestionData, (createQues_err, createQues_data) => {
                                                 if(createQues_err)
                                                 {
                                                     console.log(createQues_err)
@@ -422,7 +422,7 @@ exports.createQuestionPaper = (priorities, request, blueprint, chapterData, topi
 
 exports.getConceptAvailQuestions = async (conceptId, conceptData, questionDatas, callback) => {
     
-    console.log("CONCEPT ID : ", conceptId);
+    // console.log("CONCEPT ID : ", conceptId);
     let conceptBlock = "";
     let avalQuestion = [];
     let singleQues = "";
@@ -430,7 +430,10 @@ exports.getConceptAvailQuestions = async (conceptId, conceptData, questionDatas,
     {
         if(i < conceptId.length)
         {
-            conceptBlock = await conceptData.filter(con => con.concept_id === conceptId[i]);
+            // console.log("conceptId[i] : ", conceptId[i]);
+            conceptBlock = await conceptData.filter(con => con.concept_id === conceptId[i].value);
+            // console.log("conceptBlock : ", conceptBlock);
+
             if(conceptBlock.length > 0 && conceptBlock[0].concept_question_id)
             {
                 await conceptBlock[0].concept_question_id.forEach(async cq => {
@@ -447,7 +450,7 @@ exports.getConceptAvailQuestions = async (conceptId, conceptData, questionDatas,
         else
         {
             /** END **/
-            console.log("AVAILABLE QUESTION : ", avalQuestion);
+            // console.log("AVAILABLE QUESTION : ", avalQuestion);
             callback(0, avalQuestion);
         }
     }
@@ -455,7 +458,7 @@ exports.getConceptAvailQuestions = async (conceptId, conceptData, questionDatas,
 }
 
 exports.getTopicsAvailQuestions = async (topicId, topicData, conceptData, questionDatas, callback) => {
-    console.log("TOPIC ID : ", topicId);
+    // console.log("TOPIC ID : ", topicId);
     let foundTopic = "";
     let avalConcept = [];
     let avalConIds = [];
@@ -465,15 +468,17 @@ exports.getTopicsAvailQuestions = async (topicId, topicData, conceptData, questi
     {
         if(i < topicId.length)
         {
-            foundTopic = await topicData.filter(con => con.topic_id === topicId[i]);
+            foundTopic = await topicData.filter(con => con.topic_id === topicId[i].value);
+            // console.log("foundTopic : ", foundTopic);
             if(foundTopic.length > 0)
             {                
                 await foundTopic[0].topic_concept_id.forEach(async tc => {
                     singleCon = await conceptData.find(cons => cons.concept_id === tc);
+                    // console.log("singleCon : ", singleCon);
                     if(singleCon != undefined)
                     {
                         avalConcept.push(singleCon);
-                        avalConIds.push(tc);
+                        avalConIds.push({value: tc});
                     }                        
                 })      
             }
@@ -483,7 +488,9 @@ exports.getTopicsAvailQuestions = async (topicId, topicData, conceptData, questi
         else
         {
             /** END **/
-            console.log("AVAILABLE CONCEPT : ", avalConcept);
+            // console.log("AVAILABLE CONCEPT ID : ", avalConIds);
+            // console.log("AVAILABLE CONCEPT : ", avalConcept);            
+
             exports.getConceptAvailQuestions(avalConIds, avalConcept, questionDatas, async(conQuesAvail_err, conQuesAvail_data) => {
                 if(conQuesAvail_err)
                 {
