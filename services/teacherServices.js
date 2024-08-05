@@ -1772,7 +1772,7 @@ exports.getTeacherPostLearningPermissions = function (request, callback) {
                       console.log("TEACHER ACTIVITY : ", teachActivity_response);
 
                       let requestTopics = request.data.topics.map((e) => e.topic_id); 
-                      console.log("requestTopics : ", requestTopics);
+                      console.log("requestTopics : ", requestTopics); 
 
                       /** CHECK DIGICARDS UNLOCK **/
                       let chapterActivity = teachActivity_response.Items.length > 0 ? await teachActivity_response.Items[0].chapter_data.filter(ce => ce.chapter_id === request.data.chapter_id) : [];
@@ -1799,9 +1799,10 @@ exports.getTeacherPostLearningPermissions = function (request, callback) {
                           }
                           else
                           {
-                              console.log("QUIZ DATA : ", quizData_res);
+                            console.log("QUIZ DATA : ", quizData_res);
 
-                              if(postQuizConfig.choose_topic === "Yes"){
+                            if(postQuizConfig.choose_topic === "Yes")
+                            {
 
                                 // requestTopics shouldn't be empty
                                 // Check if they are archived or not and filter unarchived topics 
@@ -1812,13 +1813,12 @@ exports.getTeacherPostLearningPermissions = function (request, callback) {
                                 let quizGenerated = "No"; 
                                 console.log("quizData_res.Items : ", quizData_res.Items)
                                 console.log("requestTopics : ", requestTopics)
-                                console.log("testselectedTopics",selectedTopics);
 
                                 await quizData_res.Items.length > 0 && quizData_res.Items.forEach((e) => {
                                   e.selectedTopics.length > 0 && e.selectedTopics.forEach((a) => 
                                   requestTopics.filter((k) => k === a.topic_id).length > 0 && ( quizGenerated = "Yes" ) ) 
                                 }) 
-
+                                console.log("ok****");
                                 if(quizData_res.Items.length > 0 && quizGenerated === "Yes"){
                                   callback(400, constant.messages.POST_QUIZ_ALREADY_GENERATED) 
                                 }else{
@@ -1862,7 +1862,9 @@ exports.getTeacherPostLearningPermissions = function (request, callback) {
                                     callback(400, constant.messages.NO_TOPICS_SELECTED); 
                                   }
                                 }
-                            }else if(postQuizConfig.choose_topic === "No"){ 
+                            }
+                            else if(postQuizConfig.choose_topic === "No")
+                            { 
 
                               // if request.data.topics is [], fetch all post topics and removed archived topics 
                               // check digicads are unlocked for those topics or not if its mandatory
@@ -1878,7 +1880,7 @@ exports.getTeacherPostLearningPermissions = function (request, callback) {
 
                                       topicRepository.fetchPostTopicData(single_chapter_response.Items[0], async function (post_topic_err, post_topic_response) {
                                         if (post_topic_err) {
-                                            console.log(post_topic_err);
+                                            console.log("post_topic_err",post_topic_err);
                                             callback(post_topic_err, post_topic_response);
                                         } else {
 
@@ -1950,6 +1952,7 @@ exports.getTeacherPostLearningPermissions = function (request, callback) {
                                     }
                                   })
                               }else{
+                                console.log("HERE : ================ ");
                                 callback(400, constant.messages.POST_QUIZ_ALREADY_GENERATED)
                               }
                             } 
