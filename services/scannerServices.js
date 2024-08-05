@@ -432,13 +432,6 @@ exports.uploadQuizAnswerSheets = function (request, callback)
                         callback(pageDetailsErr, pageDetailsRes);
                     }
                     else {
-                        pageDetailsRes =  {
-                            page_no: 1,
-                            test_id: "6597a41e-617b-5e38-a9ab-f47bb27240bd",
-                            roll_no: '15702A0913',
-                            quiz_id: "6597a41e-617b-5e38-a9ab-f47bb27240bd",
-                            set: "A"
-                          }
                         console.log("PAGE DETAILS : ", pageDetailsRes);
 
                         if (pageDetailsRes.page_no && pageDetailsRes.quiz_id && pageDetailsRes.roll_no && pageDetailsRes.set && Number(pageDetailsRes.page_no)) {
@@ -465,7 +458,6 @@ exports.uploadQuizAnswerSheets = function (request, callback)
                                 }
                                 else {
                                     if (helper.isEmptyObject(fetch_quiz_data_response.Item)) {
-                                        console.log("test prajwal");
                                         callback(constant.messages.COULDNOT_READ_QUIZ_ID, 0);
                                     } 
                                     else {
