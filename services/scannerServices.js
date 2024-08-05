@@ -268,7 +268,7 @@ exports.uploadAnswerSheets = async function (request, callback) {
                                     callback(fetch_class_test_data_err, fetch_class_test_data_response);
                                 } else {
 
-                                    console.log("Test OBJ", fetch_class_test_data_response);
+                                    console.log("Test object", fetch_class_test_data_response);
                                     if (helper.isEmptyObject(fetch_class_test_data_response.Item)) {
                                         callback(constant.messages.COULDNT_READ_TEST_ID, 0);
                                     } else {
