@@ -223,7 +223,7 @@ exports.fetchTeacherActivityDetails = function (request, callback) {
         if (DBErr) {
             console.log(constant.messages.TOPIC_DATABASE_ERROR);
             console.log(DBErr);
-            callback(500, constant.messages.TOPIC_DATABASE_ERROR)
+            callback(500, constant.messages.TOPIC_DATABASE_ERROR);
         } else {
             let docClient = dynamoDBCall;
 
