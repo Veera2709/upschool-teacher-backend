@@ -677,3 +677,59 @@ exports.changeSkillStatus = function (request, callback) {
         }
     });
 }
+
+
+
+exports.fetchBulkCognitiveSkillNameById = function (request, callback) {
+
+    dynamoDbCon.getDB(function (DBErr, dynamoDBCall) {
+        if (DBErr) {
+            console.log("Class Data Database Error");
+            console.log(DBErr);
+            callback(500, constant.messages.DATABASE_ERROR);
+        } else {
+            let docClient = dynamoDBCall;
+            let FilterExpressionDynamic = "";
+            let ExpressionAttributeValuesDynamic = {}; 
+            console.log("fetchChapterData request : ", request);
+            let cognitive_id = request.cognitive_id;
+            console.log("cognitive_id : ", cognitive_id);
+            if(cognitive_id.length === 1){
+                let read_params = {
+                    TableName: TABLE_NAMES.upschool_cognitive_skill,
+                    KeyConditionExpression: "cognitive_id = :cognitive_id",
+                    ExpressionAttributeValues: { 
+                        ":cognitive_id": cognitive_id[0]
+                    },
+                }
+    
+                DATABASE_TABLE.queryRecord(docClient, read_params, callback);
+
+            }else{
+                console.log(" Chapter Else");
+                cognitive_id.forEach((element, index) => { 
+                    console.log("element : ", element);
+
+                    if(index < cognitive_id.length-1){ 
+                        FilterExpressionDynamic = FilterExpressionDynamic + "cognitive_id = :cognitive_id"+ index +" OR "
+                        ExpressionAttributeValuesDynamic[':cognitive_id'+ index] = element
+                    } else{
+                        FilterExpressionDynamic = FilterExpressionDynamic + "cognitive_id = :cognitive_id"+ index
+                        ExpressionAttributeValuesDynamic[':cognitive_id'+ index] = element;
+                    }
+                });
+
+                let read_params = {
+                    TableName: TABLE_NAMES.upschool_cognitive_skill,
+                    FilterExpression: FilterExpressionDynamic,
+                    ExpressionAttributeValues: ExpressionAttributeValuesDynamic,
+                }
+                DATABASE_TABLE.scanRecord(docClient, read_params, callback);
+            }
+        }
+    });
+}
+
+
+
+
