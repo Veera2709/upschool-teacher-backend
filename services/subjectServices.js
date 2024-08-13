@@ -6,7 +6,7 @@ const constant = require('../constants/constant');
 const helper = require('../helper/helper');
 const { TABLE_NAMES } = require('../constants/tables');
 const commonRepository = require("../repository/commonRepository");
-const commonServices = require("../services/commonServices");
+// const commonServices = require("../services/commonServices");
 
 exports.getUnitsandChaptersBasedonSubjects = function (request, callback) {
 

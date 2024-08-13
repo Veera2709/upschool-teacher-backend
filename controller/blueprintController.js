@@ -6,7 +6,7 @@ exports.fetchBlueprintById = (req, res, next) => {
         if (fetch_blueprint_err) {
             res.status(fetch_blueprint_err).json(fetch_blueprint_response);
         } else {
-            console.log("Got Blueprint!");
+            console.log("Got Blueprint");
             res.json(fetch_blueprint_response);
         }
     });
