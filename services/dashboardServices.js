@@ -6,10 +6,14 @@ const subjectRepository = require("../repository/subjectRepository");
 const teacherRepository = require("../repository/teacherRepository");
 const unitRepository = require("../repository/unitRepository");
 const quizRepository = require("../repository/quizRepository");
+const settingsRepository = require("../repository/settingsRepository");
+const questionRepository = require("../repository/questionRepository");
 const quizResultRepository = require("../repository/quizResultRepository");
 const chapterRepository = require("../repository/chapterRepository");
 const topicRepository = require("../repository/topicRepository");
 const userRepository = require("../repository/userRepository");
+const { getS3SignedUrl, cleanAthenaResponse } = require("../helper/helper");
+const { executeQuery } = require("./athenaService");
 
 exports.getAssessmentDetails = (request, callback) => {
   // get the class % to generate reports using school_id
@@ -1148,15 +1152,6 @@ exports.preLearningSummaryDetails = async (request, callback) => {
 
 exports.postLearningSummaryDetails = async (request, callback) => {
   try {
-    const schoolDataRes = await new Promise((resolve, reject) => {
-      schoolRepository.getSchoolDetailsById(request, (err, res) => {
-        if (err) {
-          console.log(err);
-          return reject(err);
-        }
-        resolve(res);
-      });
-    });
 
     const studentsDataRes = await new Promise((resolve, reject) => {
       studentRepository.getStudentsData(request, (err, res) => {
@@ -1307,6 +1302,164 @@ exports.postLearningSummaryDetails = async (request, callback) => {
 };
 
 
+exports.viewAnalysisIndividualReport = async (request, callback) =>
+{
+  try{
+       const quizData = await new Promise((resolve, reject) => {
+        quizRepository.fetchQuizDataById(request, (err, res) => {
+          if (err) {
+            console.log(err);
+            return reject(err);
+          }
+          resolve(res);
+        });
+      });
 
 
+    const studentsDataRes = await new Promise((resolve, reject) => {
+      quizResultRepository.fetchQuizResultDataOfStudent(request, (err, res) => {
+        if (err) {
+          console.log(err);
+          return reject(err);
+        }
+        resolve(res);
+      });
+    });
 
+if(quizData.Item && studentsDataRes.Items[0] )
+{
+  let questionIds =  quizData.Item.question_track_details[studentsDataRes.Items[0].marks_details.set_key].map((val)=>
+  {
+    return val.question_id;
+  })
+
+    const topicIds =  quizData.Item.question_track_details[studentsDataRes.Items[0].marks_details.set_key].map((val)=>
+    {
+   return val.topic_id;
+    })
+
+
+    const questions = await new Promise((resolve, reject) => {
+      questionRepository.fetchBulkQuestionsNameById({question_id : questionIds }, (err, res) => {
+        if (err) {
+          console.log(err);
+          return reject(err);
+        }
+        resolve(res);
+      });
+    });
+
+  //   questions.Items.push({
+  //     "question_id": "7902c1c4-b791-50f1-bde8-34e2f54332a9",
+  //     "question_content": "<p>Because the Equipmet $$Blank12$$ very delicate. It must $$Blank22$$ handle with $$Blank32$$.&nbsp;</p>",
+  //     "answers_of_question": [
+  //         {
+  //             "answer_weightage": "5",
+  //             "answer_display": "Yes",
+  //             "answer_content": "is",
+  //             "answer_option": "Blank12",
+  //             "answer_type": "Words"
+  //         },
+  //         {
+  //             "answer_weightage": "5",
+  //             "answer_display": "Yes",
+  //             "answer_content": "be",
+  //             "answer_option": "Blank22",
+  //             "answer_type": "Words"
+  //         },
+  //         {
+  //             "answer_weightage": "2.01",
+  //             "answer_display": "Yes",
+  //             "answer_content": "care",
+  //             "answer_option": "Blank32",
+  //             "answer_type": "Words"
+  //         },
+  //         {
+  //         "answer_content": "question_uploads/5e8c4e49-a8f0-582f-b512-1d680c3f9974.jpg",
+  //         "answer_display": "Yes",
+  //         "answer_option": "Options",
+  //         "answer_type": "Image",
+  //         "answer_weightage": "12"
+  //        },
+  //        {
+  //         "answer_content": "question_uploads/7964d66d-194d-5450-84b7-a51a5d07de76.wav",
+  //         "answer_display": "NO",
+  //         "answer_option": "",
+  //         "answer_type": "Audio File",
+  //         "answer_weightage": ""
+  //        }
+  //     ],
+  //     "question_type": "Subjective",
+  //     "cognitive_skill": "cog cog io",
+  //     "marks": 15,
+  //     "topic_title": "T9",
+  //     "obtained_marks": 7.01
+  // });
+
+
+    console.log(questions);
+
+    const topicNames = await new Promise((resolve, reject) => {
+      topicRepository.fetchBulkTopicsIDName({ unit_Topic_id: topicIds }, (err, res) => {
+        if (err) {
+          console.log(err);
+          return reject(err);
+        }
+        resolve(res);
+      });
+    });
+
+
+    const cognitive_id = questions.Items.map(que => que.cognitive_skill )
+
+    const cognitiveSkillNames = await new Promise((resolve, reject) => {
+      settingsRepository.fetchBulkCognitiveSkillNameById({ cognitive_id: cognitive_id }, (err, res) => {
+        if (err) {
+          console.log(err);
+          return reject(err);
+        }
+        resolve(res);
+      });
+    });
+    console.log("----cognitive_id--------",cognitiveSkillNames);
+    questions.Items.map(async que =>
+      {
+        const ans = quizData.Item.question_track_details[studentsDataRes.Items[0].marks_details.set_key].find((val)=> val.question_id == que.question_id );
+        console.log("----------ans-------",ans);
+
+        que.topic_title = topicNames.Items.find(val =>
+            val.topic_id == ans.topic_id
+          ).topic_title;
+
+          que.cognitive_skill = cognitiveSkillNames.Items.find(val =>
+            val.cognitive_id == que.cognitive_skill
+          )
+          que.cognitive_skill = que.cognitive_skill ? que.cognitive_skill.cognitive_name : "" ;
+
+
+          que.obtained_marks = studentsDataRes.Items[0].marks_details.qa_details.find(val =>
+            val.question_id == que.question_id
+          ).obtained_marks;
+
+          await Promise.all(
+            que.answers_of_question.map(async ans => {
+                if (ans.answer_type === "Image" || ans.answer_type === "Audio File") {
+                    ans.answer_content = await getS3SignedUrl(ans.answer_content);
+                }
+                return ans; // Make sure to return the updated answer
+            })
+        );
+      }
+    )
+    console.log("0-==================");
+    console.log(await getS3SignedUrl("question_uploads/7c70deb3-fdac-5cdd-9c89-f35324dfd412.jpg"));
+    callback(null , questions)
+}
+else
+callback(null , [])
+  } 
+  catch (error) {
+  console.error(error);
+  callback(error);
+  }
+}
