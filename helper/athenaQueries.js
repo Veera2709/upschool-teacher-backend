@@ -18,7 +18,7 @@ exports.getQuizResults = (quizId, class_id ,section_id) => `
 SELECT 
     t1.student_id,
     t1.user_firstname,
-    t2.individual_group_performance
+    CAST(t2.individual_group_performance AS json) AS individual_group_performance
 FROM 
     ${TABLE_NAMES.upschool_student_info} t1
 LEFT OUTER JOIN  

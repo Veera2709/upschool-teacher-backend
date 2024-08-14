@@ -929,6 +929,8 @@ exports.fetchIndividualQuizReportNew = async function (request, callback) {
 
 
 
+
+
 // exports.comparingQuizAnswer = async (markDetails, quesAns, individualPassPercentage) => {
 //     const qaDetails = markDetails.qa_details;
 
