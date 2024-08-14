@@ -151,6 +151,7 @@ app.post("/v1/getAssesmentSummaryDetails",dashboardController.getAssesmentSummar
 app.post("/v1/preLearningSummaryDetails",dashboardController.preLearningSummaryDetails);
 app.post("/v1/postLearningSummaryDetails",dashboardController.postLearningSummaryDetails);
 app.post("/v1/preLearningBlueprintDetails",blueprintController.preLearningBlueprintDetails);
+app.post("/v1/preLearningBlueprintDetailsOld",blueprintController.preLearningBlueprintDetailsOld);
 app.post("/v1/viewAnalysisIndividualReport",dashboardController.viewAnalysisIndividualReport);
 
 
