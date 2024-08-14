@@ -9,6 +9,8 @@ const { TABLE_NAMES } = require('../constants/tables');
 const schoolRepository = require("../repository/schoolRepository"); 
 const studentRepository = require("../repository/studentRepository");
 const classTestRepository = require("../repository/classTestRepository");
+const { executeQuery } = require("./athenaService");
+const { getQuizResults } = require("../helper/athenaQueries");
 
 exports.checkDuplicateQuizName = (request, callback) => {
     quizRepository.checkDuplicateQuizName(request, function (quizData_error, quizData_response) {
@@ -798,6 +800,7 @@ const knowPassOrFail = (marks_details, quesAndAns, individualPassPercentage) => 
 exports.fetchIndividualQuizReport = async function (request, callback) {
     try {
         /** FETCH ALL QUIZ DATA **/
+        console.log("requestresponse",request);
         const fetch_quiz_response = await new Promise((resolve, reject) => {
             quizRepository.getAllQuizData(request, (fetch_quiz_err, fetch_quiz_response) => {
                 if (fetch_quiz_err) {
@@ -843,12 +846,17 @@ exports.fetchIndividualQuizReport = async function (request, callback) {
                 }
             });
         });
+        const quizId = request.data.quiz_id;
 
-        console.log("Student Info Response: ", AllstudentsData);
+        const quizResultData = await executeQuery(getQuizResults(quizId));
+
+
+
+        console.log("Student Info Responsek: ", quizResultData);
         console.log({"+++++++": studentsNewData});
 
         // Create a mapping of student_id to student details from studentsNewData
-        const studentDetailsMap = new Map(studentsNewData.map(student => [student.student_id, student]));
+        const studentDetailsMap = new Map(quizResultData.map(student => [student.student_id, student]));
 
         // Merge data in AllstudentsData with the corresponding details from studentsNewData
         const updatedAllStudentsData = AllstudentsData.Items.map(student => {
