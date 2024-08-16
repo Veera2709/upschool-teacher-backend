@@ -1078,18 +1078,23 @@ exports.preLearningBlueprintDetails = async (request, callback) => {
     const quizResultData = await executeQuery(getQuizResultsQuery('e7992e33-9147-5cd0-80c8-a98a75440920'));
 
     const aggregatedData = {};
+
+   console.log("-------------quizResultData------------- ",quizResultData); 
     
     quizResultData.forEach((result, i) => {
-      if (result.marks_details && i != 0) {
+      if (result.marks_details ) {
         const marksDetails = JSON.parse(result.marks_details);
         marksDetails[0].qa_details.forEach((question) => {
           const questionId = question.question_id;
           const obtainedMarks = question.obtained_marks;
 
           // Check if the question_id already exists in aggregatedData
-          if (!aggregatedData[questionId]) {
+          if (!aggregatedData[questionId]) { 
             // Find the topic_id and concept_id from question_track_details
             const trackDetails = quizData.Item.question_track_details;
+
+            console.log("=============, -" ,result.question_track_details);
+            console.log("===========", JSON.parse(result.question_track_details));
 
             const topicConceptGroup = trackDetails[
               marksDetails[0].set_key
