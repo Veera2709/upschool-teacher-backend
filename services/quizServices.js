@@ -785,140 +785,15 @@ const knowPassOrFail = (marks_details, quesAndAns, individualPassPercentage) => 
     })
 };
 
-// exports.fetchAllQuizDetails = function (request, callback) {
-//     /** FETCH USER BY EMAIL **/
-//     quizRepository.getAllQuizData(request, function (fetch_quiz_err, fetch_quiz_response) {
-//         if (fetch_quiz_err) {
-//             console.log(fetch_quiz_err);
-//             callback(fetch_quiz_err, fetch_quiz_response);
-//         } else {
-//             callback(0, fetch_quiz_response)
-//         }
-//     })
-// }
-
-// exports.fetchIndividualQuizReport = async function (request, callback) {
-//     try {
-//         /** FETCH ALL QUIZ DATA **/
-//         console.log("requestresponse",request);
-//         const fetch_quiz_response = await new Promise((resolve, reject) => {
-//             quizRepository.getAllQuizData(request, (fetch_quiz_err, fetch_quiz_response) => {
-//                 if (fetch_quiz_err) {
-//                     reject(fetch_quiz_err);
-//                 } else {
-//                     resolve(fetch_quiz_response);
-//                 }
-//             });
-//         });
-
-//         console.log("++++++++++++++++++++", fetch_quiz_response);
-
-//         if (!fetch_quiz_response || !fetch_quiz_response.Items) {
-//             throw new Error("Invalid fetch_quiz_response format");
-//         }
-
-//         /** FETCH ALL STUDENT DATA **/
-//         let studentsNewData = await Promise.all(fetch_quiz_response.Items.map(async item => {
-//             return new Promise((resolve, reject) => {
-//                 studentRepository.getAllStudents(item.student_id, (fetch_student_err, fetch_student_response) => {
-//                     if (fetch_student_err) {
-//                         reject(fetch_student_err);
-//                     } else {
-//                         console.log("Student Data Response: ", fetch_student_response);
-//                         const studentItem = fetch_student_response.Items && fetch_student_response.Items.length > 0 ? fetch_student_response.Items[0] : null;
-//                         resolve({
-//                             student_id: item.student_id,
-//                             user_firstname: studentItem ? studentItem.user_firstname : null,
-                           
-//                             quiz_data: item // Include the quiz data
-//                         });
-//                     }
-//                 });
-//             });
-//         }));
-
-//         let AllstudentsData = await new Promise((resolve, reject) => {
-//             classTestRepository.getStudentInfo(request, (fetch_student_err, fetch_student_response) => {
-//                 if (fetch_student_err) {
-//                     reject(fetch_student_err);
-//                 } else {
-//                     resolve(fetch_student_response);
-//                 }
-//             });
-//         });
-//         const quizId = request.data.quiz_id;
-
-//         const quizResultData = await executeQuery(getQuizResults(quizId));
-
-
-
-//         console.log("Student Info Responsek: ", quizResultData);
-//         console.log({"+++++++": studentsNewData});
-
-//         // Create a mapping of student_id to student details from studentsNewData
-//         const studentDetailsMap = new Map(quizResultData.map(student => [student.student_id, student]));
-
-//         // Merge data in AllstudentsData with the corresponding details from studentsNewData
-//         const updatedAllStudentsData = AllstudentsData.Items.map(student => {
-//             const studentDetails = studentDetailsMap.get(student.student_id);
-//             return {
-//                 ...student,
-//                 ...studentDetails // This will overwrite existing properties if they match, and add new ones if they don't
-//             };
-//         });
-
-//         console.log("updatedAllStudentsData", updatedAllStudentsData);
-//         callback(null, updatedAllStudentsData);
-
-//     } catch (err) {
-//         console.log(err);
-//         callback(err, null);
-//     }
-// };
-
-
 exports.fetchIndividualQuizReport = async function (request, callback) {
-    try {
-        const quizResults = await new Promise((resolve, reject) => {
-            quizResultRepository.fetchQuizResultByQuizId(request, (fetch_quiz_err, fetch_quiz_response) => {
-                if (fetch_quiz_err) {
-                    reject(fetch_quiz_err);
-                } else {
-                    resolve(fetch_quiz_response);
-                }
-            });
-        });
-
-        const AllstudentsData = await new Promise((resolve, reject) => {
-            classTestRepository.getStudentInfo(request, (fetch_student_err, fetch_student_response) => {
-                if (fetch_student_err) {
-                    reject(fetch_student_err);
-                } else {
-                    resolve(fetch_student_response);
-                }
-            });
-        });
-
-        AllstudentsData.Items.map(studentData =>{
-                const studentResult = quizResults.Items.find(quizResult => studentData.student_id == quizResult.student_id );
-                if(studentResult)
-                studentData.individual_group_performance = studentResult.individual_group_performance;
-            })
-        
-            callback(null, AllstudentsData);
-    }
-    catch (err) {
-      console.log(err);
-      callback(err, null);
-    }
-};
-
-
-exports.fetchIndividualQuizReportNew = async function (request, callback) {
     try {
         const {quiz_id , section_id ,class_id} = request.data;
         const quizResultData = await executeQuery(getQuizResults(quiz_id , class_id , section_id));
-        callback(null, quizResultData);
+        const _quizResultData = quizResultData.map((r) => {
+            return { ...r, individual_group_performance: r.individual_group_performance && JSON.parse(r.individual_group_performance)};
+          });
+ 
+        callback(null, _quizResultData);
     }
     catch (err) {
       console.log(err);
