@@ -2,7 +2,7 @@ const { TABLE_NAMES } = require("../constants/tables");
 
 exports.getQuizResultsQuery = (quizId) => `
   SELECT 
-      question_track_details  AS question_track_details, 
+      q1.question_track_details  AS question_track_details, 
       CAST(q2.marks_details AS json) AS marks_details 
   FROM 
       ${TABLE_NAMES.upschool_quiz_table} q1
