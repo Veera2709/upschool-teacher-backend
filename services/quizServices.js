@@ -9,7 +9,6 @@ const { TABLE_NAMES } = require('../constants/tables');
 const schoolRepository = require("../repository/schoolRepository"); 
 const studentRepository = require("../repository/studentRepository");
 const classTestRepository = require("../repository/classTestRepository");
-const { getQuizResults } = require("../helper/athenaQueries");
 
 exports.checkDuplicateQuizName = (request, callback) => {
     quizRepository.checkDuplicateQuizName(request, function (quizData_error, quizData_response) {

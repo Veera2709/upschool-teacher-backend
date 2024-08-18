@@ -9,7 +9,6 @@ const settingsRepository = require("../repository/settingsRepository");
 const { TABLE_NAMES } = require('../constants/tables');
 const constant = require('../constants/constant');
 const helper = require('../helper/helper');
-const { getQuizResultsQuery } = require("../helper/athenaQueries");
 
 exports.getBlueprintByItsId = (request, callback) => {    
     blueprintRepository.fetchBlueprintById(request, async function (singleBlueprint_err, singleBlueprint_res) {
