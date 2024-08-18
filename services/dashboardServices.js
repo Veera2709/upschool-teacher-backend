@@ -13,7 +13,6 @@ const chapterRepository = require("../repository/chapterRepository");
 const topicRepository = require("../repository/topicRepository");
 const userRepository = require("../repository/userRepository");
 const { getS3SignedUrl, cleanAthenaResponse } = require("../helper/helper");
-const { executeQuery } = require("./athenaService");
 
 exports.getAssessmentDetails = (request, callback) => {
   // get the class % to generate reports using school_id
@@ -1451,8 +1450,6 @@ if(quizData.Item && studentsDataRes.Items[0] )
         );
       }
     )
-    console.log("0-==================");
-    console.log(await getS3SignedUrl("question_uploads/7c70deb3-fdac-5cdd-9c89-f35324dfd412.jpg"));
     callback(null , questions)
 }
 else
