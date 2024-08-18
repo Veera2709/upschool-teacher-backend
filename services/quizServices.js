@@ -9,7 +9,6 @@ const { TABLE_NAMES } = require('../constants/tables');
 const schoolRepository = require("../repository/schoolRepository"); 
 const studentRepository = require("../repository/studentRepository");
 const classTestRepository = require("../repository/classTestRepository");
-const { executeQuery } = require("./athenaService");
 const { getQuizResults } = require("../helper/athenaQueries");
 
 exports.checkDuplicateQuizName = (request, callback) => {
@@ -785,25 +784,53 @@ const knowPassOrFail = (marks_details, quesAndAns, individualPassPercentage) => 
     })
 };
 
+// exports.fetchAllQuizDetails = function (request, callback) {
+//     /** FETCH USER BY EMAIL **/
+//     quizRepository.getAllQuizData(request, function (fetch_quiz_err, fetch_quiz_response) {
+//         if (fetch_quiz_err) {
+//             console.log(fetch_quiz_err);
+//             callback(fetch_quiz_err, fetch_quiz_response);
+//         } else {
+//             callback(0, fetch_quiz_response)
+//         }
+//     })
+// }
+
 exports.fetchIndividualQuizReport = async function (request, callback) {
     try {
-        const {quiz_id , section_id ,class_id} = request.data;
-        const quizResultData = await executeQuery(getQuizResults(quiz_id , class_id , section_id));
-        const _quizResultData = quizResultData.map((r) => {
-            return { ...r, individual_group_performance: r.individual_group_performance && JSON.parse(r.individual_group_performance)};
-          });
- 
-        callback(null, _quizResultData);
+        const quizResults = await new Promise((resolve, reject) => {
+            quizResultRepository.fetchQuizResultByQuizId(request, (fetch_quiz_err, fetch_quiz_response) => {
+                if (fetch_quiz_err) {
+                    reject(fetch_quiz_err);
+                } else {
+                    resolve(fetch_quiz_response);
+                }
+            });
+        });
+
+        const AllstudentsData = await new Promise((resolve, reject) => {
+            classTestRepository.getStudentInfo(request, (fetch_student_err, fetch_student_response) => {
+                if (fetch_student_err) {
+                    reject(fetch_student_err);
+                } else {
+                    resolve(fetch_student_response);
+                }
+            });
+        });
+
+        AllstudentsData.Items.map(studentData =>{
+                const studentResult = quizResults.Items.find(quizResult => studentData.student_id == quizResult.student_id );
+                if(studentResult)
+                studentData.individual_group_performance = studentResult.individual_group_performance;
+            })
+        
+            callback(null, AllstudentsData);
     }
     catch (err) {
       console.log(err);
       callback(err, null);
     }
 };
-
-
-
-
 
 
 // exports.comparingQuizAnswer = async (markDetails, quesAns, individualPassPercentage) => {
