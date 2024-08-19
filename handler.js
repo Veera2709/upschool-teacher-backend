@@ -23,7 +23,7 @@ const classTestController = require('./controller/classTestController');
 const scannerController = require('./controller/scannerController');
 const quizController = require('./controller/quizController');
 const schoolAdminController = require('./controller/schoolAdminController');
-const dashboardController = require('./controller/dashboardController');
+const reportController = require('./controller/reportController');
 
 const validator = require('./middleware/validator');
 
@@ -144,15 +144,15 @@ app.post("/v1/updateSchoolAdmin", validator.validUser, schoolAdminController.upd
 app.post("/v1/toggleSchoolAdminStatus", validator.validUser, schoolAdminController.toggleSchoolAdminStatus);
 
 // Dashboard
-app.post("/v1/fetchAssessmentSummary", dashboardController.fetchAssessmentSummary);
-app.post("/v1/getTargetedLearningExpectation",dashboardController.getTargetedLearningExpectation);
-app.post("/v1/getTargetedLearningExpectationDetails",dashboardController.getTargetedLearningExpectationDetails);
-app.post("/v1/getAssesmentSummaryDetails",dashboardController.getAssesmentSummaryDetails);
-app.post("/v1/preLearningSummaryDetails",dashboardController.preLearningSummaryDetails);
-app.post("/v1/postLearningSummaryDetails",dashboardController.postLearningSummaryDetails);
+app.post("/v1/fetchAssessmentSummary", reportController.fetchAssessmentSummary);
+app.post("/v1/getTargetedLearningExpectation",reportController.getTargetedLearningExpectation);
+app.post("/v1/getTargetedLearningExpectationDetails",reportController.getTargetedLearningExpectationDetails);
+app.post("/v1/getAssesmentSummaryDetails",reportController.getAssesmentSummaryDetails);
+app.post("/v1/preLearningSummaryDetails",reportController.preLearningSummaryDetails);
+app.post("/v1/postLearningSummaryDetails",reportController.postLearningSummaryDetails);
 app.post("/v1/preLearningBlueprintDetails",blueprintController.preLearningBlueprintDetails);
 app.post("/v1/preLearningBlueprintDetailsOld",blueprintController.preLearningBlueprintDetailsOld);
-app.post("/v1/viewAnalysisIndividualReport",dashboardController.viewAnalysisIndividualReport);
+app.post("/v1/viewAnalysisIndividualReport",reportController.viewAnalysisIndividualReport);
 
 
 const NODE_ENV = process.env.NODE_ENV || 'development';
