@@ -182,56 +182,56 @@ exports.fetchQuizResultByQuizId = function (request, callback) {
 
 
 
-// exports.fetchBulkQuizResultsByID = function (request, callback) {
+exports.fetchBulkQuizResultsByID = function (request, callback) {
 
-//     dynamoDbCon.getDB(function (DBErr, dynamoDBCall) {
-//         if (DBErr) {
-//             console.log("Class Data Database Error");
-//             console.log(DBErr);
-//             callback(500, constant.messages.DATABASE_ERROR);
-//         } else {
-//             let docClient = dynamoDBCall;
-//             let FilterExpressionDynamic = "";
-//             let ExpressionAttributeValuesDynamic = {}; 
-//             console.log("fetchQuizData request : ", request);
-//             let unit_Quiz_id = request.unit_Quiz_id;
-//             console.log("unit_Quiz_id : ", unit_Quiz_id);
-//             if(unit_Quiz_id.length === 1){
-//                 let read_params = {
-//                     TableName: TABLE_NAMES.upschool_quiz_result,
-//                     KeyConditionExpression: "quiz_id = :quiz_id",
-//                     ExpressionAttributeValues: { 
-//                         ":quiz_id": unit_Quiz_id[0]
-//                     },
-//                     ProjectionExpression: ["quiz_id", "isPassed", "student_id"],
-//                 }
+    dynamoDbCon.getDB(function (DBErr, dynamoDBCall) {
+        if (DBErr) {
+            console.log("Class Data Database Error");
+            console.log(DBErr);
+            callback(500, constant.messages.DATABASE_ERROR);
+        } else {
+            let docClient = dynamoDBCall;
+            let FilterExpressionDynamic = "";
+            let ExpressionAttributeValuesDynamic = {}; 
+            console.log("fetchQuizData request : ", request);
+            let unit_Quiz_id = request.unit_Quiz_id;
+            console.log("unit_Quiz_id : ", unit_Quiz_id);
+            if(unit_Quiz_id.length === 1){
+                let read_params = {
+                    TableName: TABLE_NAMES.upschool_quiz_result,
+                    KeyConditionExpression: "quiz_id = :quiz_id",
+                    ExpressionAttributeValues: { 
+                        ":quiz_id": unit_Quiz_id[0]
+                    },
+                    ProjectionExpression: ["quiz_id", "isPassed", "student_id"],
+                }
     
-//                 DATABASE_TABLE.queryRecord(docClient, read_params, callback);
+                DATABASE_TABLE.queryRecord(docClient, read_params, callback);
 
-//             }else{
-//                 console.log(" Chapter Else");
-//                 unit_Quiz_id.forEach((element, index) => { 
-//                     console.log("element : ", element);
+            }else{
+                console.log(" Chapter Else");
+                unit_Quiz_id.forEach((element, index) => { 
+                    console.log("element : ", element);
 
-//                     if(index < unit_Quiz_id.length-1){ 
-//                         FilterExpressionDynamic = FilterExpressionDynamic + "quiz_id = :quiz_id"+ index +" OR "
-//                         ExpressionAttributeValuesDynamic[':quiz_id'+ index] = element
-//                     } else{
-//                         FilterExpressionDynamic = FilterExpressionDynamic + "quiz_id = :quiz_id"+ index
-//                         ExpressionAttributeValuesDynamic[':quiz_id'+ index] = element;
-//                     }
-//                 });
+                    if(index < unit_Quiz_id.length-1){ 
+                        FilterExpressionDynamic = FilterExpressionDynamic + "quiz_id = :quiz_id"+ index +" OR "
+                        ExpressionAttributeValuesDynamic[':quiz_id'+ index] = element
+                    } else{
+                        FilterExpressionDynamic = FilterExpressionDynamic + "quiz_id = :quiz_id"+ index
+                        ExpressionAttributeValuesDynamic[':quiz_id'+ index] = element;
+                    }
+                });
 
-//                 let read_params = {
-//                     TableName: TABLE_NAMES.upschool_topic_table,
-//                     FilterExpression: FilterExpressionDynamic,
-//                     ExpressionAttributeValues: ExpressionAttributeValuesDynamic,
-//                     ProjectionExpression: ["quiz_id", "isPassed", "student_id" ],
-//                 }
-//                 DATABASE_TABLE.scanRecord(docClient, read_params, callback);
-//             }
-//         }
-//     });
-// }
+                let read_params = {
+                    TableName: TABLE_NAMES.upschool_quiz_result,
+                    FilterExpression: FilterExpressionDynamic,
+                    ExpressionAttributeValues: ExpressionAttributeValuesDynamic,
+                    ProjectionExpression: ["quiz_id", "isPassed", "student_id" ],
+                }
+                DATABASE_TABLE.scanRecord(docClient, read_params, callback);
+            }
+        }
+    });
+}
 
 

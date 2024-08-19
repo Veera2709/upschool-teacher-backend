@@ -1,6 +1,10 @@
 const blueprintRepository = require("../repository/blueprintRepository");  
 const questionRepository = require("../repository/questionRepository");  
 const commonRepository = require("../repository/commonRepository");
+const quizRepository = require("../repository/quizRepository");
+const quizResultRepository = require("../repository/quizResultRepository");
+const topicRepository = require("../repository/topicRepository");
+const conceptRepository = require("../repository/conceptRepository");
 const settingsRepository = require("../repository/settingsRepository");
 const { TABLE_NAMES } = require('../constants/tables');
 const constant = require('../constants/constant');
@@ -1056,3 +1060,160 @@ exports.getAllBluePrints = (request, callback) => {
 //     }
 //     conceptLoop(0);
 // }
+
+exports.preLearningBlueprintDetails = async (request, callback) => {
+    try {
+      const quizData = await new Promise((resolve, reject) => {
+        quizRepository.fetchQuizDataById(request, (err, res) => {
+          if (err) {
+            console.log(err);
+            return reject(err);
+          }
+          resolve(res);
+        });
+      });
+  
+      const quizResultData = await new Promise((resolve, reject) => {
+        quizResultRepository.fetchQuizResultByQuizId(request, (err, res) => {
+          if (err) {
+            console.log(err);
+            return reject(err);
+          }
+          resolve(res);
+        });
+      });
+
+      const aggregatedData = {};
+      
+      quizResultData.Items.forEach((result, i) => {
+        if (result.marks_details) {
+          const marksDetails = result.marks_details;
+          marksDetails[0].qa_details.forEach((question) => {
+            const questionId = question.question_id;
+            const obtainedMarks = question.obtained_marks;
+  
+            // Check if the question_id already exists in aggregatedData
+            if (!aggregatedData[questionId]) {
+              // Find the topic_id and concept_id from question_track_details
+              const trackDetails = quizData.Item.question_track_details;obtainedMarks
+  
+              const topicConceptGroup = trackDetails[
+                marksDetails[0].set_key
+              ].find((q) => q.question_id === questionId);
+  
+              // Initialize the question data
+              aggregatedData[questionId] = {
+                topic_id: topicConceptGroup?.topic_id,
+                concept_id: topicConceptGroup?.concept_id,
+                total_marks: obtainedMarks,
+                count: 1,
+              };
+            } else {
+              // Update the existing data
+              aggregatedData[questionId].total_marks += obtainedMarks;
+              aggregatedData[questionId].count += 1;
+            }
+          });
+        }
+      });
+ 
+      // Calculate averages
+  
+      const averages = Object.keys(aggregatedData).map((questionId) => {
+        const data = aggregatedData[questionId];
+        const marks = 3;
+        return {
+          question_id: questionId,
+          topic_id: data.topic_id,
+          concept_id: data.concept_id,
+          average_marks: (data.total_marks / (data.count * marks)) * 100,
+        };
+      });
+  
+      const conceptIds = [];
+      const topicIds = [];
+  
+      averages.forEach((item) => {
+        conceptIds.push(item.concept_id);
+        topicIds.push(item.topic_id);
+      });
+      
+      const topicNames = topicIds.length && await new Promise((resolve, reject) => {
+          topicRepository.fetchBulkTopicsIDName({ unit_Topic_id: topicIds }, (err, res) => {
+            if (err) {
+              console.log(err);
+              return reject(err);
+            }
+            resolve(res);
+          });
+        });
+
+      const conceptNames = await new Promise((resolve, reject) => {
+            conceptRepository.fetchBulkConceptsIDName({ unit_Concept_id: conceptIds }, (err, res) => {
+              if (err) {
+                console.log(err);
+                return reject(err);
+              }
+              resolve(res);
+            });
+          });
+    
+          averages.map((item) =>
+          {
+            item.topic_title = topicNames.Items.find(val =>
+                val.topic_id == item.topic_id
+              ).topic_title;
+            item.concept_title = conceptNames.Items.find(val =>
+                val.concept_id == item.concept_id
+              ).concept_title;
+          })
+  
+        const conceptMap = new Map();
+  
+        // Step 1: Calculate concept averages
+        averages.forEach(({ concept_id, topic_id, topic_title, average_marks ,concept_title }) => {
+          const conceptData = conceptMap.get(concept_id) || { totalScore: 0, count: 0, topic_id, topic_title,concept_title };
+          conceptData.totalScore += average_marks;
+          conceptData.count += 1;
+          conceptMap.set(concept_id, conceptData);
+        });
+          
+        const conceptAverages = [...conceptMap].map(([concept_id, { totalScore, count, topic_id, topic_title ,concept_title }]) => ({
+          concept_id,
+          topic_id,
+          topic_title, 
+          concept_title,
+          average_score: totalScore / count,
+          number_of_questions: count,
+        }));
+  
+        // Step 2: Calculate topic averages based on concept averages
+        const topicMap = new Map();
+        
+        conceptAverages.forEach(({ topic_id, topic_title, average_score }) => {
+          const topicData = topicMap.get(topic_id) || { totalScore: 0, count: 0, topic_title };
+          topicData.totalScore += average_score;
+          topicData.count += 1;
+          topicMap.set(topic_id, topicData);
+        });
+        
+  
+        const topicAverages = [...topicMap].map(([topic_id, { totalScore, count, topic_title }]) => ({
+          topic_id,
+          topic_title, // Include topic_title in the topic data
+          topic_average_score: totalScore / count,
+          number_of_concepts: count,
+        }));
+        
+        // Step 3: Combine topic and concept data for UI display
+        const displayData = topicAverages.map((topic) => ({
+          ...topic,
+          concepts: conceptAverages.filter((concept) => concept.topic_id === topic.topic_id),
+        }));
+        
+        callback(null, displayData);
+        
+    } catch (error) {
+      console.log(error);
+    }
+  };

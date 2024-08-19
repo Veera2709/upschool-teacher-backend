@@ -7,6 +7,8 @@ exports.readScannedPage = async function (request, callback) {
         const { Key } = request.data;
         // Get the URL of the image in S3
         const imageUrl = await helper.getS3SignedUrl(Key);
+
+        console.log("imageUrl", imageUrl);
         
         // MathPix Api section 
         await axios({
@@ -22,6 +24,7 @@ exports.readScannedPage = async function (request, callback) {
                 formats: ["text"],
             },
         }).then(async function (response) {
+            console.log("RESPONSE : ", response);
             callback(0, response);            
         });
 

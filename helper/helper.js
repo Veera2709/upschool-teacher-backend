@@ -1107,5 +1107,5 @@ exports.processRows = (resultsData) => {
       });
       rows.push(row);
     });
-    return rows;
+    return rows.slice(1);
   }

@@ -101,7 +101,7 @@ app.post("/v1/toggleQuestionPaper", validator.validUser, testQuestionPaperContro
 
 /** BLUE PRINT **/
 app.post("/v1/fetchBlueprintById", validator.validUser, blueprintController.fetchBlueprintById);
-app.post("/v1/fetchQuestionBasedOnBlueprint", validator.validUser, blueprintController.fetchQuestionBasedOnBlueprint);
+app.post("/v1/fetchQuestionBasedOnBlueprint", blueprintController.fetchQuestionBasedOnBlueprint); // validator.validUser,
 app.post("/v1/fetchAllBluePrints", validator.validUser, blueprintController.fetchAllBluePrints);
 
 // CLASS TEST : 
@@ -123,7 +123,7 @@ app.post("/v1/validateOTPForScanning", scannerController.validateOTPForScanning)
 app.post("/v1/fetchSignedURLForAnswers", validator.validScannerUser, scannerController.fetchSignedURLForAnswers);
 app.post("/v1/uploadAnswerSheets", validator.validScannerUser, scannerController.uploadAnswerSheets);
 app.post("/v1/fetchSignedURLForQuizAnswers", validator.validScannerUser, scannerController.fetchSignedURLForQuizAnswers) //Quiz
-app.post("/v1/uploadQuizAnswerSheets", validator.validScannerUser, scannerController.uploadQuizAnswerSheets); // Quiz
+app.post("/v1/uploadQuizAnswerSheets", scannerController.uploadQuizAnswerSheets); // Quiz  validator.validScannerUser,
 
 // Quiz
 app.post("/v1/checkDuplicateQuizName",  validator.validUser, quizController.checkDuplicateQuizName);
@@ -150,7 +150,9 @@ app.post("/v1/getTargetedLearningExpectationDetails",dashboardController.getTarg
 app.post("/v1/getAssesmentSummaryDetails",dashboardController.getAssesmentSummaryDetails);
 app.post("/v1/preLearningSummaryDetails",dashboardController.preLearningSummaryDetails);
 app.post("/v1/postLearningSummaryDetails",dashboardController.postLearningSummaryDetails);
-app.post("/v1/preLearningBlueprintDetails",dashboardController.preLearningBlueprintDetails);
+app.post("/v1/preLearningBlueprintDetails",blueprintController.preLearningBlueprintDetails);
+app.post("/v1/preLearningBlueprintDetailsOld",blueprintController.preLearningBlueprintDetailsOld);
+app.post("/v1/viewAnalysisIndividualReport",dashboardController.viewAnalysisIndividualReport);
 
 
 const NODE_ENV = process.env.NODE_ENV || 'development';

@@ -268,7 +268,7 @@ exports.uploadAnswerSheets = async function (request, callback) {
                                     callback(fetch_class_test_data_err, fetch_class_test_data_response);
                                 } else {
 
-                                    console.log("Test OBJ", fetch_class_test_data_response);
+                                    console.log("Test object", fetch_class_test_data_response);
                                     if (helper.isEmptyObject(fetch_class_test_data_response.Item)) {
                                         callback(constant.messages.COULDNT_READ_TEST_ID, 0);
                                     } else {
@@ -460,13 +460,8 @@ exports.uploadQuizAnswerSheets = function (request, callback)
                                     if (helper.isEmptyObject(fetch_quiz_data_response.Item)) {
                                         callback(constant.messages.COULDNOT_READ_QUIZ_ID, 0);
                                     } 
-                                    else {
-                                        console.log(request,"test ok")
-                                        request.data.client_class_id =  "1df5eb4b-1186-57a1-8984-f36fcfbfcb8b",
-                                        request.data.section_id = "f0d3d2ea-e1b6-5a1d-829d-83aefbe7a065",
-                                        request.data.roll_no = "15702A0913",
-                                        
-                                        
+                                    else {                                    
+                                       
                                         
                                         studentRepository.fetchStudentDataByRollNoClassSection(request, function (fetch_student_data_err, fetch_student_data_response) {
                                             if (fetch_student_data_err) {
