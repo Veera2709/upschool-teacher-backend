@@ -683,6 +683,7 @@ exports.splitSectionAnswer = async (studMetaData, questionPaper) => {
 }
 
 exports.splitStudentQuizAnswer = async (studMetaData) => {
+    console.log("studMetaData",studMetaData)
     return new Promise(async (resolve, reject) => {
         let splitedAns = [];
         await exports.splitIndividualAns(studMetaData).then((speAns) => {
@@ -707,7 +708,8 @@ exports.formatIndividualAnsArr = async (studMetaData, sectionIndex, splitContinu
     return resArr;
 }
 
-exports.splitIndividualAns = async (ansArray) => {
+
+exports.splitIndividualAns = async (ansArray) => {  
 
     return new Promise(async (resolve, reject) => {
         let individualAns = [];
@@ -726,15 +728,16 @@ exports.splitIndividualAns = async (ansArray) => {
                     tempAns += tempAns != constant.evalConstant.splitLines ? constant.evalConstant.splitLines + inAns : inAns;
                 }
             }
-        })
+        });
 
         if (tempAns.length > 0) {
             individualAns.push(tempAns.replace(new RegExp(`${constant.evalConstant.empty}`, "gi"), ""));
         }
         individualAns.shift();
         resolve(individualAns);
-    })
-}
+    });
+};
+
 
 exports.getIndexOfAlphabet = async (char) => {
     char = char.toUpperCase().replace(/\,/g, "").trim();
