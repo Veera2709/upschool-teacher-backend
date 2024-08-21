@@ -203,7 +203,7 @@ exports.fetchBulkQuizResultsByID = function (request, callback) {
                     ExpressionAttributeValues: { 
                         ":quiz_id": unit_Quiz_id[0]
                     },
-                    ProjectionExpression: ["quiz_id", "isPassed", "student_id"],
+                    // ProjectionExpression: ["quiz_id", "isPassed", "student_id"],
                 }
     
                 DATABASE_TABLE.queryRecord(docClient, read_params, callback);
@@ -226,7 +226,7 @@ exports.fetchBulkQuizResultsByID = function (request, callback) {
                     TableName: TABLE_NAMES.upschool_quiz_result,
                     FilterExpression: FilterExpressionDynamic,
                     ExpressionAttributeValues: ExpressionAttributeValuesDynamic,
-                    ProjectionExpression: ["quiz_id", "isPassed", "student_id" ],
+                    // ProjectionExpression: ["quiz_id", "isPassed", "student_id" ],
                 }
                 DATABASE_TABLE.scanRecord(docClient, read_params, callback);
             }

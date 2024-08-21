@@ -1,8 +1,8 @@
-const dashboardServices = require("../services/dashboardServices");
+const reportServices = require("../services/reportServices");
 
 exports.fetchAssessmentSummary = (req, res, next) => {
     let request = req.body;
-    dashboardServices.getAssessmentDetails(request, function (assessment_detail_err, assessment_detail_res) {
+    reportServices.getAssessmentDetails(request, function (assessment_detail_err, assessment_detail_res) {
         if (assessment_detail_err) {
             res.status(assessment_detail_err).json(assessment_detail_res);
         } else {
@@ -14,7 +14,7 @@ exports.fetchAssessmentSummary = (req, res, next) => {
 
 exports.getTargetedLearningExpectation = (req, res, next) => {
     let request = req.body;
-    dashboardServices.getTargetedLearningExpectation(request, function (learning_expectation_details_err, learning_expectation_details_res) {
+    reportServices.getTargetedLearningExpectation(request, function (learning_expectation_details_err, learning_expectation_details_res) {
         if (learning_expectation_details_err) {
             res.status(learning_expectation_details_err).json(learning_expectation_details_res);
         } else {
@@ -27,7 +27,7 @@ exports.getTargetedLearningExpectation = (req, res, next) => {
 
 exports.getTargetedLearningExpectationDetails = (req, res, next) => {
     let request = req.body;
-    dashboardServices.getTargetedLearningExpectationDetails(request, function (learning_expectation_details_err, learning_expectation_details_res) {
+    reportServices.getTargetedLearningExpectationDetails(request, function (learning_expectation_details_err, learning_expectation_details_res) {
         if (learning_expectation_details_err) {
             res.status(learning_expectation_details_err).json(learning_expectation_details_res);
         } else {
@@ -38,7 +38,7 @@ exports.getTargetedLearningExpectationDetails = (req, res, next) => {
 };
 exports.getAssesmentSummaryDetails = (req, res, next) => {
     let request = req.body;
-    dashboardServices.getAssesmentSummaryDetails(request, function (assesmentSummary_details_err, assesmentSummary_details_res) {
+    reportServices.getAssesmentSummaryDetails(request, function (assesmentSummary_details_err, assesmentSummary_details_res) {
         if (assesmentSummary_details_err) {
             res.status(assesmentSummary_details_err).json(assesmentSummary_details_res);
         } else {
@@ -51,7 +51,7 @@ exports.getAssesmentSummaryDetails = (req, res, next) => {
 
 exports.preLearningSummaryDetails = (req, res, next) => {
     let request = req.body;
-    dashboardServices.preLearningSummaryDetails(request, function (preLearningSummary_details_err, preLearningSummary_details_res) {
+    reportServices.preLearningSummaryDetails(request, function (preLearningSummary_details_err, preLearningSummary_details_res) {
         if (preLearningSummary_details_err) {
             res.status(preLearningSummary_details_err).json(preLearningSummary_details_res);
         } else {
@@ -63,7 +63,7 @@ exports.preLearningSummaryDetails = (req, res, next) => {
 
 exports.postLearningSummaryDetails = (req, res, next) => {
     let request = req.body;
-    dashboardServices.postLearningSummaryDetails(request, function (postLearningSummary_details_err, postLearningSummary_details_res) {
+    reportServices.postLearningSummaryDetails(request, function (postLearningSummary_details_err, postLearningSummary_details_res) {
         if (postLearningSummary_details_err) {
             res.status(postLearningSummary_details_err).json(postLearningSummary_details_res);
         } else {
@@ -75,7 +75,7 @@ exports.postLearningSummaryDetails = (req, res, next) => {
 
 exports.viewAnalysisIndividualReport = (req, res, next) => {
     let request = req.body;
-    dashboardServices.viewAnalysisIndividualReport(request, function (individualReport_details_err, individualReport_details_res) {
+    reportServices.viewAnalysisIndividualReport(request, function (individualReport_details_err, individualReport_details_res) {
         if (individualReport_details_err) {
             res.status(individualReport_details_err).json(individualReport_details_res);
         } else {
