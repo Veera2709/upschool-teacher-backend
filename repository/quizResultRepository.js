@@ -198,13 +198,15 @@ exports.fetchBulkQuizResultsByID = function (request, callback) {
             console.log("unit_Quiz_id : ", unit_Quiz_id);
             if(unit_Quiz_id.length === 1){
                 let read_params = {
-                    TableName: TABLE_NAMES.upschool_quiz_result,
-                    KeyConditionExpression: "quiz_id = :quiz_id",
-                    ExpressionAttributeValues: { 
-                        ":quiz_id": unit_Quiz_id[0]
-                    },
-                    // ProjectionExpression: ["quiz_id", "isPassed", "student_id"],
+                TableName: TABLE_NAMES.upschool_quiz_result,
+                IndexName: indexName.Indexes.common_id_index,
+                KeyConditionExpression: "common_id = :common_id",
+                FilterExpression: "quiz_id = :quiz_id",
+                ExpressionAttributeValues: {
+                    ":quiz_id": unit_Quiz_id[0],
+                    ":common_id": constant.constValues.common_id
                 }
+            };
     
                 DATABASE_TABLE.queryRecord(docClient, read_params, callback);
 
