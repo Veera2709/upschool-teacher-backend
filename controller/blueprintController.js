@@ -54,26 +54,3 @@ exports.addBluePrint = (req, res, next) => {
     });
 };
 
-exports.preLearningBlueprintDetails = (req, res, next) => {
-    let request = req.body;
-    blueprintServices.preLearningBlueprintDetails(request, function (postLearningBlueprint_details_err, postLearningBlueprint_details_res) {
-        if (postLearningBlueprint_details_err) {
-            res.status(postLearningBlueprint_details_err).json(postLearningBlueprint_details_res);
-        } else {
-            console.log("pre Learning Summary for the subject!");
-            res.json(postLearningBlueprint_details_res);
-        }
-    });
-};
-
-exports.preLearningBlueprintDetailsOld = (req, res, next) => {
-    let request = req.body;
-    blueprintServices.preLearningBlueprintDetailsOld(request, function (postLearningBlueprint_details_err, postLearningBlueprint_details_res) {
-        if (postLearningBlueprint_details_err) {
-            res.status(postLearningBlueprint_details_err).json(postLearningBlueprint_details_res);
-        } else {
-            console.log("pre Learning Summary for the subject!");
-            res.json(postLearningBlueprint_details_res);
-        }
-    });
-};
