@@ -150,8 +150,7 @@ app.post("/v1/getTargetedLearningExpectationDetails",reportController.getTargete
 app.post("/v1/getAssesmentSummaryDetails",reportController.getAssesmentSummaryDetails);
 app.post("/v1/preLearningSummaryDetails",reportController.preLearningSummaryDetails);
 app.post("/v1/postLearningSummaryDetails",reportController.postLearningSummaryDetails);
-app.post("/v1/preLearningBlueprintDetails",blueprintController.preLearningBlueprintDetails);
-app.post("/v1/preLearningBlueprintDetailsOld",blueprintController.preLearningBlueprintDetailsOld);
+app.post("/v1/preLearningBlueprintDetails",reportController.preLearningBlueprintDetails);
 app.post("/v1/viewAnalysisIndividualReport",reportController.viewAnalysisIndividualReport);
 
 
