@@ -9,8 +9,10 @@ const quizRepository = require("../repository/quizRepository");
 const settingsRepository = require("../repository/settingsRepository");
 const questionRepository = require("../repository/questionRepository");
 const quizResultRepository = require("../repository/quizResultRepository");
+const classTestRepository = require("../repository/classTestRepository");
 const chapterRepository = require("../repository/chapterRepository");
 const topicRepository = require("../repository/topicRepository");
+const conceptRepository = require("../repository/conceptRepository");
 const userRepository = require("../repository/userRepository");
 const { getS3SignedUrl, cleanAthenaResponse } = require("../helper/helper");
 
@@ -94,14 +96,14 @@ exports.getAssessmentDetails = (request, callback) => {
                                                 
                                                 if (val.learningType === "preLearning") {
                                                   if (val.not_considered_topics)
-                                                    notConsideredTopicsPre += val.not_considered_topics;
+                                                    notConsideredTopicsPre += val.not_considered_topics.length;
                                                   if ( studentsCount && studentsAttendedQuiz >= (classPercentagePre * studentsCount * 0.01)) {
                                                     preLearningCompletedTopicsCount += val.selectedTopics.length;
                                                   }
                                                 } else {
 
                                                   if (val.not_considered_topics)
-                                                    notConsideredTopicsPost += val.not_considered_topics;
+                                                    notConsideredTopicsPost += val.not_considered_topics.length;
                                                   if ( studentsCount && studentsAttendedQuiz >= (classPercentagePost * studentsCount * 0.01)) {
                                                     postLearningCompletedTopicsCount += val.selectedTopics.length;
                                                   }
@@ -203,6 +205,7 @@ exports.getTargetedLearningExpectation = async (request, callback) => {
                       // Calculate passed students
                       quizResultDataRes.Items.map((val) => {
                         // if (true) {
+                          console.log("------val---",val);
                         if(val.isPassed)
                           passedStudentsOfParticularQuiz++;
                       });
@@ -689,16 +692,7 @@ exports.postLearningSummaryDetails = async (request, callback) => {
 exports.viewAnalysisIndividualReport = async (request, callback) =>
 {
   try{
-       const quizData = await new Promise((resolve, reject) => {
-        quizRepository.fetchQuizDataById(request, (err, res) => {
-          if (err) {
-            console.log(err);
-            return reject(err);
-          }
-          resolve(res);
-        });
-      });
-
+       const quizData = await quizRepository.fetchQuizDataById2(request);
 
     const studentsDataRes = await new Promise((resolve, reject) => {
       quizResultRepository.fetchQuizResultDataOfStudent(request, (err, res) => {
@@ -796,25 +790,9 @@ callback(null , [])
 
 exports.preLearningBlueprintDetails = async (request, callback) => {
   try {
-    const quizData = await new Promise((resolve, reject) => {
-      quizRepository.fetchQuizDataById(request, (err, res) => {
-        if (err) {
-          console.log(err);
-          return reject(err);
-        }
-        resolve(res);
-      });
-    });
+    const quizData = await quizRepository.fetchQuizDataById2(request);
 
-    const quizResultData = await new Promise((resolve, reject) => {
-      quizResultRepository.fetchQuizResultByQuizId(request, (err, res) => {
-        if (err) {
-          console.log(err);
-          return reject(err);
-        }
-        resolve(res);
-      });
-    });
+    const quizResultData = await quizResultRepository.fetchQuizResultByQuizId(request);
 
     const aggregatedData = {};
     
@@ -886,33 +864,17 @@ exports.preLearningBlueprintDetails = async (request, callback) => {
       conceptIds.push(item.concept_id);
       topicIds.push(item.topic_id);
     });
-    
-    const topicNames = topicIds.length && await new Promise((resolve, reject) => {
-        topicRepository.fetchBulkTopicsIDName({ unit_Topic_id: topicIds }, (err, res) => {
-          if (err) {
-            console.log(err);
-            return reject(err);
-          }
-          resolve(res);
-        });
-      });
 
-    const conceptNames = conceptIds.length && await new Promise((resolve, reject) => {
-          conceptRepository.fetchBulkConceptsIDName({ unit_Concept_id: conceptIds }, (err, res) => {
-            if (err) {
-              console.log(err);
-              return reject(err);
-            }
-            resolve(res);
-          });
-        });
+    const topicNames = topicIds.length && await topicRepository.fetchBulkTopicsIDName2({ unit_Topic_id: topicIds });
+
+    const conceptNames = conceptIds.length && await conceptRepository.fetchBulkConceptsIDName2({ unit_Concept_id: conceptIds });
 
         averages.map((item) =>
         {
-          item.topic_title = topicNames.Items.find(val =>
+          item.topic_title = topicNames.find(val =>
               val.topic_id == item.topic_id
             ).topic_title;
-          item.concept_title = conceptNames.Items.find(val =>
+          item.concept_title = conceptNames.find(val =>
               val.concept_id == item.concept_id
             ).concept_title;
         })
@@ -960,9 +922,26 @@ exports.preLearningBlueprintDetails = async (request, callback) => {
         concepts: conceptAverages.filter((concept) => concept.topic_id === topic.topic_id),
       }));
 
+     console.log("==============================",displayData); 
       callback(null, displayData);
       
   } catch (error) {
     console.log(error);
   }
+};
+
+exports.fetchIndividualQuizReport = async (request)=> {
+
+  console.log("-----comming-----");
+      const quizResults = await quizResultRepository.fetchQuizResultByQuizId(request);
+
+      const AllstudentsData =  await classTestRepository.getStudentInfo(request);
+      console.log("-----comming2-----");
+      AllstudentsData.Items.map(studentData =>{
+              const studentResult = quizResults.Items.find(quizResult => studentData.student_id == quizResult.student_id );
+              if(studentResult)
+              studentData.individual_group_performance = studentResult.individual_group_performance;
+          })
+          // console.log("-----comming3-----", AllstudentsData);
+          return AllstudentsData;
 };

@@ -3,6 +3,8 @@ const { TABLE_NAMES } = require('../constants/tables');
 const indexName = require('../constants/indexes');
 const { DATABASE_TABLE } = require('./baseRepository');
 const { successResponse } = require('./baseRepository');
+const baseRepositoryNew = require('./baseRepositoryNew');
+
 const helper = require('../helper/helper');
 const constant = require('../constants/constant');
 
@@ -361,4 +363,39 @@ exports.fetchBulkTopicsIDName = function (request, callback) {
         }
     });
 }
+
+
+exports.fetchBulkTopicsIDName2 = async (request) => {
+    const unit_Topic_id = [...new Set(request.unit_Topic_id)];
+
+    if (unit_Topic_id.length === 1) {
+        const params = {
+            TableName: TABLE_NAMES.upschool_topic_table,
+            KeyConditionExpression: "topic_id = :topic_id",
+            ExpressionAttributeValues: { 
+                ":topic_id": unit_Topic_id[0]
+            },
+            ProjectionExpression: "topic_id, topic_title, pre_post_learning, display_name",
+        };
+
+        const result = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+        return result;
+    } else {
+        const keys = unit_Topic_id.map((id) => ({
+            topic_id: id
+        }));
+
+        const params = {
+            RequestItems: { 
+                [TABLE_NAMES.upschool_topic_table]: {
+                    Keys: keys,
+                    ProjectionExpression: "topic_id, topic_title, pre_post_learning, display_name"
+                }
+            }
+        };
+        const result = await baseRepositoryNew.DATABASE_TABLE2.getByObjects(params);
+
+        return result.Responses[TABLE_NAMES.upschool_topic_table];
+    }
+};
 

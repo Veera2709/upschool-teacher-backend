@@ -2,6 +2,7 @@ const dynamoDbCon = require('../awsConfig');
 const { TABLE_NAMES } = require('../constants/tables');
 const indexName = require('../constants/indexes');
 const { DATABASE_TABLE } = require('./baseRepository');
+const baseRepositoryNew = require('./baseRepositoryNew');
 const helper = require('../helper/helper');
 const constant = require('../constants/constant');
 
@@ -164,3 +165,41 @@ exports.fetchBulkConceptsIDName = function (request, callback) {
         }
     });
 }
+
+exports.fetchBulkConceptsIDName2 = async (request) => {
+    const unit_Concept_id = [...new Set(request.unit_Concept_id)]; // Remove duplicates
+    console.log("fetchConceptsData request:", request);
+    console.log("unit_Concept_id:", unit_Concept_id);
+
+    if (unit_Concept_id.length === 1) {
+        // Query when there's only one concept ID
+        const params = {
+            TableName: TABLE_NAMES.upschool_concept_blocks_table,
+            KeyConditionExpression: "concept_id = :concept_id",
+            ExpressionAttributeValues: { 
+                ":concept_id": unit_Concept_id[0]
+            },
+            ProjectionExpression: "concept_id, concept_title, display_name",
+        };
+
+        const result = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+        return result.Items;
+    } else {
+        // BatchGet for multiple concept IDs
+        const keys = unit_Concept_id.map((id) => ({
+            concept_id: id
+        }));
+
+        const params = {
+            RequestItems: {
+                [TABLE_NAMES.upschool_concept_blocks_table]: {
+                    Keys: keys,
+                    ProjectionExpression: "concept_id, concept_title, display_name"
+                }
+            }
+        };
+
+        const result = await baseRepositoryNew.DATABASE_TABLE2.getByObjects(params);
+        return result.Responses[TABLE_NAMES.upschool_concept_blocks_table];
+    }
+};
