@@ -136,7 +136,7 @@ app.post("/v1/fetchQuizTemplates", validator.validUser, quizController.fetchQuiz
 app.post("/v1/resetQuizEvaluationStatus", validator.validUser, quizController.resetQuizEvaluationStatus);
 app.post("/v1/startQuizEvaluation", quizController.startQuizEvaluation); // validator.validUser,
 
-app.post("/v1/getIndividualQuizReport",quizController.getIndividualQuizReport)
+app.post("/v1/getIndividualQuizReport",reportController.getIndividualQuizReport)
 
 // School admin
 app.post("/v1/createSchoolAdmin", validator.validUser, schoolAdminController.createSchoolAdmin);

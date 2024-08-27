@@ -795,42 +795,6 @@ const knowPassOrFail = (marks_details, quesAndAns, individualPassPercentage) => 
 //     })
 // }
 
-exports.fetchIndividualQuizReport = async function (request, callback) {
-    try {
-        const quizResults = await new Promise((resolve, reject) => {
-            quizResultRepository.fetchQuizResultByQuizId(request, (fetch_quiz_err, fetch_quiz_response) => {
-                if (fetch_quiz_err) {
-                    reject(fetch_quiz_err);
-                } else {
-                    resolve(fetch_quiz_response);
-                }
-            });
-        });
-
-        const AllstudentsData = await new Promise((resolve, reject) => {
-            classTestRepository.getStudentInfo(request, (fetch_student_err, fetch_student_response) => {
-                if (fetch_student_err) {
-                    reject(fetch_student_err);
-                } else {
-                    resolve(fetch_student_response);
-                }
-            });
-        });
-
-        AllstudentsData.Items.map(studentData =>{
-                const studentResult = quizResults.Items.find(quizResult => studentData.student_id == quizResult.student_id );
-                if(studentResult)
-                studentData.individual_group_performance = studentResult.individual_group_performance;
-            })
-        
-            callback(null, AllstudentsData);
-    }
-    catch (err) {
-      console.log(err);
-      callback(err, null);
-    }
-};
-
 
 // exports.comparingQuizAnswer = async (markDetails, quesAns, individualPassPercentage) => {
 //     const qaDetails = markDetails.qa_details;

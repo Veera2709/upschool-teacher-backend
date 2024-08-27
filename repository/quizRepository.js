@@ -2,6 +2,7 @@ const dynamoDbCon = require('../awsConfig');
 const { TABLE_NAMES } = require('../constants/tables');
 const indexName = require('../constants/indexes');
 const { DATABASE_TABLE } = require('./baseRepository');
+const baseRepositoryNew = require('./baseRepositoryNew');
 const helper = require('../helper/helper');
 const constant = require('../constants/constant');
 
@@ -220,6 +221,17 @@ exports.fetchQuizDataById = function (request, callback) {
         }
     });
 }
+
+exports.fetchQuizDataById2 = async (request) => {
+    let params = {
+        TableName: TABLE_NAMES.upschool_quiz_table,
+        Key: {
+            "quiz_id": request.data.quiz_id
+        }
+    };
+
+    return await baseRepositoryNew.DATABASE_TABLE2.getItem(params); 
+};
 
 exports.getQuizResult = function (request, callback) {
 
