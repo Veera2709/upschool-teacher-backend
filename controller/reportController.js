@@ -97,3 +97,13 @@ exports.preLearningBlueprintDetails = (req, res, next) => {
         }
     });
 };
+
+exports.getIndividualQuizReport = async (req, res, next) => {
+    try {
+        const request = req.body;
+        const reportData = await reportServices.fetchIndividualQuizReport(request);
+        return res.status(200).json(reportData);
+    } catch (error) {
+        next(error)
+    }
+};

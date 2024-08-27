@@ -4,6 +4,7 @@ const indexName = require('../constants/indexes');
 const { DATABASE_TABLE } = require('./baseRepository');
 const helper = require('../helper/helper');
 const constant = require('../constants/constant');
+const baseRepositoryNew = require('./baseRepositoryNew');
 
 exports.fetchQuizResultDataOfStudent = function (request, callback) {
     dynamoDbCon.getDB(function (DBErr, dynamoDBCall) {
@@ -152,20 +153,8 @@ exports.fetchStudentQuiRresultMetadata = function (request, callback) {
     });
 }
 
-
-
-
-exports.fetchQuizResultByQuizId = function (request, callback) {
-    dynamoDbCon.getDB(function (DBErr, dynamoDBCall) {
-        if (DBErr) {
-            console.log("Fetch Quiz Data Of Student Error");
-            console.log(DBErr);
-            callback(500, constant.messages.DATABASE_ERROR)
-        } else {
-
-            let docClient = dynamoDBCall;
-
-            let read_params = {
+exports.fetchQuizResultByQuizId =async (request)=> {
+            let params = {
                 TableName: TABLE_NAMES.upschool_quiz_result,
                 IndexName: indexName.Indexes.common_id_index,
                 KeyConditionExpression: "common_id = :common_id",
@@ -175,11 +164,9 @@ exports.fetchQuizResultByQuizId = function (request, callback) {
                     ":common_id": constant.constValues.common_id
                 }
             };
-            DATABASE_TABLE.queryRecord(docClient, read_params, callback);
-        }
-    });
-}
 
+            return await baseRepositoryNew.DATABASE_TABLE2.query(params); 
+        }
 
 
 exports.fetchBulkQuizResultsByID = function (request, callback) {

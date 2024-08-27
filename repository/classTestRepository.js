@@ -2,6 +2,7 @@ const dynamoDbCon = require('../awsConfig');
 const { TABLE_NAMES } = require('../constants/tables');
 const indexName = require('../constants/indexes');
 const { DATABASE_TABLE } = require('./baseRepository');
+const baseRepositoryNew = require('./baseRepositoryNew');
 const helper = require('../helper/helper');
 const constant = require('../constants/constant');
 
@@ -132,17 +133,9 @@ exports.getClassTestIdAndName = function (request, callback) {
     });
 }
 
-exports.getStudentInfo = function (request, callback) {
+exports.getStudentInfo = function (request) {
 
-    dynamoDbCon.getDB(function (DBErr, dynamoDBCall) {
-        if (DBErr) {
-            console.log("Class Data Database Error");
-            console.log(DBErr);
-            callback(500, constant.messages.DATABASE_ERROR);
-        } else {
-            let docClient = dynamoDBCall;
-
-            let read_params = {
+            let params = {
                 TableName: TABLE_NAMES.upschool_student_info,
 
                 IndexName: indexName.Indexes.common_id_index,
@@ -153,13 +146,12 @@ exports.getStudentInfo = function (request, callback) {
                     ":class_id": request.data.class_id,
                     ":section_id": request.data.section_id,
                 },
-                ProjectionExpression: ["student_id", "user_firstname", "user_lastname", "roll_no"]
+                // ProjectionExpression: ["student_id", "user_firstname", "user_lastname", "roll_no"]
             }
 
-            DATABASE_TABLE.queryRecord(docClient, read_params, callback);
+            const studentInfoData =  baseRepositoryNew.DATABASE_TABLE2.query(params);
+            return studentInfoData;  
         }
-    });
-}
 
 exports.fetchClassTestDataById = function (request, callback) {
 
