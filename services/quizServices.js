@@ -682,47 +682,46 @@ exports.assigningQuizMarks = async (studResultData, quizQuestionSets, quesAns, c
     })    
 }
 
-exports.comparingQuizAnswer = async (studAns, markDetails, questionPaper, quesAns, classPassPercentage,group_pass_percentage,questionPaperTrack) => {
+exports.comparingQuizAnswer = async (studAns, markDetails, questionPaper, quesAns, classPassPercentage, group_pass_percentage, questionPaperTrack) => {
     return new Promise(async (resolve, reject) => {
         await helper.splitStudentQuizAnswer(studAns).then((splitedAns) => {
             console.log("SPLITED ANSWER : ", splitedAns);
-            // resolve(splitedAns);
             
             let passStatus = false;
-            async function sectionLoop(i)
-            {
-                if(i < markDetails.length)
-                {
-                    if(splitedAns[i].individualAns && splitedAns[i].individualAns.length > 0)
-                    {
-                        await exports.setQizQaDetails(markDetails[i].qa_details, splitedAns[i].individualAns, quesAns, questionPaperTrack).then(async(secQaDetails) => {
+            
+            async function sectionLoop(i) {
+                if (i < markDetails.length) {
+                    if (splitedAns[i] && splitedAns[i].individualAns && splitedAns[i].individualAns.length > 0) {
+                        await exports.setQizQaDetails(markDetails[i].qa_details, splitedAns[i].individualAns, quesAns, questionPaperTrack).then(async (secQaDetails) => {
                             console.log("SECTION QA DETAILS : ", secQaDetails);
                             markDetails[i].qa_details = secQaDetails;
 
-                            await knowPassOrFail(markDetails[i], quesAns, classPassPercentage,group_pass_percentage).then((overallResult) => {
+                            await knowPassOrFail(markDetails[i], quesAns, classPassPercentage, group_pass_percentage).then((overallResult) => {
                                 markDetails[i].totalMark = overallResult.studentResult;
                                 passStatus = overallResult.isPassed;
-                            })
-                        })
-                    }                    
+                            });
+                        });
+                    } 
+                    
                     i++;
                     sectionLoop(i);
-                }
-                else
-                {
+                } else {
                     /** LOOP END **/
                     console.log("End comparingAnswer");
                     console.log("OVERALL QA DETAILS : ", markDetails);
 
                     resolve({ markDetails, isPassed: passStatus });                  
-                    
-                    /** Send mark_details of one student*/
                 }
             }
+            
             sectionLoop(0);
-        })  
-    })
-}
+        }).catch((error) => {
+            console.error("Error in splitStudentQuizAnswer:", error);
+            reject(error);
+        });
+    });
+};
+
 
 exports.setQizQaDetails = (qaDetails, indAns, quesAns, questionPaperTrack) => {
     let localQuestion = "";
@@ -739,7 +738,7 @@ exports.setQizQaDetails = (qaDetails, indAns, quesAns, questionPaperTrack) => {
                 localType = questionPaperTrack.filter(ques => ques.question_id === qaDetails[i].question_id);
                 if(localQuestion.length > 0 && indAns[i])
                 {
-                    await exports.compareAnswer(localQuestion[0], indAns[i],).then((obMark) => {
+                    await exports.comparingQuizAnswer(localQuestion[0], indAns[i],).then((obMark) => {
                         console.log("OBTAINED MARKS : ", obMark);
                         qaDetails[i].obtained_marks = obMark;
                         qaDetails[i].student_answer = indAns[i];
