@@ -170,7 +170,7 @@ exports.getTargetedLearningExpectation = async (request, callback) => {
   let reachedTopics = 0;
 
   try {
-    await schoolRepository.getSchoolDetailsById(request, (schoolDataErr, schoolDataRes) => {
+     schoolRepository.getSchoolDetailsById(request, (schoolDataErr, schoolDataRes) => {
       if (schoolDataErr) {
         callback(schoolDataErr, schoolDataRes);
       } else {
@@ -694,15 +694,17 @@ exports.viewAnalysisIndividualReport = async (request, callback) =>
   try{
        const quizData = await quizRepository.fetchQuizDataById2(request);
 
-    const studentsDataRes = await new Promise((resolve, reject) => {
-      quizResultRepository.fetchQuizResultDataOfStudent(request, (err, res) => {
-        if (err) {
-          console.log(err);
-          return reject(err);
-        }
-        resolve(res);
-      });
-    });
+       
+       const studentsDataRes = await new Promise((resolve, reject) => {
+         quizResultRepository.fetchQuizResultDataOfStudent(request, (err, res) => {
+           if (err) {
+             console.log(err);
+             return reject(err);
+            }
+            resolve(res);
+          });
+        });
+        console.log(studentsDataRes.Items[0].marks_details,"&&&&&&&&&&&&&&&&&&&&&&&&&&&",quizData.Item.question_track_details);
 
 if(quizData.Item && studentsDataRes.Items[0] )
 {
@@ -788,8 +790,8 @@ callback(null , [])
   }
 }
 
-exports.preLearningBlueprintDetails = async (request, callback) => {
-  try {
+exports.preLearningBlueprintDetails = async (request) => {
+
     const quizData = await quizRepository.fetchQuizDataById2(request);
 
     const quizResultData = await quizResultRepository.fetchQuizResultByQuizId(request);
@@ -922,26 +924,20 @@ exports.preLearningBlueprintDetails = async (request, callback) => {
         concepts: conceptAverages.filter((concept) => concept.topic_id === topic.topic_id),
       }));
 
-     console.log("==============================",displayData); 
-      callback(null, displayData);
+    return displayData;
       
-  } catch (error) {
-    console.log(error);
-  }
 };
 
 exports.fetchIndividualQuizReport = async (request)=> {
 
-  console.log("-----comming-----");
       const quizResults = await quizResultRepository.fetchQuizResultByQuizId(request);
 
       const AllstudentsData =  await classTestRepository.getStudentInfo(request);
-      console.log("-----comming2-----");
       AllstudentsData.Items.map(studentData =>{
               const studentResult = quizResults.Items.find(quizResult => studentData.student_id == quizResult.student_id );
               if(studentResult)
               studentData.individual_group_performance = studentResult.individual_group_performance;
           })
-          // console.log("-----comming3-----", AllstudentsData);
-          return AllstudentsData;
+
+      return AllstudentsData;
 };

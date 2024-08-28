@@ -6,6 +6,7 @@ const dynamoDbCon = require('../awsConfig');
 const constant = require('../constants/constant');
 const {groupTypes } = require('../constants/constant');
 const { constants } = require("buffer");
+const { StatusCodes } = require('http-status-codes');
 
 const excelEpoc = new Date(1900, 0, 0).getTime();
 const msDay = 86400000;
@@ -1143,4 +1144,11 @@ exports.processRows = (resultsData) => {
       rows.push(row);
     });
     return rows.slice(1);
+  }
+
+  exports.ERROR = StatusCodes;
+
+  exports.formatResponse = (res ,data ,statusCode = 200) =>
+  {
+    return res.status(statusCode).json(data);
   }

@@ -1,3 +1,4 @@
+const { formatResponse } = require("../helper/helper");
 const reportServices = require("../services/reportServices");
 
 exports.fetchAssessmentSummary = (req, res, next) => {
@@ -86,23 +87,21 @@ exports.viewAnalysisIndividualReport = (req, res, next) => {
 };
 
 
-exports.preLearningBlueprintDetails = (req, res, next) => {
+exports.preLearningBlueprintDetails = async (req, res, next) => {
+    try {
     let request = req.body;
-    reportServices.preLearningBlueprintDetails(request, function (postLearningBlueprint_details_err, postLearningBlueprint_details_res) {
-        if (postLearningBlueprint_details_err) {
-            res.status(postLearningBlueprint_details_err).json(postLearningBlueprint_details_res);
-        } else {
-            console.log("pre Learning Summary for the subject!");
-            res.json(postLearningBlueprint_details_res);
-        }
-    });
+    const reportData = await reportServices.preLearningBlueprintDetails(request);
+    return formatResponse(res, reportData);
+    } catch (error) {
+       next(error)
+    }
 };
 
 exports.getIndividualQuizReport = async (req, res, next) => {
     try {
         const request = req.body;
         const reportData = await reportServices.fetchIndividualQuizReport(request);
-        return res.status(200).json(reportData);
+        return formatResponse(res, reportData);
     } catch (error) {
         next(error)
     }
