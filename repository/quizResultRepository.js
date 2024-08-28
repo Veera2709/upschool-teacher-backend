@@ -168,6 +168,21 @@ exports.fetchQuizResultByQuizId =async (request)=> {
             return await baseRepositoryNew.DATABASE_TABLE2.query(params); 
         }
 
+ exports.fetchQuizResultDataOfStudentNew = async (request)=>{
+                    let params = {
+                        TableName: TABLE_NAMES.upschool_quiz_result,
+                        IndexName: indexName.Indexes.common_id_index,
+                        KeyConditionExpression: "common_id = :common_id",
+                        FilterExpression: "quiz_id = :quiz_id AND student_id = :student_id",
+                        ExpressionAttributeValues: {
+                            ":quiz_id": request.data.quiz_id,
+                            ":student_id": request.data.student_id,
+                            ":common_id": constant.constValues.common_id
+                        }
+                    };
+        
+                    return await baseRepositoryNew.DATABASE_TABLE2.query(params); 
+                }
 
 exports.fetchBulkQuizResultsByID = function (request, callback) {
 

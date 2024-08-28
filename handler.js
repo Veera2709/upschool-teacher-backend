@@ -3,6 +3,7 @@ const express = require("express");
 const app = express();
 const bodyParser = require("body-parser");
 const dotenv = require("dotenv");
+const fileUpload = require("express-fileupload");
 dotenv.config();
 const cors = require('cors');
 const commonController = require('./controller/commonController');
@@ -26,20 +27,22 @@ const schoolAdminController = require('./controller/schoolAdminController');
 const reportController = require('./controller/reportController');
 
 const validator = require('./middleware/validator');
+const { ERROR } = require("./helper/helper");
 
-app.use(bodyParser.urlencoded({
+app.use(express.urlencoded({
     limit: '50mb',
     extended: true,
     parameterLimit: 100000,
 }));
 
-app.use(bodyParser.json({
+app.use(express.json({
+    type: "application/json",
     limit: '50mb'
 }));
 
-app.use(bodyParser.json({
-    type: "application/vnd.api+json",
-}));
+app.use(haltOnTimedout);
+
+app.use(fileUpload());
 
 app.use(cors());
 
@@ -154,7 +157,24 @@ app.post("/v1/preLearningBlueprintDetails",reportController.preLearningBlueprint
 app.post("/v1/viewAnalysisIndividualReport",reportController.viewAnalysisIndividualReport);
 
 
+function haltOnTimedout(req, res, next) {
+    if (!req.timedout) next()
+}
+
+
+app.use((err, req, res, next) => {
+    console.log(`Path: ${req.path} -> Status Code: ${err.status || ERROR.INTERNAL_SERVER_ERROR} -> Stack: ${err.stack}`)
+    res.status(err.status || ERROR.INTERNAL_SERVER_ERROR).send(err.message);
+});
+
 const NODE_ENV = process.env.NODE_ENV || 'development';
+
+// if (NODE_ENV === 'development' || NODE_ENV === Environment.Testing) {
+//     const swaggerOptions = {
+//         explorer: true, // Enable Swagger UI explorer in development and testing environments
+//     };
+//     app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerJSDocs, swaggerOptions));
+// }
 
 if (NODE_ENV === 'development') {
 
