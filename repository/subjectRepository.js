@@ -4,6 +4,8 @@ const indexName = require('../constants/indexes');
 const { DATABASE_TABLE } = require('./baseRepository');
 const helper = require('../helper/helper');
 const constant = require('../constants/constant');
+const baseRepositoryNew = require('./baseRepositoryNew');
+
 
 exports.getSubjetById = function (request, callback) {
 
@@ -28,6 +30,18 @@ exports.getSubjetById = function (request, callback) {
         }
     });
 }
+exports.getSubjetById2 = async (request) => {
+    let params = {
+        TableName: TABLE_NAMES.upschool_subject_table,
+        KeyConditionExpression: "subject_id = :subject_id",
+        ExpressionAttributeValues: {
+            ":subject_id": request.data.subject_id
+        }
+    };
+
+    return await baseRepositoryNew.DATABASE_TABLE2.query(params);
+}
+
 exports.getSubjetByIdAndName = function (request, callback) {
 
     dynamoDbCon.getDB(function (DBErr, dynamoDBCall) {
@@ -44,8 +58,8 @@ exports.getSubjetByIdAndName = function (request, callback) {
                 KeyConditionExpression: "subject_id = :subject_id",
                 ExpressionAttributeValues: {
                     ":subject_id": request.data.subject_id
-                }, 
-                ProjectionExpression: ["subject_id", "subject_title"],  
+                },
+                ProjectionExpression: ["subject_id", "subject_title"],
 
             }
 

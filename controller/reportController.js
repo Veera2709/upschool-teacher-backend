@@ -1,17 +1,16 @@
 const { formatResponse } = require("../helper/helper");
 const reportServices = require("../services/reportServices");
 
-exports.fetchAssessmentSummary = (req, res, next) => {
-    let request = req.body;
-    reportServices.getAssessmentDetails(request, function (assessment_detail_err, assessment_detail_res) {
-        if (assessment_detail_err) {
-            res.status(assessment_detail_err).json(assessment_detail_res);
-        } else {
-            console.log("Fetched assessment details for the subject!");
-            res.json(assessment_detail_res);
-        }
-    });
+exports.fetchAssessmentSummary = async (req, res, next) => {
+    try {
+        const request = req.body;
+        const reportData = await reportServices.getAssessmentDetails(request);
+        return formatResponse(res, reportData);
+    } catch (error) {
+        next(error)
+    }
 };
+
 
 exports.getTargetedLearningExpectation = (req, res, next) => {
     let request = req.body;
@@ -89,11 +88,11 @@ exports.viewAnalysisIndividualReport = (req, res, next) => {
 
 exports.preLearningBlueprintDetails = async (req, res, next) => {
     try {
-    let request = req.body;
-    const reportData = await reportServices.preLearningBlueprintDetails(request);
-    return formatResponse(res, reportData);
+        let request = req.body;
+        const reportData = await reportServices.preLearningBlueprintDetails(request);
+        return formatResponse(res, reportData);
     } catch (error) {
-       next(error)
+        next(error)
     }
 };
 

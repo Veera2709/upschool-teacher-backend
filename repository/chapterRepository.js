@@ -5,6 +5,8 @@ const { DATABASE_TABLE } = require('./baseRepository');
 const { successResponse } = require('./baseRepository');
 const helper = require('../helper/helper');
 const constant = require('../constants/constant');
+const baseRepositoryNew = require('./baseRepositoryNew');
+
 
 exports.fetchChapterByID = function (request, callback) {
 
@@ -132,6 +134,40 @@ exports.fetchBulkChaptersIDName = function (request, callback) {
             }
         }
     });
+}
+exports.fetchBulkChaptersIDName2 =async (request)=> {     
+    let unit_chapter_id = request.unit_chapter_id;
+    if(unit_chapter_id.length === 1){
+        let params = {
+            TableName: TABLE_NAMES.upschool_chapter_table,
+            KeyConditionExpression: "chapter_id = :chapter_id",
+                    ExpressionAttributeValues: { 
+                        ":chapter_id": unit_chapter_id[0]
+                    },
+                    ProjectionExpression: "chapter_id, chapter_title, display_name, prelearning_topic_id , postlearning_topic_id",
+        }
+        return await baseRepositoryNew.DATABASE_TABLE2.query(params); 
+
+
+    }else{
+            const keys = unit_chapter_id.map((id) => ({
+                chapter_id: id
+            }));
+    
+            const params = {
+                RequestItems: {
+                    [TABLE_NAMES.upschool_chapter_table]: {
+                        Keys: keys,
+                        ProjectionExpression: "chapter_id, chapter_title, display_name, prelearning_topic_id , postlearning_topic_id",
+                    }
+                }
+            };
+    
+
+        return await baseRepositoryNew.DATABASE_TABLE2.getByObjects(params); 
+
+    }
+
 }
 exports.fetchChaptersIDandChapterTopicID = function (request, callback) {
 
