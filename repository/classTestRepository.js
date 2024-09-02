@@ -133,7 +133,7 @@ exports.getClassTestIdAndName = function (request, callback) {
     });
 }
 
-exports.getStudentInfo = function (request) {
+exports.getStudentInfo = async (request)=> {
 
             let params = {
                 TableName: TABLE_NAMES.upschool_student_info,
@@ -149,8 +149,8 @@ exports.getStudentInfo = function (request) {
                 // ProjectionExpression: ["student_id", "user_firstname", "user_lastname", "roll_no"]
             }
 
-            const studentInfoData =  baseRepositoryNew.DATABASE_TABLE2.query(params);
-            return studentInfoData;  
+            return await baseRepositoryNew.DATABASE_TABLE2.query(params);
+             
         }
 
 exports.fetchClassTestDataById = function (request, callback) {

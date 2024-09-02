@@ -379,7 +379,7 @@ exports.fetchBulkTopicsIDName2 = async (request) => {
         };
 
         const result = await baseRepositoryNew.DATABASE_TABLE2.query(params);
-        return result;
+        return result.Items;
     } else {
         const keys = unit_Topic_id.map((id) => ({
             topic_id: id
