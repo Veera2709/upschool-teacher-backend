@@ -33,6 +33,26 @@ exports.fetchQuizResultDataOfStudent = function (request, callback) {
     });
 }
 
+exports.fetchQuizResultDataOfStudent2 = async (request) => {
+   
+        const params = {
+            TableName: TABLE_NAMES.upschool_quiz_result,
+            IndexName: indexName.Indexes.common_id_index,
+            KeyConditionExpression: "common_id = :common_id",
+            FilterExpression: "quiz_id = :quiz_id AND student_id = :student_id",
+            ExpressionAttributeValues: {
+                ":quiz_id": request.data.quiz_id,
+                ":student_id": request.data.student_id,
+                ":common_id": constant.constValues.common_id
+            }
+        };
+
+        // Assuming baseRepositoryNew.DATABASE_TABLE2.query is a wrapper around DynamoDB's query method
+        const result = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+        return result;
+};
+
+
 exports.insertQuizDataOfStudent = function (request, callback) {
 
     dynamoDbCon.getDB(function (DBErr, dynamoDBCall) {
@@ -238,4 +258,25 @@ exports.fetchBulkQuizResultsByID = function (request, callback) {
     });
 }
 
+exports.fetchBulkQuizResultsByID2 = async (request) => {
+    const unit_Quiz_id = [...new Set(request.unit_Quiz_id)]; // Remove duplicates
+    const common_id = constant.constValues.common_id;
 
+    // Create filter expression for multiple quiz_id
+    const filterExpression = unit_Quiz_id.map((_, index) => `quiz_id = :quiz_id${index}`).join(" OR ");
+    const expressionAttributeValues = unit_Quiz_id.reduce((acc, quizId, index) => {
+        acc[`:quiz_id${index}`] = quizId;
+        return acc;
+    }, { ":common_id": common_id });
+
+    const params = {
+        TableName: TABLE_NAMES.upschool_quiz_result,
+        IndexName: indexName.Indexes.common_id_index,
+        KeyConditionExpression: "common_id = :common_id",
+        FilterExpression: filterExpression,
+        ExpressionAttributeValues: expressionAttributeValues,
+    };
+
+        const result = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+        return result.Items;
+};

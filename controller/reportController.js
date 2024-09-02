@@ -50,40 +50,34 @@ exports.getAssesmentSummaryDetails = (req, res, next) => {
 };
 
 
-exports.preLearningSummaryDetails = (req, res, next) => {
-    let request = req.body;
-    reportServices.preLearningSummaryDetails(request, function (preLearningSummary_details_err, preLearningSummary_details_res) {
-        if (preLearningSummary_details_err) {
-            res.status(preLearningSummary_details_err).json(preLearningSummary_details_res);
-        } else {
-            console.log("pre Learning Summary for the subject!");
-            res.json(preLearningSummary_details_res);
-        }
-    });
+exports.preLearningSummaryDetails =async (req, res, next) => {
+    try {
+        const request = req.body;
+        const reportData = await reportServices.preLearningSummaryDetails(request);
+        return formatResponse(res, reportData);
+    } catch (error) {
+        next(error)
+    }
 };
 
-exports.postLearningSummaryDetails = (req, res, next) => {
-    let request = req.body;
-    reportServices.postLearningSummaryDetails(request, function (postLearningSummary_details_err, postLearningSummary_details_res) {
-        if (postLearningSummary_details_err) {
-            res.status(postLearningSummary_details_err).json(postLearningSummary_details_res);
-        } else {
-            console.log("pre Learning Summary for the subject!");
-            res.json(postLearningSummary_details_res);
-        }
-    });
+exports.postLearningSummaryDetails =async (req, res, next) => {
+    try {
+        const request = req.body;
+        const reportData = await reportServices.postLearningSummaryDetails(request);
+        return formatResponse(res, reportData);
+    } catch (error) {
+        next(error)
+    }
 };
 
-exports.viewAnalysisIndividualReport = (req, res, next) => {
+exports.viewAnalysisIndividualReport =async (req, res, next) => {
+    try {
     let request = req.body;
-    reportServices.viewAnalysisIndividualReport(request, function (individualReport_details_err, individualReport_details_res) {
-        if (individualReport_details_err) {
-            res.status(individualReport_details_err).json(individualReport_details_res);
-        } else {
-            console.log("pre Learning Summary for the subject!");
-            res.json(individualReport_details_res);
-        }
-    });
+    const reportData =  await reportServices.viewAnalysisIndividualReport(request);
+    return formatResponse(res, reportData);
+    } catch (error) {
+    next(error)
+    }
 };
 
 

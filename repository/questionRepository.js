@@ -5,6 +5,7 @@ const { DATABASE_TABLE } = require("./baseRepository");
 const { successResponse } = require("./baseRepository");
 const helper = require("../helper/helper");
 const constant = require("../constants/constant");
+const baseRepositoryNew = require('./baseRepositoryNew');
 
 
 exports.REFfetchBulkQuestionsWithPublishStatusAndProjection = function (request, callback) {
@@ -275,6 +276,44 @@ exports.fetchBulkQuestionsNameById = function (request, callback) {
         }
     });
 }
+
+exports.fetchBulkQuestionsNameById2 = async (request) => {
+        const question_ids = [...new Set(request.question_id)]; // Remove duplicates
+
+        if (question_ids.length === 1) {
+            // When there is only one question ID
+            const params = {
+                TableName: TABLE_NAMES.upschool_question_table,
+                KeyConditionExpression: "question_id = :question_id",
+                ExpressionAttributeValues: { 
+                    ":question_id": question_ids[0]
+                },
+                ProjectionExpression: "answers_of_question, cognitive_skill, question_id, question_type, marks, difficulty_level, question_content"
+            };
+
+            const result = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+            return result.Items;
+        } else {
+            // When there are multiple question IDs
+            const keys = question_ids.map((id) => ({
+                question_id: id
+            }));
+
+            const params = {
+                RequestItems: { 
+                    [TABLE_NAMES.upschool_question_table]: {
+                        Keys: keys,
+                        ProjectionExpression: "answers_of_question, cognitive_skill, question_id, question_type, marks, difficulty_level, question_content"
+                    }
+                }
+            };
+
+            const result = await baseRepositoryNew.DATABASE_TABLE2.getByObjects(params);
+            return result.Responses[TABLE_NAMES.upschool_question_table];
+        }
+
+};
+
 
 
 
