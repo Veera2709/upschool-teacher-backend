@@ -738,7 +738,7 @@ exports.setQizQaDetails = (qaDetails, indAns, quesAns, questionPaperTrack) => {
                 localType = questionPaperTrack.filter(ques => ques.question_id === qaDetails[i].question_id);
                 if(localQuestion.length > 0 && indAns[i])
                 {
-                    await exports.comparingQuizAnswer(localQuestion[0], indAns[i],).then((obMark) => {
+                    await classTestServices.compareAnswer(localQuestion[0], indAns[i],).then((obMark) => {
                         console.log("OBTAINED MARKS : ", obMark);
                         qaDetails[i].obtained_marks = obMark;
                         qaDetails[i].student_answer = indAns[i];
