@@ -6,7 +6,6 @@ const baseRepositoryNew = require('./baseRepositoryNew');
 const { successResponse } = require('./baseRepository');
 const helper = require('../helper/helper');
 const constant = require('../constants/constant');
-const baseRepositoryNew = require('./baseRepositoryNew');
 
 
 exports.getStudentsData = function (request, callback) {
