@@ -6,6 +6,8 @@ const { successResponse } = require('./baseRepository');
 const baseRepositoryNew = require('./baseRepositoryNew');
 const helper = require('../helper/helper');
 const constant = require('../constants/constant');
+const baseRepositoryNew = require('./baseRepositoryNew');
+
 
 exports.fetchChapterByID = function (request, callback) {
 

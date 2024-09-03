@@ -6,6 +6,8 @@ const baseRepositoryNew = require('./baseRepositoryNew');
 const { successResponse } = require('./baseRepository');
 const helper = require('../helper/helper');
 const constant = require('../constants/constant');
+const baseRepositoryNew = require('./baseRepositoryNew');
+
 
 exports.getStudentsData = function (request, callback) {
 
@@ -34,6 +36,21 @@ exports.getStudentsData = function (request, callback) {
 
         }
     });
+}
+exports.getStudentsData2 = async (request) => {
+    let params = {
+        TableName: TABLE_NAMES.upschool_student_info,
+        IndexName: indexName.Indexes.common_id_index,
+        KeyConditionExpression: "common_id = :common_id",
+        FilterExpression: "user_status = :user_status AND section_id = :section_id",
+        ExpressionAttributeValues: {
+            ":common_id": constant.constValues.common_id,
+            ":user_status": "Active",
+            ":section_id": request.data.section_id
+        }
+    };
+
+    return await baseRepositoryNew.DATABASE_TABLE2.query(params);
 }
 
 exports.getStudentsData2 = async (request) => {
