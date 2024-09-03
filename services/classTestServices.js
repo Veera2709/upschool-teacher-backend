@@ -437,16 +437,18 @@ exports.readStudentAnswerSheets = (request, callback) => {
     } entireStudentsData(0);
 }
 
-exports.fetchGetStudentData = (request, callback) => {
+exports.fetchGetStudentData = async(request, callback) => {
 
-    classTestRepository.getStudentInfo(request, async function (fetch_student_err, fetch_student_res) {
-        if (fetch_student_err) {
-            console.log(fetch_student_err);
-            callback(fetch_student_err, fetch_student_res);
-        } else {
-            callback(fetch_student_err, fetch_student_res.Items);
-        }
-    })
+    // classTestRepository.getStudentInfo(request, async function (fetch_student_err, fetch_student_res) {
+    //     if (fetch_student_err) {
+    //         console.log(fetch_student_err);
+    //         callback(fetch_student_err, fetch_student_res);
+    //     } else {
+    //         callback(fetch_student_err, fetch_student_res.Items);
+    //     }
+    // })
+    const AllstudentsData =  await classTestRepository.getStudentInfo(request);
+    callback(0,AllstudentsData);
 }
 
 exports.getResult = (request, callback) => {

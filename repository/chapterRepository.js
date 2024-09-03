@@ -3,6 +3,7 @@ const { TABLE_NAMES } = require('../constants/tables');
 const indexName = require('../constants/indexes');
 const { DATABASE_TABLE } = require('./baseRepository');
 const { successResponse } = require('./baseRepository');
+const baseRepositoryNew = require('./baseRepositoryNew');
 const helper = require('../helper/helper');
 const constant = require('../constants/constant');
 const baseRepositoryNew = require('./baseRepositoryNew');
@@ -135,40 +136,40 @@ exports.fetchBulkChaptersIDName = function (request, callback) {
         }
     });
 }
-exports.fetchBulkChaptersIDName2 =async (request)=> {     
-    let unit_chapter_id = request.unit_chapter_id;
-    if(unit_chapter_id.length === 1){
-        let params = {
-            TableName: TABLE_NAMES.upschool_chapter_table,
-            KeyConditionExpression: "chapter_id = :chapter_id",
-                    ExpressionAttributeValues: { 
-                        ":chapter_id": unit_chapter_id[0]
-                    },
-                    ProjectionExpression: "chapter_id, chapter_title, display_name, prelearning_topic_id , postlearning_topic_id",
-        }
-        return await baseRepositoryNew.DATABASE_TABLE2.query(params); 
 
 
-    }else{
-            const keys = unit_chapter_id.map((id) => ({
-                chapter_id: id
-            }));
-    
+exports.fetchBulkChaptersIDName2 = async  (request)=> {
+        const unit_chapter_id = request.unit_chapter_id;
+
+        if (unit_chapter_id.length === 1) {
+
+            const params = {
+                TableName: TABLE_NAMES.upschool_chapter_table,
+                KeyConditionExpression: "chapter_id = :chapter_id",
+                ExpressionAttributeValues: {
+                    ":chapter_id": unit_chapter_id[0]
+                },
+                ProjectionExpression: "chapter_id, chapter_title, display_name, prelearning_topic_id, postlearning_topic_id",
+            };
+
+            return await baseRepositoryNew.DATABASE_TABLE2.query(params);
+        } else {
+            // Use BatchGetCommand for multiple chapter IDs
+            const keys = unit_chapter_id.map((id) => ({ chapter_id: id }));
             const params = {
                 RequestItems: {
                     [TABLE_NAMES.upschool_chapter_table]: {
                         Keys: keys,
-                        ProjectionExpression: "chapter_id, chapter_title, display_name, prelearning_topic_id , postlearning_topic_id",
-                    }
-                }
+                        ProjectionExpression: "chapter_id, chapter_title, display_name, prelearning_topic_id, postlearning_topic_id",
+                    },
+                },
             };
-    
 
-        return await baseRepositoryNew.DATABASE_TABLE2.getByObjects(params); 
+            const data = await baseRepositoryNew.DATABASE_TABLE2.getByObjects(params);
+            return data.Responses[TABLE_NAMES.upschool_chapter_table]; // Return the fetched chapters
+        }
+};
 
-    }
-
-}
 exports.fetchChaptersIDandChapterTopicID = function (request, callback) {
 
     dynamoDbCon.getDB(function (DBErr, dynamoDBCall) {

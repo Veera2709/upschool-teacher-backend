@@ -4,6 +4,7 @@ const indexName = require('../constants/indexes');
 const { DATABASE_TABLE } = require('./baseRepository');
 const helper = require('../helper/helper');
 const constant = require('../constants/constant');
+const baseRepositoryNew = require('./baseRepositoryNew');
 
 exports.getContentCategories = function (request, callback) {
 
@@ -730,6 +731,39 @@ exports.fetchBulkCognitiveSkillNameById = function (request, callback) {
     });
 }
 
+exports.fetchBulkCognitiveSkillNameById2 = async (request) => {
+    const cognitive_ids = [...new Set(request.cognitive_id)]; // Remove duplicates
+
+    if (cognitive_ids.length === 1) {
+        // When there is only one cognitive ID
+        const params = {
+            TableName: TABLE_NAMES.upschool_cognitive_skill,
+            KeyConditionExpression: "cognitive_id = :cognitive_id",
+            ExpressionAttributeValues: { 
+                ":cognitive_id": cognitive_ids[0]
+            }
+        };
+
+        const result = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+        return result.Items;
+    } else {
+        // When there are multiple cognitive IDs
+        const keys = cognitive_ids.map((id) => ({
+            cognitive_id: id
+        }));
+
+        const params = {
+            RequestItems: { 
+                [TABLE_NAMES.upschool_cognitive_skill]: {
+                    Keys: keys
+                }
+            }
+        };
+
+        const result = await baseRepositoryNew.DATABASE_TABLE2.getByObjects(params);
+        return result.Responses[TABLE_NAMES.upschool_cognitive_skill];
+    }
+};
 
 
 

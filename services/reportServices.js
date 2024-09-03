@@ -295,68 +295,26 @@ exports.getTargetedLearningExpectationDetails = async (request) => {
 };
 
 
-exports.preLearningSummaryDetails = async (request, callback) => {
-  try {
-    const studentsDataRes = await new Promise((resolve, reject) => {
-      studentRepository.getStudentsData(request, (err, res) => {
-        if (err) {
-          console.log(err);
-          return reject(err);
-        }
-        resolve(res);
-      });
-    });
+exports.preLearningSummaryDetails = async (request) => {
+
+    const studentsDataRes = await studentRepository.getStudentsData2(request);
 
     const studentsCount = studentsDataRes.Items.length;
 
-    const subjectDataRes = await new Promise((resolve, reject) => {
-      subjectRepository.getSubjetById(request, (err, res) => {
-        if (err) {
-          console.log(err);
-          return reject(err);
-        }
-        resolve(res);
-      });
-    });
+    const subjectDataRes = await subjectRepository.getSubjetById2(request);
 
     if (subjectDataRes.Items.length > 0) {
       const subject_unit_id = subjectDataRes.Items[0].subject_unit_id;
 
-      const unitDataRes = await new Promise((resolve, reject) => {
-        unitRepository.fetchUnitData({ subject_unit_id }, (err, res) => {
-          if (err) {
-            console.log(err);
-            return reject(err);
-          }
-          resolve(res);
-        });
-      });
+      const unitDataRes = await unitRepository.fetchUnitData2({ subject_unit_id });
 
       if (unitDataRes.Items.length > 0) {
         let unit_chapter_id = [];
         unitDataRes.Items.forEach((e) => unit_chapter_id.push(...e.unit_chapter_id));
-
-        const chapterDataRes = await new Promise((resolve, reject) => {
-          chapterRepository.fetchBulkChaptersIDName({ unit_chapter_id }, (err, res) => {
-            if (err) {
-              console.log(err);
-              return reject(err);
-            }
-            resolve(res);
-          });
-        });
-
-        const quizDataRes = await new Promise((resolve, reject) => {
-          quizRepository.fetchAllQuizBasedonSubject(request, (err, res) => {
-            if (err) {
-              console.log(err);
-              return reject(err);
-            }
-            resolve(res);
-          });
-        });
-
-        console.log("quizDataRes = ", quizDataRes);
+        
+        const chapterDataRes = await chapterRepository.fetchBulkChaptersIDName2({ unit_chapter_id });
+        
+        const quizDataRes = await quizRepository.fetchAllQuizBasedonSubject2(request);
 
         const quizIds = [];
         quizDataRes.Items.forEach((quiz) => {
@@ -371,29 +329,18 @@ exports.preLearningSummaryDetails = async (request, callback) => {
           }
         });
 
-        // Fetch quiz results in bulk
-        const quizResultDataRes = await new Promise((resolve, reject) => {
-          quizResultRepository.fetchBulkQuizResultsByID({ unit_Quiz_id: quizIds }, (err, res) => {
-            if (err) {
-              console.log(err);
-              return reject(err);
-            }
-            resolve(res);
-          });
-        });
-
-        console.log("quizResultDataRes = ", quizResultDataRes);
+        const quizResultDataRes = await quizResultRepository.fetchBulkQuizResultsByID2({ unit_Quiz_id: quizIds });
 
         const topicIds = [];
         chapterDataRes.Items.forEach((val) => {
-          val.totalStrength = studentsCount;  // Preserve totalStrength
+          val.totalStrength = studentsCount; 
 
           if (val.notConsideredTopics) {
             topicIds.push(...val.notConsideredTopics);
           }
 
           if (val.quiz_id) {
-            const quizResults = quizResultDataRes.Items.filter((result) => result.quiz_id === val.quiz_id);
+            const quizResults = quizResultDataRes.filter((result) => result.quiz_id === val.quiz_id);
             let totalMarks = 0;
 
             val.student_attendance = quizResults.length;
@@ -407,97 +354,45 @@ exports.preLearningSummaryDetails = async (request, callback) => {
         });
 
         if (topicIds.length > 0) {
-          const topicDataRes = await new Promise((resolve, reject) => {
-            topicRepository.fetchBulkTopicsIDName({ unit_Topic_id: topicIds }, (err, res) => {
-              if (err) {
-                console.log(err);
-                return reject(err);
-              }
-              resolve(res);
-            });
-          });
+          const topicDataRes = await topicRepository.fetchBulkTopicsIDName2({ unit_Topic_id: topicIds });
 
           chapterDataRes.Items.forEach((val) => {
             if (val.notConsideredTopics) {
               val.notConsideredTopics = val.notConsideredTopics.map((id) => {
-                const topic = topicDataRes.Items.find((item) => item.topic_id === id);
+                const topic = topicDataRes.find((item) => item.topic_id === id);
                 return topic ? topic.topic_title : id;
               });
             }
           });
         }
 
-        callback(null, chapterDataRes);
+        return chapterDataRes;
       }
     }
-  } catch (error) {
-    console.error(error);
-    callback(error);
-  }
 };
 
+exports.postLearningSummaryDetails = async (request) => {
 
-exports.postLearningSummaryDetails = async (request, callback) => {
-  try {
-    const studentsDataRes = await new Promise((resolve, reject) => {
-      studentRepository.getStudentsData(request, (err, res) => {
-        if (err) {
-          console.log(err);
-          return reject(err);
-        }
-        resolve(res);
-      });
-    });
+    const studentsDataRes = await studentRepository.getStudentsData2(request);
 
     const studentsCount = studentsDataRes.Items.length;
 
-    const subjectDataRes = await new Promise((resolve, reject) => {
-      subjectRepository.getSubjetById(request, (err, res) => {
-        if (err) {
-          console.log(err);
-          return reject(err);
-        }
-        resolve(res);
-      });
-    });
+    const subjectDataRes = await subjectRepository.getSubjetById2(request);
 
     if (subjectDataRes.Items.length > 0) {
       const subject_unit_id = subjectDataRes.Items[0].subject_unit_id;
 
-      const unitDataRes = await new Promise((resolve, reject) => {
-        unitRepository.fetchUnitData({ subject_unit_id }, (err, res) => {
-          if (err) {
-            console.log(err);
-            return reject(err);
-          }
-          resolve(res);
-        });
-      });
+      const unitDataRes = await unitRepository.fetchUnitData2({ subject_unit_id });
 
       if (unitDataRes.Items.length > 0) {
         let unit_chapter_id = [];
         unitDataRes.Items.forEach((e) => unit_chapter_id.push(...e.unit_chapter_id));
 
-        const chapterDataRes = await new Promise((resolve, reject) => {
-          chapterRepository.fetchBulkChaptersIDName({ unit_chapter_id }, (err, res) => {
-            if (err) {
-              console.log(err);
-              return reject(err);
-            }
-            resolve(res);
-          });
-        });
+        const chapterDataRes = await chapterRepository.fetchBulkChaptersIDName2({ unit_chapter_id });
+
+        const quizDataRes = await quizRepository.fetchAllQuizBasedonSubject2(request);
 
         const topicIds = [];
-        const quizDataRes = await new Promise((resolve, reject) => {
-          quizRepository.fetchAllQuizBasedonSubject(request, (err, res) => {
-            if (err) {
-              console.log(err);
-              return reject(err);
-            }
-            resolve(res);
-          });
-        });
 
         quizDataRes.Items.forEach((quiz) => {
           if (quiz.not_considered_topics) {
@@ -522,25 +417,16 @@ exports.postLearningSummaryDetails = async (request, callback) => {
           }
         });
 
-        // Fetch quiz results in bulk
         const quizIds = chapterDataRes.Items.flatMap((val) => val.quiz_id ? val.quiz_id.map((quiz) => quiz.id) : []);
-        const quizResultDataRes = await new Promise((resolve, reject) => {
-          quizResultRepository.fetchBulkQuizResultsByID({ unit_Quiz_id: quizIds }, (err, res) => {
-            if (err) {
-              console.log(err);
-              return reject(err);
-            }
-            resolve(res);
-          });
-        });
 
-        // Process quiz results
+        const quizResultDataRes = await quizResultRepository.fetchBulkQuizResultsByID2({ unit_Quiz_id: quizIds });
+
         chapterDataRes.Items.forEach((val) => {
           val.totalStrength = studentsCount;
 
           if (Array.isArray(val.quiz_id) && val.quiz_id.length > 0) {
             val.quiz_id.forEach((quiz) => {
-              const quizResults = quizResultDataRes.Items.filter((result) => result.quiz_id === quiz.id);
+              const quizResults = quizResultDataRes.filter((result) => result.quiz_id === quiz.id);
               let totalMarks = 0;
               let totalAttendance = 0;
 
@@ -556,110 +442,67 @@ exports.postLearningSummaryDetails = async (request, callback) => {
         });
 
         if (topicIds.length > 0) {
-          const topicDataRes = await new Promise((resolve, reject) => {
-            topicRepository.fetchBulkTopicsIDName({ unit_Topic_id: topicIds }, (err, res) => {
-              if (err) {
-                console.log(err);
-                return reject(err);
-              }
-              resolve(res);
-            });
-          });
+          const topicDataRes = await topicRepository.fetchBulkTopicsIDName2({ unit_Topic_id: topicIds });
 
           chapterDataRes.Items.forEach((val) => {
             if (val.notConsideredTopics) {
               val.notConsideredTopics = val.notConsideredTopics.map((id) => {
-                const topic = topicDataRes.Items.find((item) => item.topic_id === id);
+                const topic = topicDataRes.find((item) => item.topic_id === id);
                 return topic ? topic.topic_title : id;
               });
             }
           });
         }
 
-        callback(null, chapterDataRes);
+        return chapterDataRes;
       }
     }
-  } catch (error) {
-    console.error(error);
-    callback(error);
-  }
 };
 
+exports.viewAnalysisIndividualReport = async (request, callback) =>
+{
+       const quizData = await quizRepository.fetchQuizDataById2(request);
 
-exports.viewAnalysisIndividualReport = async (request, callback) => {
-  try {
-    const quizData = await quizRepository.fetchQuizDataById2(request);
+       const studentsDataRes = await quizResultRepository.fetchQuizResultDataOfStudent2(request);
 
+if(quizData.Item && studentsDataRes.Items[0] )
+{
+  let questionIds =  quizData.Item.question_track_details[studentsDataRes.Items[0].marks_details[0].set_key].map((val)=>
+  {
+    return val.question_id;
+  })
 
-    const studentsDataRes = await new Promise((resolve, reject) => {
-      quizResultRepository.fetchQuizResultDataOfStudent(request, (err, res) => {
-        if (err) {
-          console.log(err);
-          return reject(err);
-        }
-        resolve(res);
-      });
-    });
-    console.log(studentsDataRes.Items[0].marks_details, "&&&&&&&&&&&&&&&&&&&&&&&&&&&", quizData.Item.question_track_details);
-
-    if (quizData.Item && studentsDataRes.Items[0]) {
-      let questionIds = quizData.Item.question_track_details[studentsDataRes.Items[0].marks_details.set_key].map((val) => {
-        return val.question_id;
-      })
-
-      const topicIds = quizData.Item.question_track_details[studentsDataRes.Items[0].marks_details.set_key].map((val) => {
-        return val.topic_id;
-      })
+    const topicIds =  quizData.Item.question_track_details[studentsDataRes.Items[0].marks_details[0].set_key].map((val)=>
+    {
+   return val.topic_id;
+    })
 
 
-      const questions = await new Promise((resolve, reject) => {
-        questionRepository.fetchBulkQuestionsNameById({ question_id: questionIds }, (err, res) => {
-          if (err) {
-            console.log(err);
-            return reject(err);
-          }
-          resolve(res);
-        });
-      });
+    const questions = await questionRepository.fetchBulkQuestionsNameById2({question_id : questionIds });
 
-      const topicNames = await new Promise((resolve, reject) => {
-        topicRepository.fetchBulkTopicsIDName({ unit_Topic_id: topicIds }, (err, res) => {
-          if (err) {
-            console.log(err);
-            return reject(err);
-          }
-          resolve(res);
-        });
-      });
+    const topicNames = await topicRepository.fetchBulkTopicsIDName2({ unit_Topic_id: topicIds });
 
 
-      const cognitive_id = questions.Items.map(que => que.cognitive_skill)
+    const cognitive_id = questions.map(que => que.cognitive_skill )
 
-      const cognitiveSkillNames = await new Promise((resolve, reject) => {
-        settingsRepository.fetchBulkCognitiveSkillNameById({ cognitive_id: cognitive_id }, (err, res) => {
-          if (err) {
-            console.log(err);
-            return reject(err);
-          }
-          resolve(res);
-        });
-      });
-      questions.Items.map(async que => {
-        const ans = quizData.Item.question_track_details[studentsDataRes.Items[0].marks_details.set_key].find((val) => val.question_id == que.question_id);
+    const cognitiveSkillNames = await settingsRepository.fetchBulkCognitiveSkillNameById2({ cognitive_id: cognitive_id });
+    questions.map(async que =>
+      {
+        const ans = quizData.Item.question_track_details[studentsDataRes.Items[0].marks_details[0].set_key].find((val)=> val.question_id == que.question_id );
 
-        que.topic_title = topicNames.Items.find(val =>
-          val.topic_id == ans.topic_id
-        ).topic_title;
+        que.topic_title = topicNames.find(val =>
+            val.topic_id == ans.topic_id
+          ).topic_title;
 
-        que.cognitive_skill = cognitiveSkillNames.Items.find(val =>
-          val.cognitive_id == que.cognitive_skill
-        )
-        que.cognitive_skill = que.cognitive_skill ? que.cognitive_skill.cognitive_name : "";
+          const cognitive_skill = cognitiveSkillNames.find(val =>
+            val.cognitive_id == que.cognitive_skill
+          );
+          que.cognitive_skill = cognitive_skill.cognitive_name ? cognitive_skill.cognitive_name : "" ;
 
 
-        que.obtained_marks = studentsDataRes.Items[0].marks_details.qa_details.find(val =>
-          val.question_id == que.question_id
-        ).obtained_marks;
+          que.obtained_marks = studentsDataRes.Items[0].marks_details[0].qa_details.find(val =>
+            val.question_id == que.question_id
+          ).obtained_marks;
 
         await Promise.all(
           que.answers_of_question.map(async ans => {
@@ -670,16 +513,13 @@ exports.viewAnalysisIndividualReport = async (request, callback) => {
           })
         );
       }
-      )
-      callback(null, questions)
-    }
-    else
-      callback(null, [])
-  }
-  catch (error) {
-    console.error(error);
-    callback(error);
-  }
+    )
+
+  return questions;
+}
+else
+return [];
+
 }
 
 exports.preLearningBlueprintDetails = async (request) => {

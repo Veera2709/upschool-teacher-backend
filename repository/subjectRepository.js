@@ -6,7 +6,6 @@ const helper = require('../helper/helper');
 const constant = require('../constants/constant');
 const baseRepositoryNew = require('./baseRepositoryNew');
 
-
 exports.getSubjetById = function (request, callback) {
 
     dynamoDbCon.getDB(function (DBErr, dynamoDBCall) {
@@ -30,17 +29,19 @@ exports.getSubjetById = function (request, callback) {
         }
     });
 }
-exports.getSubjetById2 = async (request) => {
-    let params = {
-        TableName: TABLE_NAMES.upschool_subject_table,
-        KeyConditionExpression: "subject_id = :subject_id",
-        ExpressionAttributeValues: {
-            ":subject_id": request.data.subject_id
-        }
-    };
 
-    return await baseRepositoryNew.DATABASE_TABLE2.query(params);
-}
+
+exports.getSubjetById2 = async (request) => {
+        const params = {
+            TableName: TABLE_NAMES.upschool_subject_table,
+            KeyConditionExpression: "subject_id = :subject_id",
+            ExpressionAttributeValues: {
+                ":subject_id": request.data.subject_id
+            }
+        };
+
+        return await baseRepositoryNew.DATABASE_TABLE2.query(params); 
+};
 
 exports.getSubjetByIdAndName = function (request, callback) {
 
