@@ -238,30 +238,27 @@ exports.fetchBulkQuizResultsByID = function (request, callback) {
     });
 }
 exports.fetchBulkQuizResultsByID2 = async (request) => {
-    const unit_Quiz_id = [...new Set(request.unit_Quiz_id)]; // Remove duplicates
-    const common_id = constant.constValues.common_id;
-
-    // Create filter expression for multiple quiz_id
-    const filterExpression = unit_Quiz_id.map((_, index) => `quiz_id = :quiz_id${index}`).join(" OR ");
-    const expressionAttributeValues = unit_Quiz_id.reduce((acc, quizId, index) => {
-        acc[`:quiz_id${index}`] = quizId;
-        return acc;
-    }, { ":common_id": common_id });
-
+     const fromatedRequest = await helper.getDataByFilterKey(request);   
+    console.log("testrequest",request);
     const params = {
         TableName: TABLE_NAMES.upschool_quiz_result,
         IndexName: indexName.Indexes.common_id_index,
         KeyConditionExpression: "common_id = :common_id",
-        FilterExpression: filterExpression,
-        ExpressionAttributeValues: expressionAttributeValues,
+        FilterExpression: fromatedRequest.FilterExpression,
+        ExpressionAttributeValues: fromatedRequest.ExpressionAttributeValues,
     };
+
+    console.log({params});   
 
     try {
         const result = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+        console.log({result});
+        
         return result.Items;
     } catch (error) {
         console.error(`Error fetching quiz results:`, error);
         throw error;
     }
 };
+
 

@@ -1152,3 +1152,36 @@ exports.processRows = (resultsData) => {
   {
     return res.status(statusCode).json(data);
   }
+  exports.getDataByFilterKey = async (request) => {
+   console.log("test2request", request);
+    let { items, condition } = request;
+    const result = items.reduce((acc, item, index) => {
+        const currentResult = Object.entries(items[index]).reduce((acc, [key, value]) => {
+            const uniqueKey = `:${key}_${index}`;
+            acc.FilterExpression += `${key} = ${uniqueKey} ${condition} `;
+            acc.ExpressionAttributeValues[`${uniqueKey}`] = value;
+            return acc;
+        },
+            {
+                FilterExpression: ' ',
+                ExpressionAttributeValues: {},
+            });
+        // Remove the trailing condition (AND/OR) from the current FilterExpression
+        currentResult.FilterExpression = currentResult.FilterExpression.slice(0, -(condition.length + 1));
+ 
+        // Concatenate the FilterExpression for the current item with the overall result
+        acc.FilterExpression += `(${currentResult.FilterExpression}) ${condition} `;
+        acc.ExpressionAttributeValues = {
+            ...acc.ExpressionAttributeValues,
+            ...currentResult.ExpressionAttributeValues,
+        };
+ 
+        return acc;
+    }, {
+        FilterExpression: '',
+        ExpressionAttributeValues: {},
+    });
+    result.FilterExpression = result.FilterExpression.slice(0, -(condition.length + 1));
+    result.ExpressionAttributeValues[':common_id'] = '61692656'   
+    return result;
+}
