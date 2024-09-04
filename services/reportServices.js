@@ -165,7 +165,7 @@ exports.getAssessmentDetails = (request, callback) => {
 
 
 exports.getTargetedLearningExpectation = async (request, callback) => {
-  let classStrength = 0;
+  
   let totalTopics = 0;
   let reachedTopics = 0;
 
@@ -181,7 +181,7 @@ exports.getTargetedLearningExpectation = async (request, callback) => {
           if (studentDataErr) {
             callback(studentDataErr, studentDataRes);
           } else {
-            classStrength = studentDataRes?.Items?.length;
+           const classStrength = studentDataRes?.Items?.length;
 
             quizRepository.fetchAllQuizBasedonSubject(request, async (quizDataErr, quizDataRes) => {
               if (quizDataErr) {
@@ -196,27 +196,21 @@ exports.getTargetedLearningExpectation = async (request, callback) => {
                     callback(quizResultDataErr, quizResultDataRes);
                   } else {
                     quizDataRes.Items.forEach((quiz) => {
-                      let passedStudentsOfParticularQuiz = 0;
 
                       const quizResultsForThisQuiz = quizResultDataRes.Items.filter(
                         (res) => res.quiz_id === quiz.quiz_id
                       );
 
                       // Calculate passed students
-                      quizResultDataRes.Items.map((val) => {
-                        // if (true) {
-                          console.log("------val---",val);
-                        if(val.isPassed)
-                          passedStudentsOfParticularQuiz++;
-                      });
+                      const passedStudentsOfParticularQuiz = quizResultsForThisQuiz.Items.filter(val => val.isPassed).length;
 
-                      if (quiz.learningType == "preLearning" && schoolDataRes.Items[0].teacher_access.prequiz_targetlearning === 'Yes') {
-                        if (passedStudentsOfParticularQuiz >= (classPercentagePre ? classStrength * classPercentagePre * 0.01 : 0)) {
-                          reachedTopics += quiz.selectedTopics.length;
-                        }
-                      } else if (passedStudentsOfParticularQuiz >= (classPercentagePost ? classStrength * classPercentagePost * 0.01 : 0)) {
+                      const classPercentage = quiz.learningType === "preLearning" ? classPercentagePre : classPercentagePost;
+                      const passedThreshold = classPercentage ? classStrength * classPercentage * 0.01 : 0;
+                      
+                      if (passedStudentsOfParticularQuiz >= passedThreshold) {
                         reachedTopics += quiz.selectedTopics.length;
                       }
+
                     });
 
                     callback(0, { totalTopics, reached: reachedTopics, classPercentagePre, classPercentagePost, totalStrength: classStrength });
@@ -474,6 +468,7 @@ exports.preLearningSummaryDetails = async (request) => {
     }
 };
 
+
 exports.postLearningSummaryDetails = async (request) => {
 
     const studentsDataRes = await studentRepository.getStudentsData2(request);
@@ -546,6 +541,7 @@ exports.postLearningSummaryDetails = async (request) => {
 
         if (topicIds.length > 0) {
           const topicDataRes = await topicRepository.fetchBulkTopicsIDName2({ unit_Topic_id: topicIds });
+
 
           chapterDataRes.Items.forEach((val) => {
             if (val.notConsideredTopics) {
