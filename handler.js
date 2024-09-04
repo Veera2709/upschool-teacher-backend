@@ -146,7 +146,7 @@ app.post("/v1/createSchoolAdmin", validator.validUser, schoolAdminController.cre
 app.post("/v1/updateSchoolAdmin", validator.validUser, schoolAdminController.updateSchoolAdmin);
 app.post("/v1/toggleSchoolAdminStatus", validator.validUser, schoolAdminController.toggleSchoolAdminStatus);
 
-// Dashboard
+// Dashboard Reports
 app.post("/v1/fetchAssessmentSummary", reportController.fetchAssessmentSummary);
 app.post("/v1/getTargetedLearningExpectation",reportController.getTargetedLearningExpectation);
 app.post("/v1/getTargetedLearningExpectationDetails",reportController.getTargetedLearningExpectationDetails);

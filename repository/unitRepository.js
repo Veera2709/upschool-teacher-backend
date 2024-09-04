@@ -8,6 +8,7 @@ const helper = require('../helper/helper');
 const constant = require('../constants/constant');
 
 
+
 exports.fetchUnitData = function (request, callback) {
 
     dynamoDbCon.getDB(function (DBErr, dynamoDBCall) {

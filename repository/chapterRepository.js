@@ -7,6 +7,7 @@ const baseRepositoryNew = require('./baseRepositoryNew');
 const helper = require('../helper/helper');
 const constant = require('../constants/constant');
 
+
 exports.fetchChapterByID = function (request, callback) {
 
     dynamoDbCon.getDB(function (DBErr, dynamoDBCall) {

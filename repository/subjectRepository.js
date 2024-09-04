@@ -59,8 +59,8 @@ exports.getSubjetByIdAndName = function (request, callback) {
                 KeyConditionExpression: "subject_id = :subject_id",
                 ExpressionAttributeValues: {
                     ":subject_id": request.data.subject_id
-                }, 
-                ProjectionExpression: ["subject_id", "subject_title"],  
+                },
+                ProjectionExpression: ["subject_id", "subject_title"],
 
             }
 
