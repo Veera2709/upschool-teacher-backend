@@ -151,7 +151,8 @@ exports.fetchBulkChaptersIDName2 = async  (request)=> {
                 ProjectionExpression: "chapter_id, chapter_title, display_name, prelearning_topic_id, postlearning_topic_id",
             };
 
-            return await baseRepositoryNew.DATABASE_TABLE2.query(params);
+            const chapterData =  await baseRepositoryNew.DATABASE_TABLE2.query(params);
+            return chapterData.Items;
         } else {
             // Use BatchGetCommand for multiple chapter IDs
             const keys = unit_chapter_id.map((id) => ({ chapter_id: id }));

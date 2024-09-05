@@ -1,3 +1,4 @@
+const { formatResponse } = require("../helper/helper");
 const classTestServices = require("../services/classTestServices");
 
     exports.addClassTest = (req, res, next) => {
@@ -69,19 +70,15 @@ exports.startEvaluation = (req, res, next) => {
 };
 
 
-exports.getStudentsBasedOnSection = (req, res, next) => {
-    console.log("Evaluation Start!");
-    let request = req.body;
-    classTestServices.fetchGetStudentData(request, function (fetch_student_err, fetch_student_res) {
-        if (fetch_student_err) { 
-            res.status(fetch_student_err).json(fetch_student_res);
-        } else {
-            console.log("Evaluation Completed!"); 
-            res.json(fetch_student_res);
-        }
-    });
+exports.getStudentsBasedOnSection = async (req, res, next) => {
+    try {
+        const request = req.body;
+        const studentData = await classTestServices.fetchGetStudentData(request);
+        return formatResponse(res, studentData);
+    } catch (error) {
+        next(error)
+    }
 };
-
 
 exports.getStudentResultData = (req, res, next) => {
     let request = req.body;

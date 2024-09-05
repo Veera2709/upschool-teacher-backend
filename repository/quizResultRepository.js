@@ -257,7 +257,7 @@ exports.fetchBulkQuizResultsByID = function (request, callback) {
         }
     });
 }
-exports.fetchBulkQuizResultsByID2 = async (request) => {
+exports.fetchBulkQuizResultsByID3 = async (request) => {
      const fromatedRequest = await helper.getDataByFilterKey(request);   
     console.log("testrequest",request);
     const params = {

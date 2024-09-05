@@ -150,7 +150,6 @@ app.post("/v1/toggleSchoolAdminStatus", validator.validUser, schoolAdminControll
 app.post("/v1/fetchAssessmentSummary", reportController.fetchAssessmentSummary);
 app.post("/v1/getTargetedLearningExpectation",reportController.getTargetedLearningExpectation);
 app.post("/v1/getTargetedLearningExpectationDetails",reportController.getTargetedLearningExpectationDetails);
-app.post("/v1/getAssesmentSummaryDetails",reportController.getAssesmentSummaryDetails);
 app.post("/v1/preLearningSummaryDetails",reportController.preLearningSummaryDetails);
 app.post("/v1/postLearningSummaryDetails",reportController.postLearningSummaryDetails);
 app.post("/v1/preLearningBlueprintDetails",reportController.preLearningBlueprintDetails);
