@@ -8,6 +8,7 @@ const helper = require('../helper/helper');
 const constant = require('../constants/constant');
 
 
+
 exports.fetchUnitData = function (request, callback) {
 
     dynamoDbCon.getDB(function (DBErr, dynamoDBCall) {
@@ -77,7 +78,8 @@ exports.fetchUnitData2 = async (request) => {
                 },
                 ProjectionExpression: "unit_id, unit_chapter_id, unit_status, unit_title, unit_updated_ts",
             };
-            return await baseRepositoryNew.DATABASE_TABLE2.query(params); 
+            const unit_data = await baseRepositoryNew.DATABASE_TABLE2.query(params); 
+            return unit_data.Items;
         } else {
             const keys = subject_unit_id.map((id) => ({ unit_id: id }));
             const params = {

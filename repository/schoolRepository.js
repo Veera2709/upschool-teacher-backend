@@ -4,6 +4,8 @@ const indexName = require('../constants/indexes');
 const { DATABASE_TABLE } = require('./baseRepository');
 const helper = require('../helper/helper');
 const constant = require('../constants/constant');
+const baseRepositoryNew = require('./baseRepositoryNew');
+
 
 exports.getSchoolDetailsById = function (request, callback) {
     dynamoDbCon.getDB(function (DBErr, dynamoDBCall) {
@@ -27,4 +29,15 @@ exports.getSchoolDetailsById = function (request, callback) {
 
         }
     });
+}
+exports.getSchoolDetailsById2 = async (request) => {
+    let params = {
+        TableName: TABLE_NAMES.upschool_school_info_table,
+        KeyConditionExpression: "school_id = :school_id",
+        ExpressionAttributeValues: {
+            ":school_id": request.data.school_id
+        }
+    };
+
+    return await baseRepositoryNew.DATABASE_TABLE2.query(params);
 }

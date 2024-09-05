@@ -114,7 +114,7 @@ exports.updateQuizDataOfStudent = function (request, callback) {
 
         }
     });
-}   
+}
 
 
 exports.resetQuizEvaluationStatus = function (request, callback) {
@@ -173,36 +173,36 @@ exports.fetchStudentQuiRresultMetadata = function (request, callback) {
     });
 }
 
-exports.fetchQuizResultByQuizId =async (request)=> {
-            let params = {
-                TableName: TABLE_NAMES.upschool_quiz_result,
-                IndexName: indexName.Indexes.common_id_index,
-                KeyConditionExpression: "common_id = :common_id",
-                FilterExpression: "quiz_id = :quiz_id",
-                ExpressionAttributeValues: {
-                    ":quiz_id": request.data.quiz_id,
-                    ":common_id": constant.constValues.common_id
-                }
-            };
-
-            return await baseRepositoryNew.DATABASE_TABLE2.query(params); 
+exports.fetchQuizResultByQuizId = async (request) => {
+    let params = {
+        TableName: TABLE_NAMES.upschool_quiz_result,
+        IndexName: indexName.Indexes.common_id_index,
+        KeyConditionExpression: "common_id = :common_id",
+        FilterExpression: "quiz_id = :quiz_id",
+        ExpressionAttributeValues: {
+            ":quiz_id": request.data.quiz_id,
+            ":common_id": constant.constValues.common_id
         }
+    };
 
- exports.fetchQuizResultDataOfStudentNew = async (request)=>{
-                    let params = {
-                        TableName: TABLE_NAMES.upschool_quiz_result,
-                        IndexName: indexName.Indexes.common_id_index,
-                        KeyConditionExpression: "common_id = :common_id",
-                        FilterExpression: "quiz_id = :quiz_id AND student_id = :student_id",
-                        ExpressionAttributeValues: {
-                            ":quiz_id": request.data.quiz_id,
-                            ":student_id": request.data.student_id,
-                            ":common_id": constant.constValues.common_id
-                        }
-                    };
-        
-                    return await baseRepositoryNew.DATABASE_TABLE2.query(params); 
-                }
+    return await baseRepositoryNew.DATABASE_TABLE2.query(params);
+}
+
+exports.fetchQuizResultDataOfStudentNew = async (request) => {
+    let params = {
+        TableName: TABLE_NAMES.upschool_quiz_result,
+        IndexName: indexName.Indexes.common_id_index,
+        KeyConditionExpression: "common_id = :common_id",
+        FilterExpression: "quiz_id = :quiz_id AND student_id = :student_id",
+        ExpressionAttributeValues: {
+            ":quiz_id": request.data.quiz_id,
+            ":student_id": request.data.student_id,
+            ":common_id": constant.constValues.common_id
+        }
+    };
+
+    return await baseRepositoryNew.DATABASE_TABLE2.query(params);
+}
 
 exports.fetchBulkQuizResultsByID = function (request, callback) {
 
@@ -214,35 +214,35 @@ exports.fetchBulkQuizResultsByID = function (request, callback) {
         } else {
             let docClient = dynamoDBCall;
             let FilterExpressionDynamic = "";
-            let ExpressionAttributeValuesDynamic = {}; 
+            let ExpressionAttributeValuesDynamic = {};
             console.log("fetchQuizData request : ", request);
             let unit_Quiz_id = request.unit_Quiz_id;
             console.log("unit_Quiz_id : ", unit_Quiz_id);
-            if(unit_Quiz_id.length === 1){
+            if (unit_Quiz_id.length === 1) {
                 let read_params = {
-                TableName: TABLE_NAMES.upschool_quiz_result,
-                IndexName: indexName.Indexes.common_id_index,
-                KeyConditionExpression: "common_id = :common_id",
-                FilterExpression: "quiz_id = :quiz_id",
-                ExpressionAttributeValues: {
-                    ":quiz_id": unit_Quiz_id[0],
-                    ":common_id": constant.constValues.common_id
-                }
-            };
-    
+                    TableName: TABLE_NAMES.upschool_quiz_result,
+                    IndexName: indexName.Indexes.common_id_index,
+                    KeyConditionExpression: "common_id = :common_id",
+                    FilterExpression: "quiz_id = :quiz_id",
+                    ExpressionAttributeValues: {
+                        ":quiz_id": unit_Quiz_id[0],
+                        ":common_id": constant.constValues.common_id
+                    }
+                };
+
                 DATABASE_TABLE.queryRecord(docClient, read_params, callback);
 
-            }else{
+            } else {
                 console.log(" Chapter Else");
-                unit_Quiz_id.forEach((element, index) => { 
+                unit_Quiz_id.forEach((element, index) => {
                     console.log("element : ", element);
 
-                    if(index < unit_Quiz_id.length-1){ 
-                        FilterExpressionDynamic = FilterExpressionDynamic + "quiz_id = :quiz_id"+ index +" OR "
-                        ExpressionAttributeValuesDynamic[':quiz_id'+ index] = element
-                    } else{
-                        FilterExpressionDynamic = FilterExpressionDynamic + "quiz_id = :quiz_id"+ index
-                        ExpressionAttributeValuesDynamic[':quiz_id'+ index] = element;
+                    if (index < unit_Quiz_id.length - 1) {
+                        FilterExpressionDynamic = FilterExpressionDynamic + "quiz_id = :quiz_id" + index + " OR "
+                        ExpressionAttributeValuesDynamic[':quiz_id' + index] = element
+                    } else {
+                        FilterExpressionDynamic = FilterExpressionDynamic + "quiz_id = :quiz_id" + index
+                        ExpressionAttributeValuesDynamic[':quiz_id' + index] = element;
                     }
                 });
 
@@ -257,6 +257,29 @@ exports.fetchBulkQuizResultsByID = function (request, callback) {
         }
     });
 }
+exports.fetchBulkQuizResultsByID3 = async (request) => {
+     const fromatedRequest = await helper.getDataByFilterKey(request);   
+    console.log("testrequest",request);
+    const params = {
+        TableName: TABLE_NAMES.upschool_quiz_result,
+        IndexName: indexName.Indexes.common_id_index,
+        KeyConditionExpression: "common_id = :common_id",
+        FilterExpression: fromatedRequest.FilterExpression,
+        ExpressionAttributeValues: fromatedRequest.ExpressionAttributeValues,
+    };
+
+    console.log({params});   
+
+    try {
+        const result = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+        console.log({result});
+        
+        return result.Items;
+    } catch (error) {
+        console.error(`Error fetching quiz results:`, error);
+        throw error;
+    }
+};
 
 exports.fetchBulkQuizResultsByID2 = async (request) => {
     const unit_Quiz_id = [...new Set(request.unit_Quiz_id)]; // Remove duplicates
