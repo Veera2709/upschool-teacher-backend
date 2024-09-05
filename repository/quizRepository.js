@@ -320,7 +320,7 @@ exports.fetchQuizTemplates = function (request, callback) {
 
 
 
-exports.checkPreQuiz = function (request, callback) {
+exports.checkPreQuiz = function(request, callback){
     dynamoDbCon.getDB(function (DBErr, dynamoDBCall) {
         if (DBErr) {
             console.log("Quiz Data Database Error");
