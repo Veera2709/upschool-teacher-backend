@@ -108,8 +108,8 @@ app.post("/v1/fetchQuestionBasedOnBlueprint", blueprintController.fetchQuestionB
 app.post("/v1/fetchAllBluePrints", validator.validUser, blueprintController.fetchAllBluePrints);
 
 // CLASS TEST : 
-app.post("/v1/addClassTest", validator.validUser, classTestController.addClassTest);
-app.post("/v1/fetchClassTestsBasedonStatus", validator.validUser, classTestController.fetchClassTestsBasedonStatus);
+app.post("/v1/addClassTest", classTestController.addClassTest);
+app.post("/v1/fetchClassTestsBasedonStatus",validator.validUser, classTestController.fetchClassTestsBasedonStatus);
 app.post("/v1/fetchClassTestById", validator.validUser, classTestController.fetchClassTestById);
 app.post("/v1/fetchQuestionsBasedonQuestionPaper", validator.validUser, classTestController.fetchQuestionsBasedonQuestionPaper);
 app.post("/v1/startEvaluation", validator.validUser, classTestController.startEvaluation);
@@ -150,7 +150,6 @@ app.post("/v1/toggleSchoolAdminStatus", validator.validUser, schoolAdminControll
 app.post("/v1/fetchAssessmentSummary", reportController.fetchAssessmentSummary);
 app.post("/v1/getTargetedLearningExpectation",reportController.getTargetedLearningExpectation);
 app.post("/v1/getTargetedLearningExpectationDetails",reportController.getTargetedLearningExpectationDetails);
-app.post("/v1/getAssesmentSummaryDetails",reportController.getAssesmentSummaryDetails);
 app.post("/v1/preLearningSummaryDetails",reportController.preLearningSummaryDetails);
 app.post("/v1/postLearningSummaryDetails",reportController.postLearningSummaryDetails);
 app.post("/v1/preLearningBlueprintDetails",reportController.preLearningBlueprintDetails);
