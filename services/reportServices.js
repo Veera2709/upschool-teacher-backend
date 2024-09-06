@@ -11,7 +11,7 @@ const chapterRepository = require("../repository/chapterRepository");
 const topicRepository = require("../repository/topicRepository");
 const conceptRepository = require("../repository/conceptRepository");
 const userRepository = require("../repository/userRepository");
-const { getS3SignedUrl, cleanAthenaResponse } = require("../helper/helper");
+const { getS3SignedUrl, cleanAthenaResponse, formatDate } = require("../helper/helper");
 
 exports.getAssessmentDetails = async (request) => {
 
@@ -95,13 +95,16 @@ exports.getTargetedLearningExpectation = async (request) => {
   const schoolDataRes = await schoolRepository.getSchoolDetailsById2(request)
   const classPercentagePre = schoolDataRes.Items[0].pre_quiz_config.class_percentage;
   const classPercentagePost = schoolDataRes.Items[0].post_quiz_config.class_percentage;
+
+  if(!classPercentagePre || !classPercentagePost) return;
   const studentDataRes = await studentRepository.getStudentsData2(request)
   let classStrength = studentDataRes?.Items?.length;
   const quizDataRes = await quizRepository.fetchAllQuizBasedonSubject2(request);
   const quizIds = quizDataRes.Items.map(val => val.quiz_id);
 
   const quizResultDataRes = quizIds.length && await quizResultRepository.fetchBulkQuizResultsByID2({unit_Quiz_id : quizIds})
-  totalTopics = quizResultDataRes && quizResultDataRes.reduce((acc, val) => acc + val.selectedTopics.length, 0);
+
+  totalTopics = quizDataRes && quizDataRes.Items.reduce((acc, val) => acc + val.selectedTopics?.length, 0);
 
   quizDataRes.Items.forEach((quiz) => {
 
@@ -137,7 +140,7 @@ exports.getTargetedLearningExpectationDetails = async (request) => {
         passedStudentsOfParticularQuiz: item.passedStudentsOfParticularQuiz,
         failedStudentsOfParticularQuiz: item.failedStudentsOfParticularQuiz,
         learningType: item.learningType,
-        date: item.quizStartDate.dd_mm_yyyy,
+        date: formatDate(item.created_ts),
       };
 
       if (chapterIndex === -1) {
@@ -234,7 +237,7 @@ exports.preLearningSummaryDetails = async (request) => {
       if (chapter) {
         Object.assign(chapter, {
           quiz_id: quiz.quiz_id,
-          startDate: quiz.quizStartDate.dd_mm_yyyy,
+          startDate:formatDate(quiz.created_ts),
           notConsideredTopics: quiz.not_considered_topics,
         });
         quizIds.push(quiz.quiz_id);
@@ -307,7 +310,7 @@ exports.postLearningSummaryDetails = async (request) => {
           name: quiz.quiz_name,
         });
         chapter.notConsideredTopics.push(...(quiz.not_considered_topics || []));
-        chapter.startDate = quiz.quizStartDate.dd_mm_yyyy;
+        chapter.startDate = formatDate(quiz.created_ts);
       }
     }
   });
