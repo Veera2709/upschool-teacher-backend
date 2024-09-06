@@ -140,6 +140,8 @@ exports.fetchBulkChaptersIDName = function (request, callback) {
 exports.fetchBulkChaptersIDName2 = async  (request)=> {
         const unit_chapter_id = request.unit_chapter_id;
 
+        console.log("unit_chapter_id34",unit_chapter_id);
+
         if (unit_chapter_id.length === 1) {
 
             const params = {
