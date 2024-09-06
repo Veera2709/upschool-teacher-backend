@@ -55,6 +55,7 @@ exports.hashingPassword = function (hashReq) {
 }
 
 exports.change_dd_mm_yyyy = function (givenDate) {
+    console.log({givenDate});
     if (givenDate.toString().includes('-')) {
         let splitedDate = givenDate.split("-");
         let dd_mm_yyyy = splitedDate[2] + "-" + splitedDate[1] + "-" + splitedDate[0];
@@ -1152,6 +1153,7 @@ exports.processRows = (resultsData) => {
   {
     return res.status(statusCode).json(data);
   }
+  exports.formatResponse2 = (result) => ({ "Items": result });
   exports.getDataByFilterKey = async (request) => {
    console.log("test2request", request);
     let { items, condition } = request;
@@ -1185,3 +1187,13 @@ exports.processRows = (resultsData) => {
     result.ExpressionAttributeValues[':common_id'] = '61692656'   
     return result;
 }
+
+exports.formatDate =(isoString) => {
+    const date = new Date(isoString);
+  
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const year = date.getUTCFullYear();
+  
+    return `${day}-${month}-${year}`;
+  }

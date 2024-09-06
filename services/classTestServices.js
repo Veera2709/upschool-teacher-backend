@@ -18,66 +18,35 @@ const axios = require('axios');
 const ocrServices = require('./ocrServices');
 const { resolve } = require('bluebird');
 
-exports.addClassTest = (request, callback) => {
+exports.addClassTest = async (request) => {
 
-    classTestRepository.fetchClassTestByName(request, function (fetch_class_test_err, fetch_class_test_res) {
-        if (fetch_class_test_err) {
-            console.log(fetch_class_test_err);
-            callback(fetch_class_test_err, fetch_class_test_res);
-        } else {
-            if (fetch_class_test_res.Items.length === 0) {
-                request.data.class_test_id = helper.getRandomString();
-                // Call API in EC2 Service and get Question and Answer Paper Paths : 
-                const options = {
-                    method: 'POST',
-                    headers: { 'content-type': 'application/x-www-form-urlencoded' },
-                    data: qs.stringify(request),
-                    url: process.env.PDF_GENERATION_URL + '/createQuestionAndAnswerPapers',
-                };
+    const fetch_class_test_res = await classTestRepository.fetchClassTestByName2(request)
+    if (fetch_class_test_res.Items.length === 0) {
+        request.data.class_test_id = helper.getRandomString();
+        const options = {
+            method: 'POST',
+            headers: { 'content-type': 'application/x-www-form-urlencoded' },
+            data: qs.stringify(request),
+            url: process.env.PDF_GENERATION_URL + '/createQuestionAndAnswerPapers',
+        };
+        const pdfData = await axios(options);
+        request.data.answer_sheet_template = pdfData.data.answer_sheet_template;
+        request.data.question_paper_template = pdfData.data.question_paper_template;
+        console.log("pdfData : ", pdfData.data);
+        console.log("FINAL INSERT REQUEST : ", request.data);
 
-                console.log("process.env.PDF_GENERATION_URL : ", process.env.PDF_GENERATION_URL);
-                // console.log("OPTIONS : ", options);
+        return await classTestRepository.insertClassTest2(request);
+    }
 
-                axios(options).then((pdfData) => {
-                    // insert data into the table : 
-                    request.data.answer_sheet_template = pdfData.data.answer_sheet_template;
-                    request.data.question_paper_template = pdfData.data.question_paper_template;
-                    console.log("pdfData : ", pdfData.data);
+};
 
-                    console.log("FINAL INSERT REQUEST : ", request.data);
-                    classTestRepository.insertClassTest(request, function (add_class_test_err, add_class_test_res) {
-                        if (add_class_test_err) {
-                            console.log(add_class_test_err);
-                            callback(add_class_test_err, add_class_test_res);
-                        } else {
-                            console.log("CLASS TEST SCHEDULED!");
-                            callback(add_class_test_err, add_class_test_res);
-                        }
-                    })
+exports.fetchClassTestsBasedonStatus = async (request) => await classTestRepository.getClassTestsBasedonStatus2({ items: [request.data], condition: "AND" });
 
-                }).catch((err) => {
-                    console.log("Errror in EC2 : ", err);
-                    callback(400, err)
-                })
 
-            } else {
-                callback(400, constant.messages.CLASS_TEST_EXISTS);
-            }
-        }
-    })
-}
 
-exports.fetchClassTestsBasedonStatus = (request, callback) => {
 
-    classTestRepository.getClassTestsBasedonStatus(request, async function (fetch_class_test_err, fetch_class_test_res) {
-        if (fetch_class_test_err) {
-            console.log(fetch_class_test_err);
-            callback(fetch_class_test_err, fetch_class_test_res);
-        } else {
-            callback(fetch_class_test_err, fetch_class_test_res.Items);
-        }
-    })
-}
+const getByObject = async (object) => await repo.getByObject(object);
+
 
 exports.getClassTestbyId = (request, callback) => {
     request.data.class_test_status = "Active";
@@ -148,31 +117,27 @@ exports.startEvaluationProcess = (request, callback) => {
                                             console.log("QUESTION DATA : ", questionDataRes);
 
                                             exports.assigningMarks(studentMetaRes.Items, questionPaperRes.Items[0], questionDataRes.Items, (markAssignErr, markAssignRes) => {
-                                                if(markAssignErr)
-                                                {
+                                                if (markAssignErr) {
                                                     console.log(markAssignErr);
                                                     callback(markAssignErr, markAssignRes)
                                                 }
-                                                else
-                                                {
+                                                else {
                                                     console.log(markAssignRes);
 
                                                     /** BATCH UPDATE **/
                                                     let resultTable = TABLE_NAMES.upschool_test_result;
                                                     commonRepository.bulkBatchWrite(markAssignRes, resultTable, (batchErr, batchRes) => {
-                                                        if(batchErr)
-                                                        {
+                                                        if (batchErr) {
                                                             callback(batchErr, batchRes);
                                                         }
-                                                        else
-                                                        {
+                                                        else {
                                                             callback(batchErr, 200);
                                                         }
                                                     })
                                                     /** END BATCH UPDATE **/
                                                     // callback(markAssignErr, markAssignRes);
                                                 }
-                                            })                                            
+                                            })
                                         }
                                     })
                                 }
@@ -198,17 +163,14 @@ exports.assigningMarks = async (studResultData, questionPaper, quesAns, callback
     /** GET FINAL DATA FORMAT **/
     await helper.getMarksDetailsFormat(questionPaper.questions).then(async (markDetails) => {
         console.log("STUDENT RESULT STRUCTURE : ", markDetails);
-        /** GET CONCAT ANSWERS **/    
+        /** GET CONCAT ANSWERS **/
         await helper.concatAnswers(studResultData).then((overallAns) => {
             studResultData = overallAns;
             console.log("CONCAT STUDENT ANSWERS : ", studResultData);
 
-            async function studentLoop(i)
-            {
-                if(i < studResultData.length)
-                {
-                    if(studResultData[i].overall_answer.length > 0)
-                    {
+            async function studentLoop(i) {
+                if (i < studResultData.length) {
+                    if (studResultData[i].overall_answer.length > 0) {
                         await exports.comparingAnswer(studResultData[i].overall_answer, markDetails, questionPaper, quesAns).then(async (finalMarks) => {
                             console.log("FINAL MARKS : " + studResultData[i].student_id, finalMarks);
                             studResultData[i].marks_details = finalMarks;
@@ -216,8 +178,7 @@ exports.assigningMarks = async (studResultData, questionPaper, quesAns, callback
                             studResultData[i].updated_ts = helper.getCurrentTimestamp();
                         })
                     }
-                    else
-                    {
+                    else {
                         console.log("EMPTY OVERALL ANSWER");
                         studResultData[i].marks_details = markDetails;
                         studResultData[i].evaluated = "Yes";
@@ -226,8 +187,7 @@ exports.assigningMarks = async (studResultData, questionPaper, quesAns, callback
                     i++;
                     studentLoop(i);
                 }
-                else
-                {
+                else {
                     console.log("DONE!");
                     console.log(studResultData);
                     callback(0, studResultData);
@@ -235,10 +195,10 @@ exports.assigningMarks = async (studResultData, questionPaper, quesAns, callback
                 }
             }
             studentLoop(0)
-        })             
+        })
         /** END GET CONCAT ANSWER **/
-    })     
-    
+    })
+
     /** GET FINAL DATA FORMAT **/
 }
 
@@ -247,23 +207,19 @@ exports.comparingAnswer = async (studAns, markDetails, questionPaper, quesAns) =
         await helper.splitSectionAnswer(studAns, questionPaper.questions).then((splitedAns) => {
             console.log("SPLITED ANSWER : ", splitedAns);
             // resolve(splitedAns);
-            
-            async function sectionLoop(i)
-            {
-                if(i < markDetails.length)
-                {
-                    if(splitedAns[i].individualAns && splitedAns[i].individualAns.length > 0)
-                    {
+
+            async function sectionLoop(i) {
+                if (i < markDetails.length) {
+                    if (splitedAns[i].individualAns && splitedAns[i].individualAns.length > 0) {
                         await exports.setQaDetails(markDetails[i].qa_details, splitedAns[i].individualAns, quesAns).then((secQaDetails) => {
                             console.log("SECTION QA DETAILS : ", secQaDetails);
                             markDetails[i].qa_details = secQaDetails;
                         })
-                    }                    
+                    }
                     i++;
                     sectionLoop(i);
                 }
-                else
-                {
+                else {
                     /** LOOP END **/
                     console.log("OVERALL QA DETAILS : ", markDetails);
 
@@ -274,24 +230,21 @@ exports.comparingAnswer = async (studAns, markDetails, questionPaper, quesAns) =
                 }
             }
             sectionLoop(0);
-        })  
+        })
     })
 }
 
 exports.setQaDetails = (qaDetails, indAns, quesAns) => {
     let localQuestion = "";
     let localType = "";
-    
+
     return new Promise(async (resolve, reject) => {
-        async function qaLoop(i)
-        {
-            if(i < qaDetails.length)
-            {
- 
+        async function qaLoop(i) {
+            if (i < qaDetails.length) {
+
                 localQuestion = quesAns.filter(ques => ques.question_id === qaDetails[i].question_id);
- 
-                if(localQuestion.length > 0 && indAns[i])
-                {
+
+                if (localQuestion.length > 0 && indAns[i]) {
                     await exports.compareAnswer(localQuestion[0], indAns[i],).then((obMark) => {
                         console.log("OBTAINED MARKS : ", obMark);
                         qaDetails[i].obtained_marks = obMark;
@@ -301,11 +254,10 @@ exports.setQaDetails = (qaDetails, indAns, quesAns) => {
                 i++;
                 qaLoop(i);
             }
-            else
-            {
+            else {
                 console.log("End setQaDetails");
                 resolve(qaDetails);
-            }          
+            }
         }
         qaLoop(0)
     })
@@ -314,10 +266,9 @@ exports.setQaDetails = (qaDetails, indAns, quesAns) => {
 exports.compareAnswer = (question, studAns) => {
     return new Promise(async (resolve, reject) => {
         let multiAns = await studAns.split(constant.evalConstant.splitLines).filter(emptyEle => emptyEle !== "");
-        if(question.question_type === constant.questionKeys.objective)
-        {
+        if (question.question_type === constant.questionKeys.objective) {
             /** OBJECTIVE **/
-            await helper.getIndexOfStudentAns(multiAns).then(async(studentAnswer) => { 
+            await helper.getIndexOfStudentAns(multiAns).then(async (studentAnswer) => {
 
                 console.log("STUDENT ANSWER : ", studentAnswer);
                 await helper.getOptionsWrightAnswers(question.answers_of_question).then(async (correctAns) => {
@@ -330,22 +281,20 @@ exports.compareAnswer = (question, studAns) => {
                         })
                     })();
                 })
-            })            
+            })
             /** END OBJECTIVE **/
         }
-        else if(question.question_type === constant.questionKeys.subjective)
-        {            
+        else if (question.question_type === constant.questionKeys.subjective) {
             /** SUBJECTIVE **/
-            await exports.subjectiveAnswerCorrection(question.answers_of_question, multiAns, question.question_content).then(async(scoredMark) => { 
+            await exports.subjectiveAnswerCorrection(question.answers_of_question, multiAns, question.question_content).then(async (scoredMark) => {
                 console.log("SUBJECTIVE MARK : ", scoredMark);
                 resolve(scoredMark > question.marks ? question.marks : scoredMark);
             })
             /** END SUBJECTIVE **/
         }
-        else
-        {
+        else {
             /** DESCRIPTIVE **/
-            await exports.descriptiveAnswerCorrection(question.answers_of_question, studAns).then(async(scoredMark) => { 
+            await exports.descriptiveAnswerCorrection(question.answers_of_question, studAns).then(async (scoredMark) => {
                 console.log("DESCRIPTIVE MARK : ", scoredMark);
                 resolve(scoredMark > question.marks ? question.marks : scoredMark);
             })
@@ -358,8 +307,7 @@ exports.descriptiveAnswerCorrection = async (answersOfQuestion, studentAns) => {
     return new Promise(async (resolve, reject) => {
         let totalMarks = 0;
         await answersOfQuestion.forEach((dAns, i) => {
-            if(studentAns.toLowerCase().replace(/ /g,'').includes(dAns.answer_content.toLowerCase().replace(/ /g,'')))
-            {
+            if (studentAns.toLowerCase().replace(/ /g, '').includes(dAns.answer_content.toLowerCase().replace(/ /g, ''))) {
                 totalMarks += Number(dAns.answer_weightage);
             }
         })
@@ -376,10 +324,9 @@ exports.subjectiveAnswerCorrection = async (answersOfQuestion, studentAnsArr, qu
         let blanklist = (questionContent.match(reg) || []);
         await blanklist.forEach(async (bName, i) => {
             blankAns = await answersOfQuestion.filter(bAns => bAns.answer_option === bName);
-            if(blankAns.length > 0 && studentAnsArr[i])
-            {
-                totalMarks += blankAns[0].answer_content.toLowerCase().replace(/ /g,'') == studentAnsArr[i].replace(/^,/, '').toLowerCase().replace(/ /g,'') ? Number(blankAns[0].answer_weightage) : 0;
-            }            
+            if (blankAns.length > 0 && studentAnsArr[i]) {
+                totalMarks += blankAns[0].answer_content.toLowerCase().replace(/ /g, '') == studentAnsArr[i].replace(/^,/, '').toLowerCase().replace(/ /g, '') ? Number(blankAns[0].answer_weightage) : 0;
+            }
         })
 
         resolve(totalMarks);
@@ -449,8 +396,7 @@ exports.getResult = (request, callback) => {
             callback(result_err, result_response);
         }
         else {
-            if(result_response.Items.length > 0)
-            {
+            if (result_response.Items.length > 0) {
                 console.log("result_response", result_response.Items[0].answer_metadata);
                 console.log("len", result_response.Items[0].answer_metadata.length);
 
@@ -483,11 +429,10 @@ exports.getResult = (request, callback) => {
                     }
                 } setContentURL(0);
             }
-            else
-            {
+            else {
                 console.log("NO STUDENT RESULT!");
                 callback(result_err, result_response);
-            }            
+            }
         }
     })
 }
@@ -521,14 +466,14 @@ exports.resetResultEvaluateStatus = (request, callback) => {
     })
 }
 
- exports.updateClassTestStatus = (request, callback) => {
-    classTestRepository.updateClassTestStatus(request, function(testStatus_error,testStatus_response){
-        if(testStatus_error){
+exports.updateClassTestStatus = (request, callback) => {
+    classTestRepository.updateClassTestStatus(request, function (testStatus_error, testStatus_response) {
+        if (testStatus_error) {
             console.log(testStatus_error);
-            callback(testStatus_error,testStatus_response);
-        }else{
+            callback(testStatus_error, testStatus_response);
+        } else {
             console.log(testStatus_response);
-            callback(testStatus_error,testStatus_response);
+            callback(testStatus_error, testStatus_response);
         }
     })
- }
+}
