@@ -64,6 +64,7 @@ exports.getStudentsData2 = async (request) => {
                 ":section_id": request.data.section_id
             }
         };
+        console.log({params});
 
         return await baseRepositoryNew.DATABASE_TABLE2.query(params); 
 };

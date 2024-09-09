@@ -165,7 +165,6 @@ exports.fetchClassTestByName2 = async (request) => {
 
     };
     const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
-    console.log("data3", data);
     return data;
 }
 
@@ -195,6 +194,22 @@ exports.getClassTestIdAndName = function (request, callback) {
         }
     });
 }
+exports.getClassTestIdAndName2 = async (request) => {
+    const params = {
+        TableName: TABLE_NAMES.upschool_class_test_table,
+
+        KeyConditionExpression: "class_test_id = :class_test_id",
+        FilterExpression: "class_test_status = :class_test_status",
+        ExpressionAttributeValues: {
+            ":class_test_id": request.data.class_test_id,
+            ":class_test_status": request.data.class_test_status,
+        },
+        ProjectionExpression: "class_test_id, class_test_name, question_paper_id, answer_sheet_template, question_paper_template,"
+    };
+
+    const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    return data.Items;
+};
 
 exports.getStudentInfo = async (request) => {
 
