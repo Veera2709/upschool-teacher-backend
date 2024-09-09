@@ -1187,3 +1187,13 @@ exports.processRows = (resultsData) => {
     result.ExpressionAttributeValues[':common_id'] = '61692656'   
     return result;
 }
+
+exports.formatDate =(isoString) => {
+    const date = new Date(isoString);
+  
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const year = date.getUTCFullYear();
+  
+    return `${day}-${month}-${year}`;
+  }
