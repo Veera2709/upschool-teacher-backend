@@ -4,6 +4,8 @@ const indexName = require('../constants/indexes');
 const { DATABASE_TABLE } = require('./baseRepository');
 const helper = require('../helper/helper');
 const constant = require('../constants/constant');
+const baseRepositoryNew = require('./baseRepositoryNew');
+
 
 exports.getClientClassIdAndName = function (request, callback) {
 
@@ -52,39 +54,23 @@ exports.getIndividualClientClassById = function (request, callback) {
         }
     });
 }
+exports.getResult2 = async (request) => {
+    const params = {
+        TableName: TABLE_NAMES.upschool_test_result,
+        IndexName: indexName.Indexes.common_id_index,
+        KeyConditionExpression: "common_id = :common_id",
+        FilterExpression: "class_test_id = :class_test_id AND student_id = :student_id",
+        ExpressionAttributeValues: {
+            ":common_id": constant.constValues.common_id,
+            ":class_test_id": request.data.class_test_id,
+            ":student_id": request.data.student_id
+        },
+        ProjectionExpression: "answer_metadata, marks_details, result_id, evaluated"
+    };
 
-
-
-exports.getResult = function (request, callback) {
-
-    dynamoDbCon.getDB(function (DBErr, dynamoDBCall) {
-        if (DBErr) {
-            console.log("Test Result Database Error");
-            console.log(DBErr);
-            callback(500, constant.messages.TEST_RESULT_DATA_DATABASE_ERROR);
-        } else {
-            let docClient = dynamoDBCall;
-            console.log("request : ", request);
-
-            let read_params = {
-                TableName: TABLE_NAMES.upschool_test_result,
-                IndexName: indexName.Indexes.common_id_index,
-                KeyConditionExpression: "common_id = :common_id",
-                FilterExpression: "class_test_id = :class_test_id AND student_id = :student_id",
-                ExpressionAttributeValues: {
-                    ":common_id": constant.constValues.common_id,
-                    ":class_test_id": request.data.class_test_id,
-                    ":student_id": request.data.student_id
-                },
-                ProjectionExpression: ["answer_metadata", "marks_details", "result_id", "evaluated"]
-            }
-
-            DATABASE_TABLE.queryRecord(docClient, read_params, callback);
-
-        }
-    });
-}
-
+    const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    return data.Items;
+};
 exports.modifyStudentMarks = function (request, callback) {
 
     dynamoDbCon.getDB(function (DBErr, dynamoDBCall) {

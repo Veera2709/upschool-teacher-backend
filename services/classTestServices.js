@@ -48,28 +48,24 @@ exports.fetchClassTestsBasedonStatus = async (request) => await classTestReposit
 const getByObject = async (object) => await repo.getByObject(object);
 
 
-exports.getClassTestbyId = (request, callback) => {
+exports.getClassTestbyId = async (request) => {
     request.data.class_test_status = "Active";
-    classTestRepository.getClassTestIdAndName(request, async function (classTestErr, classTestRes) {
-        if (classTestErr) {
-            console.log(classTestErr);
-            callback(classTestErr, classTestRes);
-        } else {
-            console.log("CLASS TEST DATA : ", classTestRes);
-            let questionPaperTEmp = classTestRes.Items[0].question_paper_template ? classTestRes.Items[0].question_paper_template : "N.A.";
-            let answerSheetTemp = classTestRes.Items[0].answer_sheet_template ? classTestRes.Items[0].answer_sheet_template : "N.A.";
+    const classTestRes = await classTestRepository.getClassTestIdAndName2(request)
 
-            let questionUrlCheck = constant.testFolder.questionPapers.split("/")[0];
-            let answerUrlCheck = constant.testFolder.answerSheets.split("/")[0];
+    console.log("CLASS TEST DATA : ", classTestRes);
+    let questionPaperTEmp = classTestRes.question_paper_template ? classTestRes.question_paper_template : "N.A.";
+    let answerSheetTemp = classTestRes.answer_sheet_template ? classTestRes.answer_sheet_template : "N.A.";
 
-            classTestRes.Items[0].question_paper_template_url = questionPaperTEmp.includes(questionUrlCheck) ? await helper.getS3SignedUrl(questionPaperTEmp) : "N.A.";
+    let questionUrlCheck = constant.testFolder.questionPapers.split("/")[0];
+    let answerUrlCheck = constant.testFolder.answerSheets.split("/")[0];
 
-            classTestRes.Items[0].answer_sheet_template_url = answerSheetTemp.includes(answerUrlCheck) ? await helper.getS3SignedUrl(answerSheetTemp) : "N.A.";
+    classTestRes.question_paper_template_url = questionPaperTEmp.includes(questionUrlCheck) ? await helper.getS3SignedUrl(questionPaperTEmp) : "N.A.";
 
-            callback(classTestErr, classTestRes);
+    classTestRes.answer_sheet_template_url = answerSheetTemp.includes(answerUrlCheck) ? await helper.getS3SignedUrl(answerSheetTemp) : "N.A.";
 
-        }
-    })
+
+    return classTestRes
+
 }
 
 exports.startEvaluationProcess = (request, callback) => {
@@ -384,57 +380,41 @@ exports.readStudentAnswerSheets = (request, callback) => {
     } entireStudentsData(0);
 }
 
-exports.fetchGetStudentData = async(request) => {
+exports.fetchGetStudentData = async (request) => {
 
-    const AllstudentsData =  await classTestRepository.getStudentInfo(request);
+    const AllstudentsData = await classTestRepository.getStudentInfo(request);
     return AllstudentsData;
 }
 
-exports.getResult = (request, callback) => {
-    classRepository.getResult(request, function (result_err, result_response) {
-        if (result_err) {
-            callback(result_err, result_response);
-        }
-        else {
-            if (result_response.Items.length > 0) {
-                console.log("result_response", result_response.Items[0].answer_metadata);
-                console.log("len", result_response.Items[0].answer_metadata.length);
+exports.getResult = async (request) => {
+    const result_response = await classRepository.getResult2(request)
 
-                let contentURL;
+    if (result_response.length > 0) {
 
-                async function setContentURL(index) {
+        let contentURL;
+        async function setContentURL(index) {
+            if (index < result_response.answer_metadata) {
+                contentURL = "";
+                if (((JSON.stringify(result_response.answer_metadata[index].url).includes("test_uploads/")) && (JSON.stringify(result_response.answer_metadata[index].url).includes("student_answered_sheets/"))) && result_response.answer_metadata[index].url != "" && result_response.answer_metadata[index].url != "N.A.") {
 
-                    if (index < result_response.Items[0].answer_metadata.length) {
+                    contentURL = await helper.getS3SignedUrl(result_response.answer_metadata[index].url);
+                    console.log("contentURL", contentURL);
+                    result_response.answer_metadata[index]["content_url"] = contentURL;
 
-                        contentURL = "";
+                    index++;
+                    setContentURL(index);
+                } else {
+                    index++;
+                    setContentURL(index);
+                }
 
-                        if (((JSON.stringify(result_response.Items[0].answer_metadata[index].url).includes("test_uploads/")) && (JSON.stringify(result_response.Items[0].answer_metadata[index].url).includes("student_answered_sheets/"))) && result_response.Items[0].answer_metadata[index].url != "" && result_response.Items[0].answer_metadata[index].url != "N.A.") {
-
-                            contentURL = await helper.getS3SignedUrl(result_response.Items[0].answer_metadata[index].url);
-                            console.log("contentURL", contentURL);
-                            result_response.Items[0].answer_metadata[index]["content_url"] = contentURL;
-
-                            index++;
-                            setContentURL(index);
-                        } else {
-                            index++;
-                            setContentURL(index);
-                        }
-
-                    } else {
-
-                        console.log("Loop ended!", result_response.Items[0].answer_metadata);
-                        callback(result_err, result_response);
-
-                    }
-                } setContentURL(0);
+            } else {
+                console.log("Loop ended!", result_response.answer_metadata);
             }
-            else {
-                console.log("NO STUDENT RESULT!");
-                callback(result_err, result_response);
-            }
-        }
-    })
+        } setContentURL(0);
+    }
+    return result_response;
+
 }
 exports.changeStudentMarks = (request, callback) => {
     if (request === undefined || request.data === undefined || request.data.result_id === undefined || request.data.marks_details === undefined || !Array.isArray(request.data.marks_details) || request.data.marks_details.length === 0) {
