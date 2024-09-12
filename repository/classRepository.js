@@ -69,7 +69,7 @@ exports.getResult2 = async (request) => {
     };
 
     const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
-    return data.Items;
+    return data;
 };
 exports.modifyStudentMarks = function (request, callback) {
 
@@ -96,4 +96,21 @@ exports.modifyStudentMarks = function (request, callback) {
             DATABASE_TABLE.updateRecord(docClient, update_params, callback);
         }
     });
+}
+exports.modifyStudentMarks2 = async (request) => {
+
+    let params = {
+        TableName: TABLE_NAMES.upschool_test_result,
+        Key: {
+            "result_id": request.data.result_id
+        },
+        UpdateExpression: "set marks_details = :marks_details, updated_ts = :updated_ts",
+        ExpressionAttributeValues: {
+            ":marks_details": request.data.marks_details,
+            ":updated_ts": helper.getCurrentTimestamp()
+        },
+
+    }
+    const data = await baseRepositoryNew.DATABASE_TABLE2.updateService(params);
+    return data;
 }
