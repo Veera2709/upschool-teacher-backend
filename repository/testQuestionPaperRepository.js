@@ -4,6 +4,7 @@ const indexName = require('../constants/indexes');
 const { DATABASE_TABLE } = require('./baseRepository');
 const helper = require('../helper/helper');
 const constant = require('../constants/constant');
+const baseRepositoryNew = require('./baseRepositoryNew');
 
 exports.getTestQuestionPapersBasedonStatus = function (request, callback) {
 
@@ -36,6 +37,25 @@ exports.getTestQuestionPapersBasedonStatus = function (request, callback) {
         }
     });
 }
+exports.getTestQuestionPapersBasedonStatus2 = async (request) => {
+    const params = {
+        TableName: TABLE_NAMES.upschool_test_question_paper,
+        IndexName: indexName.Indexes.common_id_index,
+        KeyConditionExpression: "common_id = :common_id",
+        FilterExpression: "client_class_id = :client_class_id AND section_id = :section_id AND subject_id = :subject_id AND question_paper_status = :question_paper_status",
+        ExpressionAttributeValues: {
+            ":common_id": constant.constValues.common_id,
+            ":client_class_id": request.data.client_class_id,
+            ":section_id": request.data.section_id,
+            ":subject_id": request.data.subject_id,
+            ":question_paper_status": request.data.question_paper_status
+        },
+        ProjectionExpression: "question_paper_id, question_paper_name, blueprint_id"
+    };
+
+    const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    return data.Items;
+};
 
 exports.fetchTestQuestionPaperbyName = function (request, callback) {
 
@@ -119,6 +139,19 @@ exports.fetchTestQuestionPaperByID = function (request, callback) {
             DATABASE_TABLE.queryRecord(docClient, read_params, callback);
         }
     });
+}
+exports.fetchTestQuestionPaperByID2 = async (request) => {
+    let params = {
+        TableName: TABLE_NAMES.upschool_test_question_paper,
+        KeyConditionExpression: "question_paper_id = :question_paper_id",
+        ExpressionAttributeValues: {
+            ":question_paper_id": request.data.question_paper_id
+        }
+
+    };
+    console.log(params);
+    const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    return data;
 }
 
 exports.getTestQuestionPaperById = function (request, callback) {

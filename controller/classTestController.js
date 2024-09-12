@@ -19,31 +19,25 @@ exports.fetchClassTestsBasedonStatus = async (req, res, next) => {
     }
 };
 
-exports.fetchClassTestById = (req, res, next) => {
-    console.log("Fetch class test by id");
-    let request = req.body;
-    classTestServices.getClassTestbyId(request, function (testDataErr, testDataRes) {
-        if (testDataErr) {
-            res.status(testDataErr).json(testDataRes);
-        } else {
-            console.log("Got class test data!");
-            res.json(testDataRes);
-        }
-    });
+exports.fetchClassTestById = async (req, res, next) => {
+    try {
+        const request = req.body;
+        const reportData = await classTestServices.getClassTestbyId(request);
+        return formatResponse(res, reportData);
+    } catch (error) {
+        next(error)
+    }
 };
 
-exports.fetchQuestionsBasedonQuestionPaper = (req, res, next) => {
-    console.log("fetchQuestionsBasedonQuestionPaper : ");
-    let request = req.body;
 
-    classTestServices.addClassTest(request, function (fetch_questions_err, fetch_questions_response) {
-        if (fetch_questions_err) {
-            res.status(fetch_questions_err).json(fetch_questions_response);
-        } else {
-            console.log("Questions Fetched Successfully");
-            res.json(fetch_questions_response);
-        }
-    });
+exports.fetchQuestionsBasedonQuestionPaper = async (req, res, next) => {
+    try {
+        const request = req.body;
+        const reportData = await classTestServices.addClassTest(request);
+        return formatResponse(res, reportData);
+    } catch (error) {
+        next(error)
+    }
 };
 
 exports.startEvaluation = (req, res, next) => {
@@ -70,52 +64,40 @@ exports.getStudentsBasedOnSection = async (req, res, next) => {
     }
 };
 
-exports.getStudentResultData = (req, res, next) => {
-    let request = req.body;
-    classTestServices.getResult(request, function (result_err, result_response) {
-        if (result_err) {
-            res.status(result_err).json(result_response);
-        } else {
-            console.log("result fetched");
-            res.json(result_response);
-        }
-    });
-}
+exports.getStudentResultData = async (req, res, next) => {
+    try {
+        const request = req.body;
+        const reportData = await classTestServices.getResult(request);
+        return formatResponse(res, reportData);
+    } catch (error) {
+        next(error)
+    }
+};
+exports.updateStudentMarks = async (req, res, next) => {
+    try {
+        const request = req.body;
+        const reportData = await classTestServices.changeStudentMarks(request);
+        return formatResponse(res, reportData);
+    } catch (error) {
+        next(error)
+    }
+};
+exports.resetEvaluationStatus = async (req, res, next) => {
+    try {
+        const request = req.body;
+        const reportData = await classTestServices.resetResultEvaluateStatus(request);
+        return formatResponse(res, reportData);
+    } catch (error) {
+        next(error)
+    }
+};
 
-exports.updateStudentMarks = (req, res, next) => {
-    let request = req.body;
-    classTestServices.changeStudentMarks(request, function (result_err, result_response) {
-        if (result_err) {
-            res.status(result_err).json(result_response);
-        } else {
-            console.log("Students Marks Updated!");
-            res.json(result_response);
-        }
-    });
-}
-
-exports.resetEvaluationStatus = (req, res, next) => {
-    let request = req.body;
-    classTestServices.resetResultEvaluateStatus(request, function (resetEvaluationerr, resetEvaluationresponse) {
-        if (resetEvaluationerr) {
-            res.status(resetEvaluationerr).json(resetEvaluationresponse);
-        } else {
-            console.log("Evaluation Status Reset!");
-            res.json(resetEvaluationresponse);
-        }
-    });
-}
-
-
-exports.toggleClassTestStatus = (req, res, next) => {
-    let request = req.body;
-    classTestServices.updateClassTestStatus(request, function (testStatus_error, testStatus_response) {
-        if (testStatus_error) {
-            res.status(testStatus_error).json(testStatus_response);
-        }
-        else {
-            console.log("Class Test Status Updated");
-            res.json(testStatus_response);
-        }
-    })
-}
+exports.toggleClassTestStatus = async (req, res, next) => {
+    try {
+        const request = req.body;
+        const reportData = await classTestServices.updateClassTestStatus(request);
+        return formatResponse(res, reportData);
+    } catch (error) {
+        next(error)
+    }
+};

@@ -165,7 +165,6 @@ exports.fetchClassTestByName2 = async (request) => {
 
     };
     const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
-    console.log("data3", data);
     return data;
 }
 
@@ -195,6 +194,38 @@ exports.getClassTestIdAndName = function (request, callback) {
         }
     });
 }
+exports.getClassTestIdAndName2 = async (request) => {
+    let params = {
+        TableName: TABLE_NAMES.upschool_class_test_table,
+
+                KeyConditionExpression: "class_test_id = :class_test_id",
+                FilterExpression: "class_test_status = :class_test_status",
+                ExpressionAttributeValues: {
+                    ":class_test_id": request.data.class_test_id,
+                    ":class_test_status": request.data.class_test_status,
+                },
+                ProjectionExpression: "class_test_id, class_test_name, question_paper_id, answer_sheet_template, question_paper_template"
+
+    };
+    const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    return data;
+}
+exports.getClassTestIdAndName2 = async (request) => {
+    const params = {
+        TableName: TABLE_NAMES.upschool_class_test_table,
+
+        KeyConditionExpression: "class_test_id = :class_test_id",
+        FilterExpression: "class_test_status = :class_test_status",
+        ExpressionAttributeValues: {
+            ":class_test_id": request.data.class_test_id,
+            ":class_test_status": request.data.class_test_status,
+        },
+        ProjectionExpression: "class_test_id, class_test_name, question_paper_id, answer_sheet_template, question_paper_template"
+    };
+
+    const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    return data;
+};
 
 exports.getStudentInfo = async (request) => {
 
@@ -212,7 +243,8 @@ exports.getStudentInfo = async (request) => {
         // ProjectionExpression: ["student_id", "user_firstname", "user_lastname", "roll_no"]
     }
 
-    return await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    return data.Items
 
 }
 
@@ -263,4 +295,21 @@ exports.updateClassTestStatus = function (request, callback) {
 
         }
     })
+}
+exports.updateClassTestStatus2 = async (request) => {
+
+    let params = {
+        TableName: TABLE_NAMES.upschool_class_test_table,
+        Key: {
+            "class_test_id": request.data.class_test_id
+        },
+        UpdateExpression: "SET class_test_status = :class_test_status, updated_ts = :updated_ts",
+        ExpressionAttributeValues: {
+            ":class_test_status": request.data.class_test_status,
+            ":updated_ts": helper.getCurrentTimestamp(),
+        }
+
+    }
+    const data = (await baseRepositoryNew.DATABASE_TABLE2.updateService(params)).$metadata.httpStatusCode;
+    return data;
 }

@@ -43,123 +43,87 @@ exports.addClassTest = async (request) => {
 exports.fetchClassTestsBasedonStatus = async (request) => await classTestRepository.getClassTestsBasedonStatus2({ items: [request.data], condition: "AND" });
 
 
-
-
-const getByObject = async (object) => await repo.getByObject(object);
-
-
-exports.getClassTestbyId = (request, callback) => {
+exports.getClassTestbyId = async (request) => {
     request.data.class_test_status = "Active";
-    classTestRepository.getClassTestIdAndName(request, async function (classTestErr, classTestRes) {
-        if (classTestErr) {
-            console.log(classTestErr);
-            callback(classTestErr, classTestRes);
-        } else {
-            console.log("CLASS TEST DATA : ", classTestRes);
-            let questionPaperTEmp = classTestRes.Items[0].question_paper_template ? classTestRes.Items[0].question_paper_template : "N.A.";
-            let answerSheetTemp = classTestRes.Items[0].answer_sheet_template ? classTestRes.Items[0].answer_sheet_template : "N.A.";
+    const classTestRes = await classTestRepository.getClassTestIdAndName2(request)
 
-            let questionUrlCheck = constant.testFolder.questionPapers.split("/")[0];
-            let answerUrlCheck = constant.testFolder.answerSheets.split("/")[0];
+    console.log("CLASS TEST DATA : ", classTestRes);
+    let questionPaperTEmp = classTestRes.Items[0].question_paper_template ? classTestRes.Items[0].question_paper_template : "N.A.";
+    let answerSheetTemp = classTestRes.Items[0].answer_sheet_template ? classTestRes.Items[0].answer_sheet_template : "N.A.";
 
-            classTestRes.Items[0].question_paper_template_url = questionPaperTEmp.includes(questionUrlCheck) ? await helper.getS3SignedUrl(questionPaperTEmp) : "N.A.";
+    let questionUrlCheck = constant.testFolder.questionPapers.split("/")[0];
+    let answerUrlCheck = constant.testFolder.answerSheets.split("/")[0];
 
-            classTestRes.Items[0].answer_sheet_template_url = answerSheetTemp.includes(answerUrlCheck) ? await helper.getS3SignedUrl(answerSheetTemp) : "N.A.";
+    classTestRes.Items[0].question_paper_template_url = questionPaperTEmp.includes(questionUrlCheck) ? await helper.getS3SignedUrl(questionPaperTEmp) : "N.A.";
 
-            callback(classTestErr, classTestRes);
+    classTestRes.Items[0].answer_sheet_template_url = answerSheetTemp.includes(answerUrlCheck) ? await helper.getS3SignedUrl(answerSheetTemp) : "N.A.";
 
-        }
-    })
+
+    return classTestRes
+
 }
 
-exports.startEvaluationProcess = (request, callback) => {
+exports.startEvaluationProcess = async (request, callback) => {
     request.data.class_test_status = "Active";
-    classTestRepository.getClassTestIdAndName(request, async function (classTestErr, classTestRes) {
-        if (classTestErr) {
-            console.log(classTestErr);
-            callback(classTestErr, classTestRes);
-        } else {
-            console.log("CLASS TEST DATA : ", classTestRes);
-            if (classTestRes.Items.length > 0) {
-                let classTest = classTestRes.Items[0];
-                testResultRepository.fetchStudentresultMetadata(request, async function (studentMetaErr, studentMetaRes) {
-                    if (studentMetaErr) {
-                        console.log(studentMetaErr);
-                        callback(studentMetaErr, studentMetaRes);
-                    } else {
-                        console.log("STUDENT METADATA : ", studentMetaRes);
-                        if (studentMetaRes.Items.length > 0) {
-                            /** FETCH QUESTION PAPER **/
-                            request.data.question_paper_id = classTest.question_paper_id;
-                            testQuestionPaperRepository.fetchTestQuestionPaperByID(request, async function (questionPaperErr, questionPaperRes) {
-                                if (questionPaperErr) {
-                                    console.log(questionPaperErr);
-                                    callback(questionPaperErr, questionPaperRes);
-                                } else {
-                                    console.log("QUESTION PAPER : ", questionPaperRes.Items);
+    const classTestRes = await classTestRepository.getClassTestIdAndName2(request)
+    if (classTestRes.Items.length > 0) {
+        let classTest = classTestRes.Items[0];
+        const studentMetaRes = await testResultRepository.fetchStudentresultMetadata2(request)
+        console.log("STUDENT METADATA : ", studentMetaRes);
+        if (studentMetaRes.Items.length > 0) {
+            request.data.question_paper_id = classTest.question_paper_id;
+            const questionPaperRes = await testQuestionPaperRepository.fetchTestQuestionPaperByID2(request)
+            console.log("QUESTION PAPER : ", questionPaperRes.Items);
+            let questionArray = [];
+            await questionPaperRes.Items[0].questions.forEach((e) => questionArray.push(...e.question_id))
+            console.log("QUESTION IDS : ", questionArray);
+            let fetchBulkQtnReq = {
+                IdArray: questionArray,
+                fetchIdName: "question_id",
+                TableName: TABLE_NAMES.upschool_question_table,
+                projectionExp: ["question_id", "question_label", "answers_of_question", "question_content", "question_disclaimer", "question_type"]
+            }
+            const quizIds = fetchBulkQtnReq.IdArray.map((val) => ({ quiz_id: val }));
 
-                                    let questionArray = [];
-                                    await questionPaperRes.Items[0].questions.forEach((e) => questionArray.push(...e.question_id))
-                                    console.log("QUESTION IDS : ", questionArray);
+            const questionDataRes = await commonRepository.fetchBulkDataWithProjection2({ items: quizIds, condition: "AND" })
+            console.log("QUESTION DATA : ", questionDataRes.Items);
 
-                                    /** FETCH CATEGORY DATA **/
-                                    let fetchBulkQtnReq = {
-                                        IdArray: questionArray,
-                                        fetchIdName: "question_id",
-                                        TableName: TABLE_NAMES.upschool_question_table,
-                                        projectionExp: ["question_id", "question_label", "answers_of_question", "question_content", "question_disclaimer", "question_type"]
-                                    }
-                                    commonRepository.fetchBulkDataWithProjection(fetchBulkQtnReq, async function (questionDataErr, questionDataRes) {
-                                        if (questionDataErr) {
-                                            console.log(questionDataErr);
-                                            callback(questionDataErr, questionDataRes);
-                                        } else {
-                                            console.log("QUESTION DATA : ", questionDataRes);
+            exports.assigningMarks(studentMetaRes.Items, questionPaperRes.Items[0], questionDataRes.Items, (markAssignErr, markAssignRes) => {
+                if (markAssignErr) {
+                    console.log(markAssignErr);
+                    callback(markAssignErr, markAssignRes)
+                }
+                else {
+                    console.log(markAssignRes);
 
-                                            exports.assigningMarks(studentMetaRes.Items, questionPaperRes.Items[0], questionDataRes.Items, (markAssignErr, markAssignRes) => {
-                                                if (markAssignErr) {
-                                                    console.log(markAssignErr);
-                                                    callback(markAssignErr, markAssignRes)
-                                                }
-                                                else {
-                                                    console.log(markAssignRes);
-
-                                                    /** BATCH UPDATE **/
-                                                    let resultTable = TABLE_NAMES.upschool_test_result;
-                                                    commonRepository.bulkBatchWrite(markAssignRes, resultTable, (batchErr, batchRes) => {
-                                                        if (batchErr) {
-                                                            callback(batchErr, batchRes);
-                                                        }
-                                                        else {
-                                                            callback(batchErr, 200);
-                                                        }
-                                                    })
-                                                    /** END BATCH UPDATE **/
-                                                    // callback(markAssignErr, markAssignRes);
-                                                }
-                                            })
-                                        }
-                                    })
-                                }
-                            })
-                            /** END FETCH QUESTION PAPER **/
+                    /** BATCH UPDATE **/
+                    let resultTable = TABLE_NAMES.upschool_test_result;
+                    commonRepository.bulkBatchWrite(markAssignRes, resultTable, (batchErr, batchRes) => {
+                        if (batchErr) {
+                            callback(batchErr, batchRes);
                         }
                         else {
-                            console.log(constant.messages.NO_ANSWER_SHEET_FOUND);
-                            callback(400, constant.messages.NO_ANSWER_SHEET_FOUND);
+                            callback(batchErr, 200);
                         }
-                    }
-                })
-            }
-            else {
-                console.log(constant.messages.NO_DATA);
-                callback(400, constant.messages.NO_DATA);
-            }
+                    })
+
+                }
+            })
         }
-    })
+        else {
+            console.log(constant.messages.NO_ANSWER_SHEET_FOUND);
+            callback(400, constant.messages.NO_ANSWER_SHEET_FOUND);
+        }
+    }
+    else {
+        console.log(constant.messages.NO_DATA);
+        callback(400, constant.messages.NO_DATA);
+    }
+
 }
 
 exports.assigningMarks = async (studResultData, questionPaper, quesAns, callback) => {
+    console.log("assigningMarksquesAns", quesAns);
     /** GET FINAL DATA FORMAT **/
     await helper.getMarksDetailsFormat(questionPaper.questions).then(async (markDetails) => {
         console.log("STUDENT RESULT STRUCTURE : ", markDetails);
@@ -384,96 +348,39 @@ exports.readStudentAnswerSheets = (request, callback) => {
     } entireStudentsData(0);
 }
 
-exports.fetchGetStudentData = async(request) => {
+exports.fetchGetStudentData = async (request) => await classTestRepository.getStudentInfo(request);
 
-    const AllstudentsData =  await classTestRepository.getStudentInfo(request);
-    return AllstudentsData;
-}
 
-exports.getResult = (request, callback) => {
-    classRepository.getResult(request, function (result_err, result_response) {
-        if (result_err) {
-            callback(result_err, result_response);
-        }
-        else {
-            if (result_response.Items.length > 0) {
-                console.log("result_response", result_response.Items[0].answer_metadata);
-                console.log("len", result_response.Items[0].answer_metadata.length);
+exports.getResult = async (request) => {
+    const result_response = await classRepository.getResult2(request)
 
-                let contentURL;
+    if (result_response.Items.length > 0) {
 
-                async function setContentURL(index) {
+        let contentURL;
+        async function setContentURL(index) {
+            if (index < result_response.Items[0].answer_metadata.length) {
+                contentURL = "";
+                if (((JSON.stringify(result_response.Items[0].answer_metadata[index].url).includes("test_uploads/")) && (JSON.stringify(result_response.Items[0].answer_metadata[index].url).includes("student_answered_sheets/"))) && result_response.Items[0].answer_metadata[index].url != "" && result_response.Items[0].answer_metadata[index].url != "N.A.") {
+                    contentURL = await helper.getS3SignedUrl(result_response.Items[0].answer_metadata[index].url);
+                    result_response.Items[0].answer_metadata[index]["content_url"] = contentURL;
+                    index++;
+                    setContentURL(index);
+                } else {
+                    index++;
+                    setContentURL(index);
+                }
 
-                    if (index < result_response.Items[0].answer_metadata.length) {
-
-                        contentURL = "";
-
-                        if (((JSON.stringify(result_response.Items[0].answer_metadata[index].url).includes("test_uploads/")) && (JSON.stringify(result_response.Items[0].answer_metadata[index].url).includes("student_answered_sheets/"))) && result_response.Items[0].answer_metadata[index].url != "" && result_response.Items[0].answer_metadata[index].url != "N.A.") {
-
-                            contentURL = await helper.getS3SignedUrl(result_response.Items[0].answer_metadata[index].url);
-                            console.log("contentURL", contentURL);
-                            result_response.Items[0].answer_metadata[index]["content_url"] = contentURL;
-
-                            index++;
-                            setContentURL(index);
-                        } else {
-                            index++;
-                            setContentURL(index);
-                        }
-
-                    } else {
-
-                        console.log("Loop ended!", result_response.Items[0].answer_metadata);
-                        callback(result_err, result_response);
-
-                    }
-                } setContentURL(0);
+            } else {
+                console.log("Loop ended!", result_response.Items[0].answer_metadata);
             }
-            else {
-                console.log("NO STUDENT RESULT!");
-                callback(result_err, result_response);
-            }
-        }
-    })
-}
-exports.changeStudentMarks = (request, callback) => {
-    if (request === undefined || request.data === undefined || request.data.result_id === undefined || request.data.marks_details === undefined || !Array.isArray(request.data.marks_details) || request.data.marks_details.length === 0) {
-        callback(400, constant.messages.INVALID_REQUEST_FORMAT);
-    } else {
-        classRepository.modifyStudentMarks(request, function (result_err, result_response) {
-            if (result_err) {
-                console.log(result_err);
-                callback(result_err, result_response);
-            }
-            else {
-                console.log(result_response);
-                callback(result_err, result_response);
-            }
-        })
+        } setContentURL(0);
     }
-}
+    return result_response;
 
-exports.resetResultEvaluateStatus = (request, callback) => {
-    testResultRepository.changeTestEvaluationStatus(request, function (resetStatusErr, resetStatusRes) {
-        if (resetStatusErr) {
-            console.log(resetStatusErr);
-            callback(resetStatusErr, resetStatusRes);
-        }
-        else {
-            console.log(resetStatusRes);
-            callback(resetStatusErr, resetStatusRes);
-        }
-    })
 }
+exports.changeStudentMarks = async (request) => await classRepository.modifyStudentMarks2(request)
 
-exports.updateClassTestStatus = (request, callback) => {
-    classTestRepository.updateClassTestStatus(request, function (testStatus_error, testStatus_response) {
-        if (testStatus_error) {
-            console.log(testStatus_error);
-            callback(testStatus_error, testStatus_response);
-        } else {
-            console.log(testStatus_response);
-            callback(testStatus_error, testStatus_response);
-        }
-    })
-}
+exports.resetResultEvaluateStatus = async (request) => await testResultRepository.changeTestEvaluationStatus2(request)
+
+
+exports.updateClassTestStatus = async (request) => await classTestRepository.updateClassTestStatus2(request)

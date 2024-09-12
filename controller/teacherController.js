@@ -1,42 +1,41 @@
 const teacherServices = require("../services/teacherServices");
 const constant = require("../constants/constant");
+const { formatResponse } = require("../helper/helper");
 
-exports.fetchTeacherClasses = (req, res, next) => {
-    let request = req.body;    
-    teacherServices.getTeacherClasses(request, function (teacher_class_err, teacher_class_response) {
-        if (teacher_class_err) { 
-            res.status(teacher_class_err).json(teacher_class_response); 
-        } else {
-            console.log("Classes Allocated to Teacher fetched Successfully"); 
-            res.json(teacher_class_response);
-        }
-    });
+exports.fetchTeacherClasses = async (req, res, next) => {
+    try {
+        const request = req.body;
+        const reportData = await teacherServices.getTeacherClasses(request);
+        return formatResponse(res, reportData);
+    } catch (error) {
+        next(error)
+    }
 };
-exports.fetchTeacherSectionsBasedonClass = (req, res, next) => {
-    let request = req.body;
-    request["token"] = req.header('Authorization');
-    
-    teacherServices.getTeacherSectionsBasedonClass(request, function (teacher_section_err, teacher_section_response) {
-        if (teacher_section_err) { 
-            res.status(teacher_section_err).json(teacher_section_response); 
-        } else {
-            console.log("Sections Allocated to Teacher fetched Successfully"); 
-            res.json(teacher_section_response);
-        }
-    });
+exports.fetchTeacherSectionsBasedonClass = async (req, res, next) => {
+    try {
+        const request = req.body;
+        const reportData = await teacherServices.getTeacherSectionsBasedonClass(request);
+        return formatResponse(res, reportData);
+    } catch (error) {
+        next(error)
+    }
 };
-exports.fetchTeacherSubjectsBasedonSection = (req, res, next) => {
-    let request = req.body;
-    request["token"] = req.header('Authorization');
-    
-    teacherServices.getTeacherSubjectsBasedonSection(request, function (teacher_subject_err, teacher_subject_response) {
-        if (teacher_subject_err) { 
-            res.status(teacher_subject_err).json(teacher_subject_response); 
-        } else {
-            console.log("Subjects Allocated to Teacher fetched Successfully"); 
-            res.json(teacher_subject_response);
-        }
-    });
+exports.fetchTeacherSectionsBasedonClass = async (req, res, next) => {
+    try {
+        const request = req.body;
+        const reportData = await teacherServices.getTeacherSectionsBasedonClass(request);
+        return formatResponse(res, reportData);
+    } catch (error) {
+        next(error)
+    }
+};exports.fetchTeacherSubjectsBasedonSection = async (req, res, next) => {
+    try {
+        const request = req.body;
+        const reportData = await teacherServices.getTeacherSubjectsBasedonSection(request);
+        return formatResponse(res, reportData);
+    } catch (error) {
+        next(error)
+    }
 };
 exports.fetchDigicardsBasedonTopic = (req, res, next) => {
     let request = req.body;
