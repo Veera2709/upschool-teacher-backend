@@ -1,5 +1,5 @@
 const { formatResponse } = require("../helper/helper");
-const classTestServices = require("../services/classTestServices");
+const {classTestServices} = require("../services");
 exports.addClassTest = async (req, res, next) => {
     try {
         const request = req.body;

@@ -1,4 +1,4 @@
-const subjectServices = require("../services/subjectServices");
+const {subjectServices} = require("../services");
 const constant = require('../constants/constant');
 
 exports.fetchUnitsandChaptersBasedonSubjects = (req, res, next) => {

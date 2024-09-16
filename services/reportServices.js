@@ -1,16 +1,4 @@
-const schoolRepository = require("../repository/schoolRepository");
-const studentRepository = require("../repository/studentRepository");
-const subjectRepository = require("../repository/subjectRepository");
-const unitRepository = require("../repository/unitRepository");
-const quizRepository = require("../repository/quizRepository");
-const settingsRepository = require("../repository/settingsRepository");
-const questionRepository = require("../repository/questionRepository");
-const quizResultRepository = require("../repository/quizResultRepository");
-const classTestRepository = require("../repository/classTestRepository");
-const chapterRepository = require("../repository/chapterRepository");
-const topicRepository = require("../repository/topicRepository");
-const conceptRepository = require("../repository/conceptRepository");
-const userRepository = require("../repository/userRepository");
+const { schoolRepository,studentRepository,subjectRepository,unitRepository,quizRepository,settingsRepository,questionRepository,quizResultRepository,classTestRepository,chapterRepository,topicRepository,conceptRepository} = require("../repository")
 const { getS3SignedUrl, cleanAthenaResponse, formatDate } = require("../helper/helper");
 
 exports.getAssessmentDetails = async (request) => {

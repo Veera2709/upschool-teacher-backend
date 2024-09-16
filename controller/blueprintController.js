@@ -1,4 +1,4 @@
-const blueprintServices = require("../services/blueprintServices");
+const {blueprintServices} = require("../services");
 
 exports.fetchBlueprintById = (req, res, next) => {
     let request = req.body;    

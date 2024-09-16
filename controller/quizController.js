@@ -1,4 +1,4 @@
-const quizServices = require("../services/quizServices");
+const {quizServices} = require("../services");
 
 exports.checkDuplicateQuizName = (req, res, next) => {
     let request = req.body;

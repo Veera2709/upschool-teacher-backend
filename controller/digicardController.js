@@ -1,4 +1,4 @@
-const digicardServices = require("../services/digicardServices");
+const {digicardServices} = require("../services");
 
 exports.fetchRelatedDigiCards = (req, res, next) => {
     let request = req.body;

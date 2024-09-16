@@ -1,4 +1,4 @@
-const topicServices = require("../services/topicServices");
+const {topicServices} = require("../services");
 const { formatResponse } = require("../helper/helper");
 
 exports.topicUnlock = (req, res, next) => {
