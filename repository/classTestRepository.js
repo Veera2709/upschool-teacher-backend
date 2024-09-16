@@ -243,8 +243,8 @@ exports.getStudentInfo = async (request) => {
         // ProjectionExpression: ["student_id", "user_firstname", "user_lastname", "roll_no"]
     }
 
-    const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
-    return data.Items
+    return await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    
 
 }
 

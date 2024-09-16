@@ -1153,6 +1153,7 @@ exports.processRows = (resultsData) => {
   {
     return res.status(statusCode).json(data);
   }
+  exports.formatErrorResponse = (errorMessage, status = '') => {  let error = new Error(errorMessage);  error.status = status;  return error;};
   exports.formatResponse2 = (result) => ({ "Items": result });
   exports.getDataByFilterKey = async (request) => {
    console.log("test2request", request);
