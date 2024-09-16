@@ -249,28 +249,16 @@ exports.fetchChaptersIDandChapterTopicID = function (request, callback) {
     });
 }
 exports.fetchChaptersIDandChapterTopicID2 = async (request) => {
-
-    let chapter_array = request.chapter_array;
-
-    if (chapter_array.length === 1) {
+    let chapter_array = request.chapter_array;    
         const params = {
             TableName: TABLE_NAMES.upschool_chapter_table,
             KeyConditionExpression: "chapter_id = :chapter_id",
             ExpressionAttributeValues: {
-                ":chapter_id": chapter_array[0]
+                ":chapter_id": chapter_array
             },
             ProjectionExpression: "chapter_id, prelearning_topic_id, postlearning_topic_id",
         };
-        const unit_data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
-        return unit_data;
-    } else {
-        const params = {
-            TableName: TABLE_NAMES.upschool_chapter_table,
-            FilterExpression: FilterExpressionDynamic,
-            ExpressionAttributeValues: ExpressionAttributeValuesDynamic,
-            ProjectionExpression: "chapter_id, prelearning_topic_id, postlearning_topic_id"
-        };
-        const data = await baseRepositoryNew.DATABASE_TABLE2.getByObjects(params);
+        const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
         return data;
-    }
+    
 };

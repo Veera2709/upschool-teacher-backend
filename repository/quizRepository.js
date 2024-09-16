@@ -116,6 +116,26 @@ exports.checkDuplicateQuizName = function (request, callback) {
         }
     })
 }
+exports.checkDuplicateQuizName2 = async (request) => {
+    let params = {
+        TableName: TABLE_NAMES.upschool_quiz_table,
+        IndexName: indexName.Indexes.common_id_index,
+        KeyConditionExpression: "common_id = :common_id",
+        FilterExpression: "chapter_id = :chapter_id AND client_class_id = :client_class_id AND section_id = :section_id AND subject_id = :subject_id AND  learningType = :learningType AND lc_quiz_name = :lc_quiz_name",
+        ExpressionAttributeValues: {
+            ":common_id": constant.constValues.common_id,
+            ":chapter_id": request.data.chapter_id,
+            ":client_class_id": request.data.client_class_id,
+            ":section_id": request.data.section_id,
+            ":subject_id": request.data.subject_id,
+            ":learningType": request.data.learningType,
+            ":lc_quiz_name": request.data.quiz_name.toLowerCase().replace(/ /g, ''),
+        }
+
+    };
+    const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    return data;
+}
 
 exports.updateQuizTemplateDetails = function (request, callback) {
     dynamoDbCon.getDB(async function (DBErr, dynamoDBCall) {
@@ -199,6 +219,27 @@ exports.getQuizBasedonStatus = function (request, callback) {
             DATABASE_TABLE.queryRecord(docClient, read_params, callback);
         }
     });
+}
+
+exports.getQuizBasedonStatus2 = async (request) => {
+    let params = {
+        TableName: TABLE_NAMES.upschool_quiz_table,
+                IndexName: indexName.Indexes.common_id_index,
+                KeyConditionExpression: "common_id = :common_id",
+                FilterExpression: "quiz_status = :quiz_status AND client_class_id = :client_class_id AND section_id = :section_id AND subject_id = :subject_id AND chapter_id = :chapter_id",
+                ExpressionAttributeValues: {
+                    ":common_id": constant.constValues.common_id,
+                    ":client_class_id": request.data.client_class_id,
+                    ":section_id": request.data.section_id,
+                    ":subject_id": request.data.subject_id,
+                    ":chapter_id": request.data.chapter_id,
+                    ":quiz_status": request.data.quiz_status
+                },
+                ProjectionExpression: "quizMode, quiz_status, learningType, quiz_id, quiz_name, chapter_id"
+
+    };
+    const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    return data.Items;
 }
 
 exports.fetchQuizDataById = function (request, callback) {
