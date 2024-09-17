@@ -137,6 +137,8 @@ app.post("/v1/preLearningSummaryDetails",reportController.preLearningSummaryDeta
 app.post("/v1/postLearningSummaryDetails",reportController.postLearningSummaryDetails);
 app.post("/v1/preLearningBlueprintDetails",reportController.preLearningBlueprintDetails);
 app.post("/v1/viewAnalysisIndividualReport",reportController.viewAnalysisIndividualReport);
+app.post("/v1/comprehensivePerformanceChapterWise",reportController.comprehensivePerformanceChapterWise);
+app.post("/v1/comprehensivePerformanceTopicWise",reportController.comprehensivePerformanceTopicWise);
 
 
 function haltOnTimedout(req, res, next) {
