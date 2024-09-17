@@ -1,4 +1,4 @@
-const studentServices = require("../services/studentServices");
+const {studentServices} = require("../services");
 
 exports.fetchIndividualDigiCard = (req, res, next) => {
     let request = req.body;

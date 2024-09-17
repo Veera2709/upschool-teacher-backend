@@ -1,16 +1,7 @@
- 
-const chapterRepository = require("../repository/chapterRepository"); 
-const digicardExtension = require("../repository/digicardExtension");
-const digicardRepository = require("../repository/digicardRepository");  
-const conceptRepository = require("../repository/conceptRepository");  
-const teachingActivityRepository = require("../repository/teachingActivityRepository");  
-const topicRepository = require("../repository/topicRepository");  
-const presetRepository = require("../repository/presetRepository");   
-const schoolRepository = require("../repository/schoolRepository");
+const {chapterRepository,digicardRepository,digicardExtension,teachingActivityRepository,topicRepository,presetRepository,schoolRepository,commonRepository} = require("../repository")
 const commonServices = require("../services/commonServices");
 const constant = require('../constants/constant');
 const helper = require('../helper/helper');
-const commonRepository = require("../repository/commonRepository");
 const { TABLE_NAMES } = require('../constants/tables');
 const { nextTick } = require("process");
 const { response } = require("express");

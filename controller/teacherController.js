@@ -1,4 +1,4 @@
-const teacherServices = require("../services/teacherServices");
+const {teacherServices} = require("../services");
 const constant = require("../constants/constant");
 const { formatResponse } = require("../helper/helper");
 

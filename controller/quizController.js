@@ -1,5 +1,5 @@
 const { formatResponse } = require("../helper/helper");
-const quizServices = require("../services/quizServices");
+const {quizServices} = require("../services");
 
 exports.checkDuplicateQuizName = async (req, res, next) => {
     try {

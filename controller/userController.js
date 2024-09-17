@@ -1,2 +1,2 @@
-const userServices = require("../services/userServices");
+const {userServices} = require("../services");
 

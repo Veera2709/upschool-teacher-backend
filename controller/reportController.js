@@ -1,5 +1,5 @@
 const { formatResponse } = require("../helper/helper");
-const reportServices = require("../services/reportServices");
+const {reportServices} = require('../services');
 
 exports.fetchAssessmentSummary = async (req, res, next) => {
     try {

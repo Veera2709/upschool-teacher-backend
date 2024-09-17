@@ -1,1 +1,1 @@
-const schoolServices = require("../services/schoolServices");
+const {schoolServices} = require("../services");
