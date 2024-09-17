@@ -1,12 +1,18 @@
+const quizRepository = require("../repository/quizRepository");
+const quizResultRepository = require("../repository/quizResultRepository");
 const classTestServices = require("./classTestServices");
 const constant = require("../constants/constant");
 const helper = require('../helper/helper');
 const { request } = require("http");
+const commonRepository = require("../repository/commonRepository");
 const { TABLE_NAMES } = require('../constants/tables');
-const { quizRepository,quizResultRepository,schoolRepository,commonRepository,studentRepository,classRepository } = require("../repository")
+const schoolRepository = require("../repository/schoolRepository");
+const studentRepository = require("../repository/studentRepository");
+const classTestRepository = require("../repository/classTestRepository");
 
 exports.checkDuplicateQuizName = async (request) => {
     const quizData_response = await quizRepository.checkDuplicateQuizName2(request)
+    console.log(quizData_response);
     if (quizData_response.Items.length > 0) {
         throw helper.formatErrorResponse(constant.messages.DUPLICATE_QUIZ_NAME, 400);
     }
@@ -275,56 +281,46 @@ exports.setQuestionPaperView = (questionIDs, questionData, callback) => {
     } setQuestionsData(0);
 }
 
-exports.fetchQuizTemplates = (request, callback) => {
-    request.data.quiz_status = "Active";
-    quizRepository.fetchQuizTemplates(request, async function (quizErr, quizRes) {
-        if (quizErr) {
-            console.log(quizErr);
-            callback(quizErr, quizRes);
+exports.fetchQuizTemplates = async (request) => {
+    try {
+        request.data.quiz_status = "Active";
+        const quizRes = await quizRepository.fetchQuizTemplates2(request);
+        console.log("QUIZ DATA:", quizRes);
+
+        if (quizRes.Items[0]?.quiz_template_details) {
+            for (let k = 97; k <= 99; k++) {
+                const set_code = String.fromCharCode(k);
+                const questionSheetKey = `set_${set_code}`;
+                const quizTemplate = quizRes.Items[0].quiz_template_details[questionSheetKey] || {};
+
+                const questionTemp = quizTemplate.question_sheet || "N.A.";
+                const questionUrlCheck = constant.quizFolder[`questionPapersSet${set_code.toUpperCase()}`].split("/")[0];
+                quizTemplate.question_sheet_url = questionTemp.includes(questionUrlCheck) 
+                    ? await helper.getS3SignedUrl(questionTemp) 
+                    : "N.A.";
+
+                const answerTemp = quizTemplate.answer_sheet || "N.A.";
+                const answerUrlCheck = constant.quizFolder[`questionPapersSet${set_code.toUpperCase()}`].split("/")[0];
+                quizTemplate.answer_sheet_url = answerTemp.includes(answerUrlCheck) 
+                    ? await helper.getS3SignedUrl(answerTemp) 
+                    : "N.A.";
+            }
         } else {
-            console.log("QUIZ DATA : ", quizRes);
-
-            if (quizRes.Items[0].quiz_template_details) {
-                for (let k = 97; k <= 99; k++) {
-                    let set_code = String.fromCharCode(k);
-                    let QnTemp = "set" + set_code + "_QnPaper_temp";
-                    let QnUrlcheck = "set" + set_code + "_QuestionUrlCheck";
-                    let ansTemp = "set" + set_code + "_ansPaper_temp";
-                    let ansUrlcheck = "set" + set_code + "_ansUrlCheck";
-
-
-                    QnTemp = quizRes.Items[0].quiz_template_details['set_' + set_code]?.question_sheet || "N.A.";
-                    QnUrlcheck = constant.quizFolder['questionPapersSet' + set_code.toUpperCase()].split("/")[0];
-                    quizRes.Items[0].quiz_template_details['set_' + set_code].question_sheet_url = QnTemp.includes(QnUrlcheck) ? await helper.getS3SignedUrl(QnTemp) : "N.A.";
-
-                    ansTemp = quizRes.Items[0].quiz_template_details['set_' + set_code]?.answer_sheet || "N.A.";
-                    ansUrlcheck = constant.quizFolder['questionPapersSet' + set_code.toUpperCase()].split("/")[0];
-                    quizRes.Items[0].quiz_template_details['set_' + set_code].answer_sheet_url = ansTemp.includes(ansUrlcheck) ? await helper.getS3SignedUrl(ansTemp) : "N.A.";
-
-                }
-
-            }
-            else {
-                quizRes.Items[0].quiz_template_details = {}
-
-            }
-            callback(quizErr, quizRes);
+            quizRes.Items[0].quiz_template_details = {};
         }
-    })
-}
+
+        return quizRes;
+    } catch (error) {
+        console.log(error);
+        throw helper.formatErrorResponse(error.message, 400);
+    }
+};
 
 
-exports.resetQuizEvaluationStatus = (request, callback) => {
-    quizResultRepository.resetQuizEvaluationStatus(request, function (quizStatus_error, quizStatus_response) {
-        if (quizStatus_error) {
-            console.log(quizStatus_error);
-            callback(quizStatus_error, quizStatus_response);
-        }
-        else {
-            callback(quizStatus_error, quizStatus_response);
-        }
-    })
-}
+
+exports.resetQuizEvaluationStatus = async(request) => await quizResultRepository.resetQuizEvaluationStatus2(request)
+      
+
 /** EVALUATION API'S **/
 
 function addIndividualGroupPerformance(markAssignRes, questionDataRes, group_pass_percentage) {

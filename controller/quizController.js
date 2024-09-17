@@ -5,7 +5,8 @@ exports.checkDuplicateQuizName = async (req, res, next) => {
     try {
         const request = req.body;
         const reportData = await quizServices.checkDuplicateQuizName(request);
-        res.send(formatResponse(res, reportData))
+        console.log(reportData);
+        formatResponse(res, reportData)
     } catch (error) {
         next(error)
     }
@@ -64,33 +65,25 @@ exports.viewQuizQuestionPaper = (req, res, next) => {
         }
     })
 }
-
-exports.fetchQuizTemplates = (req, res, next) => {
-    console.log("Fetch Quiz Templates by ID");
-    let request = req.body;
-    quizServices.fetchQuizTemplates(request, function (quizDataErr, quizDataRes) {
-        if (quizDataErr) {
-            res.status(quizDataErr).json(quizDataRes);
-        } else {
-            console.log("Got Quiz Templates Data!");
-            res.json(quizDataRes);
-        }
-    });
+exports.fetchQuizTemplates = async (req, res, next) => {
+    try {
+        const request = req.body;
+        const reportData = await quizServices.fetchQuizTemplates(request);
+        return formatResponse(res, reportData);
+    } catch (error) {
+        next(error)
+    }
 };
 
-
-exports.resetQuizEvaluationStatus = (req, res, next) => {
-    let request = req.body;
-    quizServices.resetQuizEvaluationStatus(request, function (quizStatus_error, quizStatus_response) {
-        if (quizStatus_error) {
-            res.status(quizStatus_error).json(quizStatus_response);
-        }
-        else {
-            console.log(" Quiz Evaluation Status Updated");
-            res.json(quizStatus_response);
-        }
-    })
-}
+exports.resetQuizEvaluationStatus = async (req, res, next) => {
+    try {
+        const request = req.body;
+        const reportData = await quizServices.resetQuizEvaluationStatus(request);
+        return formatResponse(res, reportData);
+    } catch (error) {
+        next(error)
+    }
+};
 exports.startQuizEvaluation = (req, res, next) => {
     console.log("Quiz Evaluation Start!");
     let request = req.body;
