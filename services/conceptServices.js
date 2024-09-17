@@ -1,7 +1,5 @@
-const dynamoDbCon = require('../awsConfig');  
-const conceptRepository = require("../repository/conceptRepository");  
-const digicardRepository = require("../repository/digicardRepository");  
-const topicRepository = require("../repository/topicRepository");  
+const dynamoDbCon = require('../awsConfig');   
+const {conceptRepository,topicRepository}= require("../repository")
 const commonServices = require("../services/commonServices");
 const constant = require('../constants/constant');
 const helper = require('../helper/helper');

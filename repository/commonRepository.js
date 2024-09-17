@@ -5,6 +5,8 @@ const { DATABASE_TABLE } = require("./baseRepository");
 const { successResponse } = require("./baseRepository");
 const helper = require("../helper/helper");
 const constant = require("../constants/constant");
+const baseRepositoryNew = require('./baseRepositoryNew');
+
 
 exports.fetchBulkData = function (request, callback) {
   dynamoDbCon.getDB(function (DBErr, dynamoDBCall) {
@@ -295,6 +297,28 @@ exports.fetchBulkDataWithProjection = function (request, callback) {
         }
     }
   });
+};
+exports.fetchBulkDataWithProjection2 = async (request) => {
+  console.log({request});
+  const fromatedRequest = await helper.getDataByFilterKey(request);   
+ console.log("testrequest",request);
+ const params = {
+     TableName: TABLE_NAMES.upschool_test_result,
+     IndexName: indexName.Indexes.common_id_index,
+     KeyConditionExpression: "common_id = :common_id",
+     FilterExpression: fromatedRequest.FilterExpression,
+     ExpressionAttributeValues: fromatedRequest.ExpressionAttributeValues,
+ };
+
+ console.log({params});   
+
+ try {
+     const result = await baseRepositoryNew.DATABASE_TABLE2.query(params);     
+     return result;
+ } catch (error) {
+     console.error(`Error fetching quiz results:`, error);
+     throw error;
+ }
 };
 
 exports.bulkBatchWrite = async (itemsToWrite, userTable, callback) => {

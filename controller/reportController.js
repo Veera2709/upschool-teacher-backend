@@ -1,5 +1,5 @@
 const { formatResponse } = require("../helper/helper");
-const reportServices = require("../services/reportServices");
+const {reportServices} = require('../services');
 
 exports.fetchAssessmentSummary = async (req, res, next) => {
     try {
@@ -75,6 +75,26 @@ exports.getIndividualQuizReport = async (req, res, next) => {
     try {
         const request = req.body;
         const reportData = await reportServices.fetchIndividualQuizReport(request);
+        return formatResponse(res, reportData);
+    } catch (error) {
+        next(error)
+    }
+};
+
+exports.comprehensivePerformanceChapterWise = async (req, res, next) => {
+    try {
+        const request = req.body;
+        const reportData = await reportServices.comprehensivePerformanceChapterWise(request);
+        return formatResponse(res, reportData);
+    } catch (error) {
+        next(error)
+    }
+};
+
+exports.comprehensivePerformanceTopicWise = async (req, res, next) => {
+    try {
+        const request = req.body;
+        const reportData = await reportServices.comprehensivePerformanceTopicWise(request);
         return formatResponse(res, reportData);
     } catch (error) {
         next(error)

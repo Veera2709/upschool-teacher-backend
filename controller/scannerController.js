@@ -1,4 +1,4 @@
-const scannerServices = require("../services/scannerServices");
+const {scannerServices} = require("../services");
 
 exports.sendScannerLink = (req, res, next) => {
     console.log("sendScannerLink Controller!", req.body);

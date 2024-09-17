@@ -1,7 +1,5 @@
-const blueprintRepository = require("../repository/blueprintRepository");
-const testQuestionPaperRepository = require("../repository/testQuestionPaperRepository");
+const {blueprintRepository,testQuestionPaperRepository,commonRepository} = require("../repository")
 const constant = require('../constants/constant');
-const commonRepository = require("../repository/commonRepository");
 const helper = require('../helper/helper');
 const { TABLE_NAMES } = require('../constants/tables');
 

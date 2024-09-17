@@ -1,11 +1,4 @@
-const blueprintRepository = require("../repository/blueprintRepository");  
-const questionRepository = require("../repository/questionRepository");  
-const commonRepository = require("../repository/commonRepository");
-const quizRepository = require("../repository/quizRepository");
-const quizResultRepository = require("../repository/quizResultRepository");
-const topicRepository = require("../repository/topicRepository");
-const conceptRepository = require("../repository/conceptRepository");
-const settingsRepository = require("../repository/settingsRepository");
+const { blueprintRepository, questionRepository, commonRepository } = require("../repository")
 const { TABLE_NAMES } = require('../constants/tables');
 const constant = require('../constants/constant');
 const helper = require('../helper/helper');

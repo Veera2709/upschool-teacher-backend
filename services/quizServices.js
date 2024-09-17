@@ -1,35 +1,20 @@
-const quizRepository = require("../repository/quizRepository");
-const quizResultRepository = require("../repository/quizResultRepository");
 const classTestServices = require("./classTestServices");
 const constant = require("../constants/constant");
 const helper = require('../helper/helper');
 const { request } = require("http");
-const commonRepository = require("../repository/commonRepository");
 const { TABLE_NAMES } = require('../constants/tables');
-const schoolRepository = require("../repository/schoolRepository"); 
-const studentRepository = require("../repository/studentRepository");
-const classTestRepository = require("../repository/classTestRepository");
+const { quizRepository,quizResultRepository,schoolRepository,commonRepository,studentRepository,classRepository } = require("../repository")
 
-exports.checkDuplicateQuizName = (request, callback) => {
-    quizRepository.checkDuplicateQuizName(request, function (quizData_error, quizData_response) {
-        if (quizData_error) {
-            console.log(quizData_error);
-            callback(quizData_error, quizData_response);
-        } else {
-            if (quizData_response.Items.length > 0) {
-                // console.log("Data already exist with the specified quiz name ");
-                callback(400, constant.messages.DUPLICATE_QUIZ_NAME);
-            }
-            else {
-                callback(quizData_error, 200);
-            }
-
-        }
-    })
+exports.checkDuplicateQuizName = async (request) => {
+    const quizData_response = await quizRepository.checkDuplicateQuizName2(request)
+    if (quizData_response.Items.length > 0) {
+        throw helper.formatErrorResponse(constant.messages.DUPLICATE_QUIZ_NAME, 400);
+    }
+    return quizData_response
 }
 
 exports.updateQuizStatus = (request, callback) => {
-    if(request.data.quiz_status == constant.status.active){
+    if (request.data.quiz_status == constant.status.active) {
         quizRepository.fetchQuizDataById(request, function (preQuiz_error, preQuiz_response) {
             if (preQuiz_error) {
                 console.log(preQuiz_error);
@@ -42,20 +27,18 @@ exports.updateQuizStatus = (request, callback) => {
                 request.data.section_id = preQuiz_response.Item.section_id;
                 request.data.learningType = preQuiz_response.Item.learningType;
 
-                quizRepository.fetchQuizData(request, async function(quizError, quizRes){
-                    if(quizError){
+                quizRepository.fetchQuizData(request, async function (quizError, quizRes) {
+                    if (quizError) {
                         console.log(quizError);
                         callback(quizError, quizRes);
                     } else {
                         console.log("QUIZ RESPONSE : ", quizRes);
-                        if(quizRes.Items.length > 0){
-                            if(preQuiz_response.Item.learningType === constant.prePostConstans.preLearningVal)
-                            {
+                        if (quizRes.Items.length > 0) {
+                            if (preQuiz_response.Item.learningType === constant.prePostConstans.preLearningVal) {
                                 console.log(constant.messages.PRE_QUIZ_ALREADY_GENERATED);
                                 callback(400, constant.messages.PRE_QUIZ_ALREADY_GENERATED);
                             }
-                            else
-                            {
+                            else {
                                 let resSelectedTop = [];
                                 await quizRes.Items.forEach(qData => {
                                     resSelectedTop = [...resSelectedTop, ...qData.selectedTopics];
@@ -65,43 +48,41 @@ exports.updateQuizStatus = (request, callback) => {
                                 let duplicatedTopics = await checkDuplicateTopics(resSelectedTop, preQuiz_response.Item.selectedTopics);
 
                                 console.log("DUPLICATED TOPICS : ", duplicatedTopics);
-                                
-                                if(duplicatedTopics.length > 0)
-                                {
+
+                                if (duplicatedTopics.length > 0) {
                                     console.log(constant.messages.POST_QUIZ_ALREADY_GENERATED);
                                     callback(400, constant.messages.POST_QUIZ_ALREADY_GENERATED);
                                 }
-                                else
-                                {
-                                    quizRepository.updateQuizStatus(request, function(statusErr,statusRes){
-                                        if(statusErr){
-                                            callback(statusErr,statusRes);
+                                else {
+                                    quizRepository.updateQuizStatus(request, function (statusErr, statusRes) {
+                                        if (statusErr) {
+                                            callback(statusErr, statusRes);
                                         }
-                                        else{
+                                        else {
                                             console.log("status updated");
-                                            callback(statusErr,statusRes);
+                                            callback(statusErr, statusRes);
                                         }
                                     })
                                 }
                             }
                         }
-                        else{
-                            quizRepository.updateQuizStatus(request, function(statusErr,statusRes){
-                                if(statusErr){
-                                    callback(statusErr,statusRes);
+                        else {
+                            quizRepository.updateQuizStatus(request, function (statusErr, statusRes) {
+                                if (statusErr) {
+                                    callback(statusErr, statusRes);
                                 }
-                                else{
+                                else {
                                     console.log("status updated");
-                                    callback(statusErr,statusRes);
+                                    callback(statusErr, statusRes);
                                 }
                             })
-                        }             
+                        }
                     }
-                })                               
+                })
             }
         })
     }
-    else{
+    else {
         quizRepository.updateQuizStatus(request, function (status_error, status_response) {
             if (status_error) {
                 console.log(status_error);
@@ -123,144 +104,71 @@ const checkDuplicateTopics = async (resTopics, checkTopics) => {
     return dupTopics;
 }
 
-exports.fetchQuizBasedonStatus = (request, callback) => {
+exports.fetchQuizBasedonStatus = async (request) => await quizRepository.getQuizBasedonStatus2(request)
 
-    quizRepository.getQuizBasedonStatus(request, async function (fetch_quiz_data_err, fetch_quiz_data_res) {
-        if (fetch_quiz_data_err) {
-            console.log(fetch_quiz_data_err);
-            callback(fetch_quiz_data_err, fetch_quiz_data_res);
+
+
+exports.getQuizResult = async (request) => {
+    const result_response = await quizRepository.getQuizResult2(request);
+
+    if (!result_response.Items || result_response.Items.length === 0) {
+        throw helper.formatErrorResponse("NO STUDENT RESULT!", 400);
+    }
+    for (let index = 0; index < result_response.Items[0].answer_metadata.length; index++) {
+        const metadata = result_response.Items[0].answer_metadata[index];
+        const url = metadata.url || "";
+
+        if (url.includes("quiz_uploads/") && url.includes("student_answered_sheets/") && url !== "N.A.") {
+            const contentURL = await helper.getS3SignedUrl(url);
+            console.log("contentURL", contentURL);
+            result_response.Items[0].answer_metadata[index]["content_url"] = contentURL;
+        }
+    }
+    return result_response;
+};
+
+exports.editStudentQuizMarks = async (request) => {
+    try {
+        // Fetch quiz data
+        const quizTestRes = await quizRepository.fetchQuizDataById2(request);
+
+        if (quizTestRes.Item.quiz_status !== "Active") {
+            throw helper.formatErrorResponse(constant.messages.NO_DATA, 400);
+        }
+
+        // Fetch school data
+        const schoolDataRes = await schoolRepository.getSchoolDetailsById2(request);
+
+        let classPassPercentage = 0;
+        if (quizTestRes.Item.learningType === constant.prePostConstans.preLearningVal) {
+            classPassPercentage = Number(schoolDataRes.Items[0].pre_quiz_config.class_percentage);
         } else {
-            callback(fetch_quiz_data_err, fetch_quiz_data_res.Items);
+            classPassPercentage = Number(schoolDataRes.Items[0].post_quiz_config.class_percentage);
         }
-    })
-} 
 
+        const questionIds = request.data.marks_details[0].qa_details.map(qDetails => qDetails.question_id);
+        const fetchBulkQtnReq = {
+            IdArray: questionIds,
+            fetchIdName: "question_id",
+            TableName: TABLE_NAMES.upschool_question_table,
+            projectionExp: ["question_id", "marks"]
+        };
+        const quizIds = fetchBulkQtnReq.IdArray.map((val) => ({ question_id: val }));
+        const questionDataRes = await commonRepository.fetchBulkDataWithProjection2({ items: quizIds, condition: "OR" })
 
-exports.getQuizResult = (request, callback) => {
-    quizRepository.getQuizResult(request, function (result_err, result_response) {
-        if (result_err) {
-            callback(result_err, result_response);
-        }
-        else {
-            if(result_response.Items.length > 0)
-            {
-                console.log("result_response", result_response.Items[0].answer_metadata);
-                console.log("len", result_response.Items[0].answer_metadata.length);
+        const overallResult = await knowPassOrFail(request.data.marks_details[0], questionDataRes.Items, classPassPercentage);
+        request.data.marks_details[0].totalMark = overallResult.studentResult;
+        request.data.passStatus = overallResult.isPassed;
 
-                let contentURL;
+        const fetchQuizDataRes = await quizRepository.modifyStudentMarks2(request);
+        return fetchQuizDataRes.Items;
 
-                async function setContentURL(index) {
+    } catch (error) {
+        console.log(error);
+        throw helper.formatErrorResponse(error.message || constant.messages.NO_DATA, 400);
+    }
+};
 
-                    if (index < result_response.Items[0].answer_metadata.length) {
-
-                        contentURL = "";
-
-                        if (((JSON.stringify(result_response.Items[0].answer_metadata[index].url).includes("quiz_uploads/")) && (JSON.stringify(result_response.Items[0].answer_metadata[index].url).includes("student_answered_sheets/"))) && result_response.Items[0].answer_metadata[index].url != "" && result_response.Items[0].answer_metadata[index].url != "N.A.") {
-
-                            contentURL = await helper.getS3SignedUrl(result_response.Items[0].answer_metadata[index].url);
-                            console.log("contentURL", contentURL);
-                            result_response.Items[0].answer_metadata[index]["content_url"] = contentURL;
-
-                            index++;
-                            setContentURL(index);
-                        } else {
-                            index++;
-                            setContentURL(index);
-                        }
-
-                    } else {
-
-                        console.log("Loop ended!", result_response.Items[0].answer_metadata);
-                        callback(result_err, result_response);
-
-                    }
-                } setContentURL(0);
-            }
-            else
-            {
-                console.log("NO STUDENT RESULT!");
-                callback(result_err, result_response);
-            }            
-        }
-    })
-}
-exports.editStudentQuizMarks = (request, callback) => {
-
-    /** FETCH QUIZ DATA **/
-    quizRepository.fetchQuizDataById(request, async function (quizTestErr, quizTestRes) {
-        if (quizTestErr) {
-            console.log(quizTestErr);
-            callback(quizTestErr, quizTestRes);
-        } else {
-            console.log("QUIZ DATA : ", quizTestRes);
-            if(quizTestRes.Item.quiz_status === "Active")
-            {
-                /** FETCH SCHOOL DATA **/
-                schoolRepository.getSchoolDetailsById(request, async(schoolDataErr, SchoolDataRes) => {
-                    if(schoolDataErr)
-                    {
-                        console.log(schoolDataErr);
-                        callback(schoolDataErr, SchoolDataRes);
-                    }
-                    else
-                    {
-                        let classPassPercentage = 0;
-                        if(quizTestRes.Item.learningType == constant.prePostConstans.preLearningVal)
-                        {
-                            classPassPercentage = Number(SchoolDataRes.Items[0].pre_quiz_config.class_percentage);
-                        }
-                        else
-                        {
-                            classPassPercentage = Number(SchoolDataRes.Items[0].post_quiz_config.class_percentage);
-                        }
-
-                        let questionIds = request.data.marks_details[0].qa_details.map(qDetails => qDetails.question_id);
-              
-                        let fetchBulkQtnReq = {
-                            IdArray: questionIds,
-                            fetchIdName: "question_id",
-                            TableName: TABLE_NAMES.upschool_question_table,
-                            projectionExp: ["question_id", "marks"]
-                        }
-                        commonRepository.fetchBulkDataWithProjection(fetchBulkQtnReq, async function (questionDataErr, questionDataRes) {
-                            if (questionDataErr) {
-                                console.log(questionDataErr);
-                                callback(questionDataErr, questionDataRes);
-                            } else {
-                                console.log("QUESTION DATA : ", questionDataRes);
-                                let passStatus = false;
-
-                                await knowPassOrFail(request.data.marks_details[0], questionDataRes.Items, classPassPercentage).then((overallResult) => {
-                                    request.data.marks_details[0].totalMark = overallResult.studentResult;
-                                    passStatus = overallResult.isPassed;
-                                })
-
-                                request.data.passStatus = passStatus;
-                                console.log({request});
-                                quizRepository.modifyStudentMarks(request, async function (fetch_quiz_data_err, fetch_quiz_data_res) {
-                                    if (fetch_quiz_data_err) {
-                                        console.log(fetch_quiz_data_err);
-                                        callback(fetch_quiz_data_err, fetch_quiz_data_res);
-                                    } else {
-                                        callback(fetch_quiz_data_err, fetch_quiz_data_res.Items);
-                                    }
-                                })
-
-                            }
-                        })
-                    }
-                });
-                /** END FETCH SCHOOL DATA **/
-            }
-            else
-            {
-                console.log(constant.messages.NO_DATA);
-                callback(400, constant.messages.NO_DATA);
-            }
-        }
-    })
-    /** END FETCH QUIZ DATA **/        
-} 
 
 
 exports.viewQuizQuestionPaper = (request, callback) => {
@@ -406,14 +314,14 @@ exports.fetchQuizTemplates = (request, callback) => {
 }
 
 
-exports.resetQuizEvaluationStatus = (request,callback) => {
-    quizResultRepository.resetQuizEvaluationStatus(request, function(quizStatus_error,quizStatus_response){
-        if(quizStatus_error){
+exports.resetQuizEvaluationStatus = (request, callback) => {
+    quizResultRepository.resetQuizEvaluationStatus(request, function (quizStatus_error, quizStatus_response) {
+        if (quizStatus_error) {
             console.log(quizStatus_error);
-            callback(quizStatus_error,quizStatus_response);
+            callback(quizStatus_error, quizStatus_response);
         }
-        else{
-            callback(quizStatus_error,quizStatus_response);
+        else {
+            callback(quizStatus_error, quizStatus_response);
         }
     })
 }
@@ -500,31 +408,28 @@ exports.startQuizEvaluationProcess = (request, callback) => {
             callback(quizTestErr, quizTestRes);
         } else {
             console.log("QUIZ DATA : ", quizTestRes);
-            if(quizTestRes && quizTestRes.Item && quizTestRes.Item.quiz_status === "Active")
-            {
+            if (quizTestRes && quizTestRes.Item && quizTestRes.Item.quiz_status === "Active") {
                 /** FETCH SCHOOL DATA **/
-                schoolRepository.getSchoolDetailsById(request, async(schoolDataErr, SchoolDataRes) => {
-                    if(schoolDataErr)
-                    {
+                schoolRepository.getSchoolDetailsById(request, async (schoolDataErr, SchoolDataRes) => {
+                    if (schoolDataErr) {
                         console.log(schoolDataErr);
                         callback(schoolDataErr, SchoolDataRes);
                     }
-                    else
-                    {
+                    else {
                         console.log('School Data: ', SchoolDataRes);
                         let classPassPercentage = 0;
                         let group_pass_percentage = 0;
-                          
-                          if (quizTestRes.Item.learningType == constant.prePostConstans.preLearningVal) {
+
+                        if (quizTestRes.Item.learningType == constant.prePostConstans.preLearningVal) {
                             classPassPercentage = Number(SchoolDataRes.Items[0].pre_quiz_config.class_percentage);
                             group_pass_percentage = Number(SchoolDataRes.Items[0].pre_quiz_config.group_pass_percentage);
-                          } else {
+                        } else {
                             classPassPercentage = Number(SchoolDataRes.Items[0].post_quiz_config.class_percentage);
                             group_pass_percentage = Number(SchoolDataRes.Items[0].post_quiz_config.group_pass_percentage);
 
-                          }
-                          
-                          
+                        }
+
+
 
                         /** REST OF THE FLOW **/
                         let quizData = quizTestRes.Item;
@@ -534,7 +439,7 @@ exports.startQuizEvaluationProcess = (request, callback) => {
                                 callback(studentMetaErr, studentMetaRes);
                             } else {
                                 console.log("STUDENT METADATA : ", studentMetaRes);
-                                if (studentMetaRes.Items.length > 0) {  
+                                if (studentMetaRes.Items.length > 0) {
                                     let questionArray = await getQuizQuestionIds(quizData.quiz_question_details);
                                     console.log("OVERALL QUESTIONS IDS : ", questionArray);
 
@@ -551,31 +456,27 @@ exports.startQuizEvaluationProcess = (request, callback) => {
                                             callback(questionDataErr, questionDataRes);
                                         } else {
                                             console.log("QUESTION DATA : ", questionDataRes);
-                                            console.log("quizData.quiz_question_details",questionDataRes.Items);
-                                            exports.assigningQuizMarks(studentMetaRes.Items, quizData.quiz_question_details, questionDataRes.Items, classPassPercentage, group_pass_percentage,quizData.question_track_details, (markAssignErr, markAssignRes) => {
-                                                if(markAssignErr)
-                                                {
+                                            console.log("quizData.quiz_question_details", questionDataRes.Items);
+                                            exports.assigningQuizMarks(studentMetaRes.Items, quizData.quiz_question_details, questionDataRes.Items, classPassPercentage, group_pass_percentage, quizData.question_track_details, (markAssignErr, markAssignRes) => {
+                                                if (markAssignErr) {
                                                     console.log(markAssignErr);
                                                     callback(markAssignErr, markAssignRes)
                                                 }
-                                                else
-                                                {
+                                                else {
                                                     // console.log("markAssignRes1",markAssignRes);
                                                     //  console.log("markAssignRes",markAssignRes[0].marks_details[0].qa_details);
-                                                     markAssignRes = addIndividualGroupPerformance(markAssignRes,questionDataRes,group_pass_percentage);
-                                                      console.log("test ok",markAssignRes);
+                                                    markAssignRes = addIndividualGroupPerformance(markAssignRes, questionDataRes, group_pass_percentage);
+                                                    console.log("test ok", markAssignRes);
                                                     //  console.log(JSON.stringify(markAssignRes, null, 2));
 
-                                                    
+
                                                     /** BATCH UPDATE **/
                                                     let resultTable = TABLE_NAMES.upschool_quiz_result;
                                                     commonRepository.bulkBatchWrite(markAssignRes, resultTable, (batchErr, batchRes) => {
-                                                        if(batchErr)
-                                                        {
+                                                        if (batchErr) {
                                                             callback(batchErr, batchRes);
                                                         }
-                                                        else
-                                                        {
+                                                        else {
                                                             callback(batchErr, 200);
                                                         }
                                                     })
@@ -587,8 +488,7 @@ exports.startQuizEvaluationProcess = (request, callback) => {
                                         }
                                     })
                                 }
-                                else
-                                {
+                                else {
                                     console.log(constant.messages.NO_ANSWER_SHEET_FOUND);
                                     callback(400, constant.messages.NO_ANSWER_SHEET_FOUND);
                                 }
@@ -597,10 +497,9 @@ exports.startQuizEvaluationProcess = (request, callback) => {
                         /** END REST OF THE FLOW **/
                     }
                 })
-                /** END FETCH SCHOOL DATA **/                
+                /** END FETCH SCHOOL DATA **/
             }
-            else
-            {
+            else {
                 console.log(constant.messages.NO_DATA);
                 callback(400, constant.messages.NO_DATA);
             }
@@ -620,26 +519,24 @@ const getQuizQuestionIds = async (quiz_question_details) => {
     return questionArr;
 }
 
-exports.assigningQuizMarks = async (studResultData, quizQuestionSets, quesAns, classPassPercentage,group_pass_percentage,question_track_details, callback) => {
+exports.assigningQuizMarks = async (studResultData, quizQuestionSets, quesAns, classPassPercentage, group_pass_percentage, question_track_details, callback) => {
     let quizSets = constant.quizSets;
 
     /** GET FINAL DATA FORMAT **/
     await helper.getQuizMarksDetailsFormat(quizQuestionSets).then(async (setsMarkFormat) => {
         console.log("SET MARK FORMAT : ", setsMarkFormat);
 
-        /** GET CONCAT ANSWERS **/    
+        /** GET CONCAT ANSWERS **/
         await helper.concatAnswers(studResultData).then((overallAns) => {
             studResultData = overallAns;
             console.log("CONCAT STUDENT QUIZ ANSWERS : ", studResultData);
 
             let questionPaper = [];
             let markDetails = [];
-            async function studentLoop(i)
-            {
-                if(i < studResultData.length)
-                {
+            async function studentLoop(i) {
+                if (i < studResultData.length) {
                     questionPaper = quizQuestionSets[quizSets[studResultData[i].quiz_set.toLowerCase()]];
-                  let  questionPaperTrack = question_track_details[quizSets[studResultData[i].quiz_set.toLowerCase()]];
+                    let questionPaperTrack = question_track_details[quizSets[studResultData[i].quiz_set.toLowerCase()]];
 
                     markDetails = await setsMarkFormat.filter((markForm, j) => {
                         return markForm.set_key === quizSets[studResultData[i].quiz_set.toLowerCase()]
@@ -648,9 +545,8 @@ exports.assigningQuizMarks = async (studResultData, quizQuestionSets, quesAns, c
                     console.log("QUESTION PAPAER : ", questionPaper);
                     console.log("MARK DETAILS : ", markDetails);
 
-                    if(studResultData[i].overall_answer.length > 0)
-                    {
-                        await exports.comparingQuizAnswer(studResultData[i].overall_answer, markDetails, questionPaper, quesAns, classPassPercentage,group_pass_percentage,questionPaperTrack).then(async (finalMarksDetails) => {
+                    if (studResultData[i].overall_answer.length > 0) {
+                        await exports.comparingQuizAnswer(studResultData[i].overall_answer, markDetails, questionPaper, quesAns, classPassPercentage, group_pass_percentage, questionPaperTrack).then(async (finalMarksDetails) => {
 
                             console.log("FINAL MARKS : " + studResultData[i].student_id, finalMarksDetails);
                             studResultData[i].marks_details = finalMarksDetails.markDetails;
@@ -659,8 +555,7 @@ exports.assigningQuizMarks = async (studResultData, quizQuestionSets, quesAns, c
                             studResultData[i].updated_ts = helper.getCurrentTimestamp();
                         })
                     }
-                    else
-                    {
+                    else {
                         console.log("EMPTY OVERALL ANSWER");
                         studResultData[i].marks_details = markDetails;
                         studResultData[i].isPassed = false;
@@ -670,25 +565,24 @@ exports.assigningQuizMarks = async (studResultData, quizQuestionSets, quesAns, c
                     i++;
                     studentLoop(i);
                 }
-                else
-                {
+                else {
                     console.log("DONE!");
                     console.log(studResultData);
                     callback(0, studResultData);
                 }
             }
             studentLoop(0)
-        })        
-    })    
+        })
+    })
 }
 
 exports.comparingQuizAnswer = async (studAns, markDetails, questionPaper, quesAns, classPassPercentage, group_pass_percentage, questionPaperTrack) => {
     return new Promise(async (resolve, reject) => {
         await helper.splitStudentQuizAnswer(studAns).then((splitedAns) => {
             console.log("SPLITED ANSWER : ", splitedAns);
-            
+
             let passStatus = false;
-            
+
             async function sectionLoop(i) {
                 if (i < markDetails.length) {
                     if (splitedAns[i] && splitedAns[i].individualAns && splitedAns[i].individualAns.length > 0) {
@@ -701,8 +595,8 @@ exports.comparingQuizAnswer = async (studAns, markDetails, questionPaper, quesAn
                                 passStatus = overallResult.isPassed;
                             });
                         });
-                    } 
-                    
+                    }
+
                     i++;
                     sectionLoop(i);
                 } else {
@@ -710,10 +604,10 @@ exports.comparingQuizAnswer = async (studAns, markDetails, questionPaper, quesAn
                     console.log("End comparingAnswer");
                     console.log("OVERALL QA DETAILS : ", markDetails);
 
-                    resolve({ markDetails, isPassed: passStatus });                  
+                    resolve({ markDetails, isPassed: passStatus });
                 }
             }
-            
+
             sectionLoop(0);
         }).catch((error) => {
             console.error("Error in splitStudentQuizAnswer:", error);
@@ -726,18 +620,15 @@ exports.comparingQuizAnswer = async (studAns, markDetails, questionPaper, quesAn
 exports.setQizQaDetails = (qaDetails, indAns, quesAns, questionPaperTrack) => {
     let localQuestion = "";
     let localType = "";
-    console.log( "checkedtrack",questionPaperTrack);
+    console.log("checkedtrack", questionPaperTrack);
     return new Promise(async (resolve, reject) => {
-        async function qaLoop(i)
-        {
-            if(i < qaDetails.length)
-            {
- 
+        async function qaLoop(i) {
+            if (i < qaDetails.length) {
+
                 localQuestion = quesAns.filter(ques => ques.question_id === qaDetails[i].question_id);
- 
+
                 localType = questionPaperTrack.filter(ques => ques.question_id === qaDetails[i].question_id);
-                if(localQuestion.length > 0 && indAns[i])
-                {
+                if (localQuestion.length > 0 && indAns[i]) {
                     await classTestServices.compareAnswer(localQuestion[0], indAns[i],).then((obMark) => {
                         console.log("OBTAINED MARKS : ", obMark);
                         qaDetails[i].obtained_marks = obMark;
@@ -748,11 +639,10 @@ exports.setQizQaDetails = (qaDetails, indAns, quesAns, questionPaperTrack) => {
                 i++;
                 qaLoop(i);
             }
-            else
-            {
+            else {
                 console.log("End setQaDetails");
                 resolve(qaDetails);
-            }          
+            }
         }
         qaLoop(0)
     })
@@ -764,21 +654,21 @@ const knowPassOrFail = (marks_details, quesAndAns, individualPassPercentage) => 
         individualPassPercentage = 50;
         let totalMarks = quesAndAns?.reduce((acc, item) => {
             return item.marks ? acc + Number(item.marks) : acc;
-        }, 0);       
-    
+        }, 0);
+
         const studentResult = marks_details?.qa_details?.filter(studentProgress => {
             return quesAndAns.some(question => question?.question_id === studentProgress?.question_id);
-        }).reduce((acc, item) =>  {
+        }).reduce((acc, item) => {
             console.log(item?.obtained_marks);
             return acc + item?.obtained_marks
         }, 0);
-     
+
         const isPassed = studentResult >= individualPassPercentage;
         console.log(isPassed);
         console.log({ totalMarks });
         console.log({ studentResult });
 
-        resolve({isPassed, studentResult});
+        resolve({ isPassed, studentResult });
     })
 };
 
@@ -807,7 +697,7 @@ const knowPassOrFail = (marks_details, quesAndAns, individualPassPercentage) => 
 //         }
 //     });
 
-//     const totalMarks = (totalObtainedMarks / quesAns.reduce((acc, cur) => acc + cur.marks, 0)) * 100; 
+//     const totalMarks = (totalObtainedMarks / quesAns.reduce((acc, cur) => acc + cur.marks, 0)) * 100;
 
 //     // Compare the calculated percentage with the individual pass percentage
 //     const pass = totalMarks >= individualPassPercentage;

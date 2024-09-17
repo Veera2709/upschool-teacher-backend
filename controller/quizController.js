@@ -1,16 +1,15 @@
-const quizServices = require("../services/quizServices");
+const { formatResponse } = require("../helper/helper");
+const {quizServices} = require("../services");
 
-exports.checkDuplicateQuizName = (req, res, next) => {
-    let request = req.body;
-    quizServices.checkDuplicateQuizName(request, function (quizData_error, quizData_response) {
-        if (quizData_error) {
-            res.status(quizData_error).json(quizData_response);
-        }
-        else {
-            res.json(quizData_response);
-        }
-    })
-}
+exports.checkDuplicateQuizName = async (req, res, next) => {
+    try {
+        const request = req.body;
+        const reportData = await quizServices.checkDuplicateQuizName(request);
+        res.send(formatResponse(res, reportData))
+    } catch (error) {
+        next(error)
+    }
+};
 
 exports.toggleQuizStatus = (req, res, next) => {
     let request = req.body;
@@ -24,41 +23,33 @@ exports.toggleQuizStatus = (req, res, next) => {
         }
     })
 }
-exports.fetchQuizBasedonStatus = (req, res, next) => {
-    console.log("fetchQuizBasedonStatus: ", req.body);
-    let request = req.body;
-
-    quizServices.fetchQuizBasedonStatus(request, function (quiz_data_err, quiz_data_response) {
-        if (quiz_data_err) {
-            res.status(quiz_data_err).json(quiz_data_response);
-        } else {
-            console.log("Quiz Data Fetched Successfully!");
-            res.json(quiz_data_response);
-        }
-    });
+exports.fetchQuizBasedonStatus = async (req, res, next) => {
+    try {
+        const request = req.body;
+        const reportData = await quizServices.fetchQuizBasedonStatus(request);
+        return formatResponse(res, reportData);
+    } catch (error) {
+        next(error)
+    }
 };
-exports.getStudentQuizResultData = (req, res, next) => {
-    let request = req.body;
-    quizServices.getQuizResult(request, function (result_err, result_response) {
-        if (result_err) {
-            res.status(result_err).json(result_response);
-        } else {
-            console.log("result fetched");
-            res.json(result_response);
-        }
-    });
-}
-exports.updateStudentQuizMarks = (req, res, next) => {
-    let request = req.body;
-    quizServices.editStudentQuizMarks(request, function (result_err, result_response) {
-        if (result_err) {
-            res.status(result_err).json(result_response);
-        } else {
-            console.log("result fetched");
-            res.json(result_response);
-        }
-    });
-}
+exports.getStudentQuizResultData = async (req, res, next) => {
+    try {
+        const request = req.body;
+        const reportData = await quizServices.getQuizResult(request);
+        res.send(formatResponse(res, reportData))
+    } catch (error) {
+        next(error)
+    }
+};
+exports.updateStudentQuizMarks = async (req, res, next) => {
+    try {
+        const request = req.body;
+        const reportData = await quizServices.editStudentQuizMarks(request);
+        res.send(formatResponse(res, reportData))
+    } catch (error) {
+        next(error)
+    }
+};
 
 exports.viewQuizQuestionPaper = (req, res, next) => {
     console.log("viewQuizQuestionPaper : ");
@@ -90,11 +81,11 @@ exports.fetchQuizTemplates = (req, res, next) => {
 
 exports.resetQuizEvaluationStatus = (req, res, next) => {
     let request = req.body;
-    quizServices.resetQuizEvaluationStatus(request, function(quizStatus_error,quizStatus_response){
-        if(quizStatus_error){
+    quizServices.resetQuizEvaluationStatus(request, function (quizStatus_error, quizStatus_response) {
+        if (quizStatus_error) {
             res.status(quizStatus_error).json(quizStatus_response);
         }
-        else{
+        else {
             console.log(" Quiz Evaluation Status Updated");
             res.json(quizStatus_response);
         }
@@ -104,10 +95,10 @@ exports.startQuizEvaluation = (req, res, next) => {
     console.log("Quiz Evaluation Start!");
     let request = req.body;
     quizServices.startQuizEvaluationProcess(request, function (quizEvaluationErr, quizEvaluationRes) {
-        if (quizEvaluationErr) { 
+        if (quizEvaluationErr) {
             res.status(quizEvaluationErr).json(quizEvaluationRes);
         } else {
-            console.log("Quiz Evaluation Completed!"); 
+            console.log("Quiz Evaluation Completed!");
             res.json(quizEvaluationRes);
         }
     });
@@ -115,7 +106,7 @@ exports.startQuizEvaluation = (req, res, next) => {
 exports.fetchAllQuizDetails = (req, res, next) => {
     let request = req.body;
     request["token"] = req.header('Authorization');
-    
+
     quizServices.fetchAllQuizDetails(request, function (fetch_all_quiz_err, fetch_all_quiz_response) {
         if (fetch_all_quiz_err) {
             res.status(fetch_all_quiz_err).json(fetch_all_quiz_response);

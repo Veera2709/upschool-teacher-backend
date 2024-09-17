@@ -181,6 +181,34 @@ exports.fetchTopicIDDisplayTitleData = function (request, callback) {
         }
     });
 }
+exports.fetchTopicIDDisplayTitleData2 = async (request) => {
+
+    let chapter_array = request.chapter_array; 
+
+    if (chapter_array.length === 1) {
+        const params = {
+            TableName: TABLE_NAMES.upschool_topic_table,
+                    KeyConditionExpression: "topic_id = :topic_id",
+                    FilterExpression: "topic_status = :topic_status",
+                    ExpressionAttributeValues: {
+                        ":topic_id": topic_array[0],
+                        ":topic_status": "Active",
+                    }, 
+                    ProjectionExpression: "topic_id, topic_title, display_name",
+        };
+        const unit_data = await baseRepositoryNew.DATABASE_TABLE2.query(params); 
+        return unit_data.Items;
+    } else {
+        const params = {
+            TableName: TABLE_NAMES.upschool_topic_table,
+                    FilterExpression: FilterExpressionDynamic,
+                    ExpressionAttributeValues: ExpressionAttributeValuesDynamic,
+                    ProjectionExpression: "topic_id, topic_title, display_name",
+        };
+        const data = await baseRepositoryNew.DATABASE_TABLE2.getByObjects(params);       
+        return data.Items;
+    }
+};
 exports.fetchTopicConceptIDData = function (request, callback) {
 
     dynamoDbCon.getDB(function (DBErr, dynamoDBCall) {
