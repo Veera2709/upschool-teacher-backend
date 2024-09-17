@@ -1,14 +1,9 @@
-const quizRepository = require("../repository/quizRepository");
-const quizResultRepository = require("../repository/quizResultRepository");
 const classTestServices = require("./classTestServices");
 const constant = require("../constants/constant");
 const helper = require('../helper/helper');
 const { request } = require("http");
-const commonRepository = require("../repository/commonRepository");
 const { TABLE_NAMES } = require('../constants/tables');
-const schoolRepository = require("../repository/schoolRepository");
-const studentRepository = require("../repository/studentRepository");
-const classTestRepository = require("../repository/classTestRepository");
+const { quizRepository,quizResultRepository,schoolRepository,commonRepository,studentRepository,classRepository } = require("../repository")
 
 exports.checkDuplicateQuizName = async (request) => {
     const quizData_response = await quizRepository.checkDuplicateQuizName2(request)

@@ -1,5 +1,4 @@
-const schoolAdminRepository = require("../repository/schoolAdminRepository");
-const userRepository = require("../repository/userRepository");
+const {schoolAdminRepository,userRepository} = require("../repository")
 
 const constant = require("../constants/constant");
 

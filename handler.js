@@ -6,25 +6,8 @@ const dotenv = require("dotenv");
 const fileUpload = require("express-fileupload");
 dotenv.config();
 const cors = require('cors');
-const commonController = require('./controller/commonController');
-const digicardController = require('./controller/digicardController');
-const studentController = require('./controller/studentController');
-const topicController = require('./controller/topicController');
-const chapterController = require('./controller/chapterController');
-const blueprintController = require('./controller/blueprintController');
-// const classController = require('./controller/classController');
-// const schoolController = require('./controller/schoolController');
-// const userController = require('./controller/userController');
-const conceptController = require('./controller/conceptController');
-const subjectController = require('./controller/subjectController');
-const teacherController = require('./controller/teacherController');
-const questionController = require('./controller/questionController');
-const testQuestionPaperController = require('./controller/testQuestionPaperController');
-const classTestController = require('./controller/classTestController');
-const scannerController = require('./controller/scannerController');
-const quizController = require('./controller/quizController');
-const schoolAdminController = require('./controller/schoolAdminController');
-const reportController = require('./controller/reportController');
+
+const { commonController, digicardController, studentController,topicController,chapterController,blueprintController,conceptController,subjectController,teacherController,questionController,testQuestionPaperController,classTestController,scannerController,quizController,schoolAdminController,reportController } = require('./controller')
 
 const validator = require('./middleware/validator');
 const { ERROR } = require("./helper/helper");

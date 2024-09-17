@@ -1,4 +1,4 @@
-const testQuestionPaperServices = require("../services/testQuestionPaperServices");
+const {testQuestionPaperServices} = require("../services");
 const constants = require("../constants/constant");
 
 exports.fetchTestQuestionPapersBasedonStatus = (req, res, next) => {

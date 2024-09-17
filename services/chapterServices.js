@@ -1,10 +1,5 @@
 const fs = require("fs");
-const chapterRepository = require("../repository/chapterRepository");  
-const topicRepository = require("../repository/topicRepository");  
-const teacherRepository = require("../repository/teacherRepository");
-const schoolRepository = require("../repository/schoolRepository");
-const quizRepository = require("../repository/quizRepository");
-const teachingActivityRepository = require("../repository/teachingActivityRepository");  
+const { chapterRepository, topicRepository, teacherRepository,schoolRepository,quizRepository,teachingActivityRepository} = require("../repository")  
 const constant = require('../constants/constant');
 const helper = require('../helper/helper');
 const { nextTick } = require("process");

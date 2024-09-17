@@ -1,14 +1,5 @@
 const dynamoDbCon = require('../awsConfig');
-const conceptRepository = require("../repository/conceptRepository");
-const digicardRepository = require("../repository/digicardRepository");
-const classTestRepository = require("../repository/classTestRepository");
-const testQuestionPaperRepository = require("../repository/testQuestionPaperRepository");
-const commonRepository = require("../repository/commonRepository");
-const blueprintRepository = require("../repository/blueprintRepository");
-const classRepository = require("../repository/classRepository");
-const subjectRepository = require("../repository/subjectRepository");
-const sectionRepository = require("../repository/sectionRepository");
-const testResultRepository = require("../repository/testResultRepository");
+const { classTestRepository,testQuestionPaperRepository,commonRepository,classRepository,testResultRepository} = require("../repository")
 const commonServices = require("../services/commonServices");
 const { TABLE_NAMES } = require('../constants/tables');
 const constant = require('../constants/constant');

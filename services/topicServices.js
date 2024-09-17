@@ -1,13 +1,7 @@
 const fs = require("fs");
 const dynamoDbCon = require("../awsConfig");
-const topicRepository = require("../repository/topicRepository");
-const chapterRepository = require("../repository/chapterRepository");
-const teacherRepository = require("../repository/teacherRepository");
-const conceptRepository = require("../repository/conceptRepository");
-const digicardRepository = require("../repository/digicardRepository");
-const teachingActivityRepository = require("../repository/teachingActivityRepository");
+const {topicRepository,chapterRepository,teacherRepository,conceptRepository,digicardRepository,teachingActivityRepository} = require("../repository")
 const teacherServices = require("../services/teacherServices");
-const commonServices = require("../services/commonServices");
 const constant = require("../constants/constant");
 const helper = require("../helper/helper");
 const { nextTick } = require("process");
