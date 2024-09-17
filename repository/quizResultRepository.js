@@ -145,6 +145,23 @@ exports.resetQuizEvaluationStatus = function (request, callback) {
         }
     });
 }
+exports.resetQuizEvaluationStatus2 = async (request) => {
+
+    let params = {
+        TableName: TABLE_NAMES.upschool_quiz_result,
+        Key: {
+            "result_id": request.data.result_id
+        },
+        UpdateExpression: "set updated_ts = :updated_ts, evaluated = :evaluated",
+        ExpressionAttributeValues: {
+            ":evaluated": "No",
+            ":updated_ts": helper.getCurrentTimestamp(),
+        },
+
+    }
+    const data = (await baseRepositoryNew.DATABASE_TABLE2.updateService(params)).$metadata.httpStatusCode;
+    return data;
+}
 
 exports.fetchStudentQuiRresultMetadata = function (request, callback) {
     dynamoDbCon.getDB(function (DBErr, dynamoDBCall) {
