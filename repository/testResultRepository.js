@@ -4,6 +4,8 @@ const indexName = require('../constants/indexes');
 const { DATABASE_TABLE } = require('./baseRepository');
 const helper = require('../helper/helper');
 const constant = require('../constants/constant');
+const baseRepositoryNew = require('./baseRepositoryNew');
+
 
 exports.fetchTestDataOfStudent = function (request, callback) {
     dynamoDbCon.getDB(function (DBErr, dynamoDBCall) {
@@ -119,6 +121,23 @@ exports.fetchStudentresultMetadata = function (request, callback) {
         }
     });
 }
+exports.fetchStudentresultMetadata2 = async (request) => {
+    let params = {
+        TableName: TABLE_NAMES.upschool_test_result,
+                IndexName: indexName.Indexes.common_id_index,
+                KeyConditionExpression: "common_id = :common_id",
+                FilterExpression: "class_test_id = :class_test_id AND evaluated = :evaluated",
+                ExpressionAttributeValues: {
+                    ":class_test_id": request.data.class_test_id,
+                    ":evaluated": "No",
+                    ":common_id": constant.constValues.common_id
+                }
+        
+
+    };
+    const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    return data;
+}
 
 
 exports.changeTestEvaluationStatus = function (request, callback) {
@@ -148,4 +167,21 @@ exports.changeTestEvaluationStatus = function (request, callback) {
 
         }
     });
+}
+exports.changeTestEvaluationStatus2 = async (request) => {
+
+    let params = {
+        TableName: TABLE_NAMES.upschool_test_result,
+                Key: {
+                    "result_id": request.data.result_id
+                },
+                UpdateExpression: "set updated_ts = :updated_ts, evaluated = :evaluated",
+                ExpressionAttributeValues: {
+                    ":evaluated": "No",
+                    ":updated_ts": helper.getCurrentTimestamp(),
+                },
+
+    }
+    const data = (await baseRepositoryNew.DATABASE_TABLE2.updateService(params)).$metadata.httpStatusCode;
+    return data;
 }

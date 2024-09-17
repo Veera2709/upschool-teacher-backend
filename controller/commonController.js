@@ -1,4 +1,4 @@
-const commonServices = require("../services/commonServices");
+const {commonServices} = require("../services");
 
 exports.userLogin = (req, res, next) => {
     console.log("LOGIN");

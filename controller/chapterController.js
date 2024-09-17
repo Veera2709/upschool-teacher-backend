@@ -1,4 +1,4 @@
-const chapterServices = require("../services/chapterServices");
+const {chapterServices} = require("../services");
 
 exports.chapterUnlock = (req, res, next) => {
     let request = req.body;

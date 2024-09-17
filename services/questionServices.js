@@ -1,9 +1,5 @@
-const schoolRepository = require("../repository/schoolRepository");  
-const chapterRepository = require("../repository/chapterRepository");  
-const topicRepository = require("../repository/topicRepository");  
 const chapterServices = require("../services/chapterServices");
-const teachingActivityRepository = require("../repository/teachingActivityRepository");  
-const conceptRepository = require("../repository/conceptRepository");  
+const { schoolRepository,chapterRepository,topicRepository,teachingActivityRepository,conceptRepository } = require("../repository")
 const constant = require('../constants/constant');
 const helper = require('../helper/helper');
 

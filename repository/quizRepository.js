@@ -116,6 +116,26 @@ exports.checkDuplicateQuizName = function (request, callback) {
         }
     })
 }
+exports.checkDuplicateQuizName2 = async (request) => {
+    let params = {
+        TableName: TABLE_NAMES.upschool_quiz_table,
+        IndexName: indexName.Indexes.common_id_index,
+        KeyConditionExpression: "common_id = :common_id",
+        FilterExpression: "chapter_id = :chapter_id AND client_class_id = :client_class_id AND section_id = :section_id AND subject_id = :subject_id AND  learningType = :learningType AND lc_quiz_name = :lc_quiz_name",
+        ExpressionAttributeValues: {
+            ":common_id": constant.constValues.common_id,
+            ":chapter_id": request.data.chapter_id,
+            ":client_class_id": request.data.client_class_id,
+            ":section_id": request.data.section_id,
+            ":subject_id": request.data.subject_id,
+            ":learningType": request.data.learningType,
+            ":lc_quiz_name": request.data.quiz_name.toLowerCase().replace(/ /g, ''),
+        }
+
+    };
+    const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    return data;
+}
 
 exports.updateQuizTemplateDetails = function (request, callback) {
     dynamoDbCon.getDB(async function (DBErr, dynamoDBCall) {
@@ -201,6 +221,27 @@ exports.getQuizBasedonStatus = function (request, callback) {
     });
 }
 
+exports.getQuizBasedonStatus2 = async (request) => {
+    let params = {
+        TableName: TABLE_NAMES.upschool_quiz_table,
+                IndexName: indexName.Indexes.common_id_index,
+                KeyConditionExpression: "common_id = :common_id",
+                FilterExpression: "quiz_status = :quiz_status AND client_class_id = :client_class_id AND section_id = :section_id AND subject_id = :subject_id AND chapter_id = :chapter_id",
+                ExpressionAttributeValues: {
+                    ":common_id": constant.constValues.common_id,
+                    ":client_class_id": request.data.client_class_id,
+                    ":section_id": request.data.section_id,
+                    ":subject_id": request.data.subject_id,
+                    ":chapter_id": request.data.chapter_id,
+                    ":quiz_status": request.data.quiz_status
+                },
+                ProjectionExpression: "quizMode, quiz_status, learningType, quiz_id, quiz_name, chapter_id"
+
+    };
+    const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    return data.Items;
+}
+
 exports.fetchQuizDataById = function (request, callback) {
 
     dynamoDbCon.getDB(function (DBErr, dynamoDBCall) {
@@ -263,6 +304,22 @@ exports.getQuizResult = function (request, callback) {
         }
     });
 }
+exports.getQuizResult2 = async (request) => {
+    let params = {
+        TableName: TABLE_NAMES.upschool_quiz_result,
+                IndexName: indexName.Indexes.common_id_index,
+                KeyConditionExpression: "common_id = :common_id",
+                FilterExpression: "quiz_id = :quiz_id AND student_id = :student_id",
+                ExpressionAttributeValues: {
+                    ":common_id": constant.constValues.common_id,
+                    ":quiz_id": request.data.quiz_id,
+                    ":student_id": request.data.student_id
+                },
+                ProjectionExpression: "answer_metadata, marks_details, result_id, evaluated"
+    };
+    const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    return data;
+}
 exports.modifyStudentMarks = function (request, callback) {
 
     dynamoDbCon.getDB(function (DBErr, dynamoDBCall) {
@@ -289,6 +346,22 @@ exports.modifyStudentMarks = function (request, callback) {
             DATABASE_TABLE.updateRecord(docClient, update_params, callback);
         }
     });
+}
+exports.modifyStudentMarks2 = async (request) => {
+    let params = {
+        TableName: TABLE_NAMES.upschool_quiz_result,
+                Key: {
+                    "result_id": request.data.result_id
+                },
+                UpdateExpression: "set marks_details = :marks_details, updated_ts = :updated_ts, isPassed = :isPassed",
+                ExpressionAttributeValues: {
+                    ":marks_details": request.data.marks_details,
+                    ":isPassed": request.data.passStatus,
+                    ":updated_ts": helper.getCurrentTimestamp()
+                },
+    };
+    const data = await baseRepositoryNew.DATABASE_TABLE2.updateService(params);
+    return data;
 }
 
 exports.fetchQuizTemplates = function (request, callback) {

@@ -1,6 +1,5 @@
 const dynamoDbCon = require('../awsConfig');
-const userRepository = require("../repository/userRepository");
-const schoolRepository = require("../repository/schoolRepository");
+const {userRepository , schoolRepository} = require("../repository")
 const constant = require('../constants/constant');
 const helper = require('../helper/helper');
 const { nextTick } = require("process");

@@ -1,4 +1,4 @@
-const schoolAdminServices = require("../services/schoolAdminServices");
+const {schoolAdminServices} = require("../services");
 
 exports.createSchoolAdmin = (req, res, next) => {
     let request = req.body;
