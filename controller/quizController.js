@@ -32,28 +32,24 @@ exports.fetchQuizBasedonStatus = async (req, res, next) => {
         next(error)
     }
 };
-exports.getStudentQuizResultData = (req, res, next) => {
-    let request = req.body;
-    quizServices.getQuizResult(request, function (result_err, result_response) {
-        if (result_err) {
-            res.status(result_err).json(result_response);
-        } else {
-            console.log("result fetched");
-            res.json(result_response);
-        }
-    });
-}
-exports.updateStudentQuizMarks = (req, res, next) => {
-    let request = req.body;
-    quizServices.editStudentQuizMarks(request, function (result_err, result_response) {
-        if (result_err) {
-            res.status(result_err).json(result_response);
-        } else {
-            console.log("result fetched");
-            res.json(result_response);
-        }
-    });
-}
+exports.getStudentQuizResultData = async (req, res, next) => {
+    try {
+        const request = req.body;
+        const reportData = await quizServices.getQuizResult(request);
+        res.send(formatResponse(res, reportData))
+    } catch (error) {
+        next(error)
+    }
+};
+exports.updateStudentQuizMarks = async (req, res, next) => {
+    try {
+        const request = req.body;
+        const reportData = await quizServices.editStudentQuizMarks(request);
+        res.send(formatResponse(res, reportData))
+    } catch (error) {
+        next(error)
+    }
+};
 
 exports.viewQuizQuestionPaper = (req, res, next) => {
     console.log("viewQuizQuestionPaper : ");
