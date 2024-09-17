@@ -22,9 +22,7 @@ exports.addClassTest = async (request) => {
         };
         const pdfData = await axios(options);
         request.data.answer_sheet_template = pdfData.data.answer_sheet_template;
-        request.data.question_paper_template = pdfData.data.question_paper_template;
-        console.log("pdfData : ", pdfData.data);
-        console.log("FINAL INSERT REQUEST : ", request.data);
+        request.data.question_paper_template = pdfData.data.question_paper_template;     
 
         return await classTestRepository.insertClassTest2(request);
     }
@@ -38,7 +36,6 @@ exports.getClassTestbyId = async (request) => {
     request.data.class_test_status = "Active";
     const classTestRes = await classTestRepository.getClassTestIdAndName2(request)
 
-    console.log("CLASS TEST DATA : ", classTestRes);
     let questionPaperTEmp = classTestRes.Items[0].question_paper_template ? classTestRes.Items[0].question_paper_template : "N.A.";
     let answerSheetTemp = classTestRes.Items[0].answer_sheet_template ? classTestRes.Items[0].answer_sheet_template : "N.A.";
 
@@ -46,9 +43,7 @@ exports.getClassTestbyId = async (request) => {
     let answerUrlCheck = constant.testFolder.answerSheets.split("/")[0];
 
     classTestRes.Items[0].question_paper_template_url = questionPaperTEmp.includes(questionUrlCheck) ? await helper.getS3SignedUrl(questionPaperTEmp) : "N.A.";
-
     classTestRes.Items[0].answer_sheet_template_url = answerSheetTemp.includes(answerUrlCheck) ? await helper.getS3SignedUrl(answerSheetTemp) : "N.A.";
-
 
     return classTestRes
 

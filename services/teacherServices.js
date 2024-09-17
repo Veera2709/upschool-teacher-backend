@@ -12,23 +12,19 @@ exports.getTeacherClasses = async (request) => {
   const individual_teacher_response = await teacherRepository.fetchTeacherByID2(request)
   const client_class_id = individual_teacher_response.Items[0].teacher_section_allocation.map((val) => ({ "client_class_id": val.client_class_id }));
 
-  const teacher_client_class_response = await teacherRepository.fetchTeacherClientClassData2({ items: client_class_id, condition: "OR" })
-  return teacher_client_class_response
+  return await teacherRepository.fetchTeacherClientClassData2({ items: client_class_id, condition: "OR" })
 };
 exports.getTeacherSectionsBasedonClass = async (request) => {
   const individual_teacher_response = await teacherRepository.fetchTeacherByID2(request)
   let section_ids = (individual_teacher_response.Items[0].teacher_section_allocation.filter((e) => e.client_class_id == request.data.client_class_id)).map(({ section_id }) => ({ section_id }));
 
-  const teacher_section_response = await teacherRepository.fetchTeacherSectionData2({ items: section_ids, condition: "OR" })
-  return teacher_section_response
-
+  return await teacherRepository.fetchTeacherSectionData2({ items: section_ids, condition: "OR" })
 };
 exports.getTeacherSubjectsBasedonSection = async (request) => {
   const individual_teacher_response = await teacherRepository.fetchTeacherByID2(request)
   let subject_ids = individual_teacher_response.Items[0].teacher_info.filter((e) => e.client_class_id == request.data.client_class_id && e.section_id == request.data.section_id && e.info_status === "Active").map(({ subject_id }) => ({ subject_id }));
 
-  const teacher_subject_response = await teacherRepository.fetchTeacherSubjectData2({ items: subject_ids, condition: "OR" })
-  return teacher_subject_response
+  return await teacherRepository.fetchTeacherSubjectData2({ items: subject_ids, condition: "OR" })
 };
 exports.teacherSubjectandActivityCheck = function (request, callback) {
   /** FETCH USER BY EMAIL **/
