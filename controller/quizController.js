@@ -36,7 +36,7 @@ exports.getStudentQuizResultData = async (req, res, next) => {
     try {
         const request = req.body;
         const reportData = await quizServices.getQuizResult(request);
-        res.send(formatResponse(res, reportData))
+        return formatResponse(res, reportData)
     } catch (error) {
         next(error)
     }
