@@ -249,16 +249,16 @@ exports.fetchChaptersIDandChapterTopicID = function (request, callback) {
     });
 }
 exports.fetchChaptersIDandChapterTopicID2 = async (request) => {
-    let chapter_array = request.chapter_array;    
-        const params = {
-            TableName: TABLE_NAMES.upschool_chapter_table,
-            KeyConditionExpression: "chapter_id = :chapter_id",
-            ExpressionAttributeValues: {
-                ":chapter_id": chapter_array
-            },
-            ProjectionExpression: "chapter_id, prelearning_topic_id, postlearning_topic_id",
-        };
-        const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
-        return data;
-    
+    const fromatedRequest = await helper.getDataByFilterKey(request);
+    const params = {
+        TableName: TABLE_NAMES.upschool_section_table,
+        IndexName: indexName.Indexes.common_id_index,
+        KeyConditionExpression: "common_id = :common_id",
+        FilterExpression: fromatedRequest.FilterExpression,
+        ExpressionAttributeValues: fromatedRequest.ExpressionAttributeValues,
+        ProjectionExpression: "chapter_id, prelearning_topic_id, postlearning_topic_id"
+    };
+    const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    return data;
+
 };
