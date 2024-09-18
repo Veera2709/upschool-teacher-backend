@@ -5,7 +5,6 @@ exports.checkDuplicateQuizName = async (req, res, next) => {
     try {
         const request = req.body;
         const reportData = await quizServices.checkDuplicateQuizName(request);
-        console.log(reportData);
         formatResponse(res, reportData)
     } catch (error) {
         next(error)
