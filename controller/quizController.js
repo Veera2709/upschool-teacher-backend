@@ -45,7 +45,7 @@ exports.updateStudentQuizMarks = async (req, res, next) => {
     try {
         const request = req.body;
         const reportData = await quizServices.editStudentQuizMarks(request);
-        res.send(formatResponse(res, reportData))
+        return formatResponse(res, reportData)
     } catch (error) {
         next(error)
     }
