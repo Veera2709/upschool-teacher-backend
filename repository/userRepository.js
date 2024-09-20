@@ -5,6 +5,8 @@ const { DATABASE_TABLE } = require('./baseRepository');
 const { successResponse } = require('./baseRepository');
 const helper = require('../helper/helper');
 const constant = require('../constants/constant');
+const baseRepositoryNew = require('./baseRepositoryNew');
+
 
 
 exports.fetchUserDataByEmail = function (request, callback) {
@@ -124,6 +126,17 @@ exports.fetchUserDataByUserId = function (request, callback) {
 
         }
     });
+}
+exports.fetchUserDataByUserId2 = async (request) => {
+    let params = {
+        TableName: TABLE_NAMES.upschool_teacher_info,
+                KeyConditionExpression: "teacher_id = :teacher_id",
+                ExpressionAttributeValues: {
+                    ":teacher_id": request.teacher_id
+                }
+    };
+
+    return await baseRepositoryNew.DATABASE_TABLE2.query(params);
 }
 
 exports.updateJwtToken = function (request, callback) {
@@ -289,6 +302,21 @@ exports.changeUserStatus = function (request, callback) {
             DATABASE_TABLE.updateRecord(docClient, update_params, callback);
         }
     });
+}
+exports.changeUserStatus2 = async (request) => {
+    let params = {
+        TableName: TABLE_NAMES.upschool_teacher_info,
+                Key: {
+                    "teacher_id": request.data.school_admin_id
+                },
+                UpdateExpression: "set user_status = :user_status, updated_ts = :updated_ts",
+                ExpressionAttributeValues: {
+                    ":user_status": request.data.user_status,
+                    ":updated_ts": helper.getCurrentTimestamp(),
+                },
+    };
+    const data = await baseRepositoryNew.DATABASE_TABLE2.updateService(params);
+    return data;
 }
 
 exports.fetchBulkUserssData = function (request, callback) {

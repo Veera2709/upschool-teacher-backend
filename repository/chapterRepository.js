@@ -251,14 +251,16 @@ exports.fetchChaptersIDandChapterTopicID = function (request, callback) {
 exports.fetchChaptersIDandChapterTopicID2 = async (request) => {
     const fromatedRequest = await helper.getDataByFilterKey(request);
     const params = {
-        TableName: TABLE_NAMES.upschool_section_table,
+        TableName: TABLE_NAMES.upschool_chapter_table,
         IndexName: indexName.Indexes.common_id_index,
         KeyConditionExpression: "common_id = :common_id",
         FilterExpression: fromatedRequest.FilterExpression,
         ExpressionAttributeValues: fromatedRequest.ExpressionAttributeValues,
         ProjectionExpression: "chapter_id, prelearning_topic_id, postlearning_topic_id"
     };
+    console.log({params});
     const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    console.log({data});
     return data;
 
 };
