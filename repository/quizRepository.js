@@ -511,3 +511,22 @@ exports.getAllQuizData = function (request, callback) {
     });
 }
 
+exports.fetchAllQuizBasedonChapter = async (request) => {
+    let params = {
+        TableName: TABLE_NAMES.upschool_quiz_table,
+        IndexName: indexName.Indexes.common_id_index,
+        KeyConditionExpression: "common_id = :common_id",  
+        FilterExpression: "chapter_id = :chapter_id AND quiz_status = :quiz_status AND subject_id = :subject_id AND client_class_id = :client_class_id AND section_id = :section_id", 
+        ExpressionAttributeValues: {
+            ":common_id": constant.constValues.common_id,
+            ":client_class_id": request.data.client_class_id,
+            ":subject_id": request.data.subject_id,
+            ":section_id": request.data.section_id,
+            ":chapter_id": request.data.chapter_id,
+            ":quiz_status": "Active",
+        }
+    };
+
+    // Make the query call to DynamoDB
+    return await baseRepositoryNew.DATABASE_TABLE2.query(params);
+};

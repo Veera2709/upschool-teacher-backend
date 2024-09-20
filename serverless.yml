@@ -379,5 +379,7 @@ functions:
           path: /v1/comprehensivePerformanceTopicWise
           method: POST
           cors: true  
-
-
+      - http:
+          path: /v1/comprehensivePerformanceConceptWise
+          method: POST
+          cors: true  
