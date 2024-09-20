@@ -37,6 +37,24 @@ exports.fetchQuizData = function (request, callback) {
         }
     });
 }
+exports.fetchQuizData2 = async (request) => {
+    const params = {
+        TableName: TABLE_NAMES.upschool_quiz_table,
+                IndexName: indexName.Indexes.common_id_index,
+                KeyConditionExpression: "common_id = :common_id",
+                FilterExpression: "client_class_id = :client_class_id AND section_id = :section_id AND subject_id = :subject_id AND quiz_status = :quiz_status AND chapter_id = :chapter_id AND learningType = :learningType",
+                ExpressionAttributeValues: {
+                    ":common_id": constant.constValues.common_id,
+                    ":client_class_id": request.data.client_class_id,
+                    ":section_id": request.data.section_id,
+                    ":subject_id": request.data.subject_id,
+                    ":chapter_id": request.data.chapter_id,
+                    ":learningType": request.data.learningType,
+                    ":quiz_status": "Active"
+                }
+    };
+    return await baseRepositoryNew.DATABASE_TABLE2.query(params); 
+};
 
 exports.addQuiz = function (request, callback) {
 
@@ -133,8 +151,7 @@ exports.checkDuplicateQuizName2 = async (request) => {
         }
 
     };
-    const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
-    return data;
+    return await baseRepositoryNew.DATABASE_TABLE2.query(params);
 }
 
 exports.updateQuizTemplateDetails = function (request, callback) {
@@ -188,6 +205,20 @@ exports.updateQuizStatus = function (request, callback) {
             DATABASE_TABLE.updateRecord(docClient, update_params, callback);
         }
     })
+}
+exports.updateQuizStatus2 = async (request) => {
+    let params = {
+        TableName: TABLE_NAMES.upschool_quiz_table,
+        Key: {
+            "quiz_id": request.data.quiz_id
+        },
+        UpdateExpression: "SET quiz_status = :quiz_status, updated_ts = :updated_ts",
+        ExpressionAttributeValues: {
+            ":quiz_status": request.data.quiz_status,
+            ":updated_ts": await helper.getCurrentTimestamp(),
+        }
+    };
+ return await baseRepositoryNew.DATABASE_TABLE2.updateService(params);
 }
 
 exports.getQuizBasedonStatus = function (request, callback) {

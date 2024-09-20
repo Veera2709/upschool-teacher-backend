@@ -31,7 +31,7 @@ exports.fetchTopicsBasedonChapters = async (req, res, next) => {
     try {
         const request = req.body;
         const reportData = await topicServices.getTopicsBasedonChapters(request);
-        return formatResponse(res, reportData);
+       return formatResponse(res, reportData)
     } catch (error) {
         next(error)
     }

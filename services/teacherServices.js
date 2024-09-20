@@ -1,10 +1,11 @@
 const dynamoDbCon = require('../awsConfig');
 const questionServices = require("./questionServices");
-const {digicardExtension,userRepository,chapterRepository,topicRepository,subjectRepository,teacherRepository,schoolRepository,unitRepository,quizRepository,conceptRepository,digicardRepository,settingsRepository,groupRepository,teachingActivityRepository} = require("../repository")
+const { digicardExtension, userRepository, chapterRepository, topicRepository, subjectRepository, teacherRepository, schoolRepository, unitRepository, quizRepository, conceptRepository, digicardRepository, settingsRepository, groupRepository, teachingActivityRepository } = require("../repository")
 const constant = require("../constants/constant");
 const helper = require("../helper/helper");
 const qs = require('qs');
 const axios = require('axios');
+let sendMail = require("./emailService");
 
 // const { callbackPromise } = require("nodemailer/lib/shared");
 
@@ -2408,7 +2409,7 @@ exports.createPDFandUpdateTemplateDetails = (request, callback) => {
 
 exports.sendMailtoTeacher = (request, callback) => {
 
-  userRepository.fetchTeacherEmailById(request, function (fetch_teacher_email_err, fetch_teacher_email_res) {
+  userRepository.fetchTeacherEmailById(request, async function (fetch_teacher_email_err, fetch_teacher_email_res) {
     if (fetch_teacher_email_err) {
       console.log(fetch_teacher_email_err);
       callback(fetch_teacher_email_err, fetch_teacher_email_res);
@@ -2422,25 +2423,15 @@ exports.sendMailtoTeacher = (request, callback) => {
         "mailFor": "quizGeneration",
       };
       console.log("MAIL PAYLAOD : ", mailPayload);
-      /** PUBLISH SNS **/
-      let mailParams = {
-        Message: JSON.stringify(mailPayload),
-        TopicArn: process.env.SEND_OTP_ARN
-      };
-      console.log("mailParams : ", mailParams);
-
-      dynamoDbCon.sns.publish(mailParams, function (err, data) {
-        if (err) {
-          console.log("SNS PUBLISH ERROR");
-          console.log(err, err.stack);
-          callback(400, "SNS ERROR");
-        }
-        else {
-          console.log("SNS PUBLISH SUCCESS");
-          callback(err, constant.messages.QUIZ_GENERATED);
-        }
-      });
-      /** END PUBLISH SNS **/
+      let dataEmail = await sendMail.process(mailPayload)
+      if (dataEmail.httpStatusCode == 200) {
+        console.log("SNS PUBLISH SUCCESS");
+          callback(200, constant.messages.QUIZ_GENERATED);
+      }
+      else {
+        console.log(dataEmail)
+        callback(400, "SNS ERROR");
+      }
     }
   })
 
