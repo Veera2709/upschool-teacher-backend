@@ -34,6 +34,22 @@ exports.fetchTeachingActivity = function (request, callback) {
         }
     });
 }
+exports.fetchTeachingActivity2 = async (request) => {
+    let params = {
+        TableName: TABLE_NAMES.upschool_teaching_activity,
+                IndexName: indexName.Indexes.common_id_index,
+                KeyConditionExpression: "common_id = :common_id",
+                FilterExpression: "client_class_id = :client_class_id AND section_id = :section_id AND subject_id = :subject_id AND activity_status = :activity_status",
+                ExpressionAttributeValues: {
+                    ":common_id": constant.constValues.common_id,
+                    ":client_class_id": request.data.client_class_id,
+                    ":section_id": request.data.section_id,
+                    ":subject_id": request.data.subject_id,
+                    ":activity_status": "Active"
+                }
+    };
+    return await baseRepositoryNew.DATABASE_TABLE2.query(params);
+}
 
 exports.updateTeachingActivity = function (request, callback) {
 

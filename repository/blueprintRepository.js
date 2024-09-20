@@ -4,6 +4,8 @@ const indexName = require('../constants/indexes');
 const { DATABASE_TABLE } = require('./baseRepository');
 const helper = require('../helper/helper');
 const constant = require('../constants/constant');
+const baseRepositoryNew = require('./baseRepositoryNew');
+
 
 exports.fetchActiveBluePrints = function (request, callback) {
 
@@ -31,7 +33,22 @@ exports.fetchActiveBluePrints = function (request, callback) {
         }
     });
 }
+exports.fetchActiveBluePrints2 = async (request) => {
+    let params = {
+        TableName: TABLE_NAMES.upschool_blueprint_table,
+                IndexName: indexName.Indexes.common_id_index,
+                KeyConditionExpression: "common_id = :common_id",
+                FilterExpression: "blueprint_status = :blueprint_status",
+                ExpressionAttributeValues: {
+                    ":common_id": constant.constValues.common_id,
+                    ":blueprint_status": "Active",
+                },
+                ProjectionExpression: "blueprint_id, blueprint_name, description, test_duration, display_name",
 
+    };
+    const data= await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    return data.Items;
+}
 exports.fetchBlueprintById = function (request, callback) {
 
     dynamoDbCon.getDB(function (DBErr, dynamoDBCall) {

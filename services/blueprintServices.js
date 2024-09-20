@@ -564,18 +564,7 @@ exports.getResQuestionObj = async (avalQues_data, blueQues, questionExistId, cal
     callback(0, endRes);
 }
 
-exports.getAllBluePrints = (request, callback) => {
-    
-    blueprintRepository.fetchActiveBluePrints(request, function (blueprint_err, blueprint_res) {
-      if (blueprint_err) {
-          console.log(blueprint_err);
-          callback(blueprint_err, blueprint_res);
-      } else {  
-        callback(blueprint_err, blueprint_res.Items); 
-      }
-    }) 
-}
-
+exports.getAllBluePrints = async(request) => await blueprintRepository.fetchActiveBluePrints2(request)
 
 /** OLD **/
 // exports.fetchBlueprintQuestions = (request, callback) => {    

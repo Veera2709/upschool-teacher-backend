@@ -207,8 +207,7 @@ exports.getClassTestIdAndName2 = async (request) => {
                 ProjectionExpression: "class_test_id, class_test_name, question_paper_id, answer_sheet_template, question_paper_template"
 
     };
-    const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
-    return data;
+    return await baseRepositoryNew.DATABASE_TABLE2.query(params);    
 }
 exports.getClassTestIdAndName2 = async (request) => {
     const params = {
