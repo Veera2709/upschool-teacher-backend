@@ -3,6 +3,7 @@ const {userRepository,classTestRepository,scannerRepository,schoolRepository,tes
 const constant = require('../constants/constant');
 const helper = require('../helper/helper');
 const ocrServices = require('./ocrServices');
+let sendMail = require("./emailService");
 
 exports.sendScannerLink = function (request, callback) {
     console.log("sendScannerLink Services : ", request);
@@ -16,7 +17,7 @@ exports.sendScannerLink = function (request, callback) {
 
                 /** CHECK SCHOOL STATUS **/
                 request.data.school_id = fetch_user_data_response.Items[0].school_id;
-                schoolRepository.getSchoolDetailsById(request, (schoolDataErr, schoolDataRes) => {
+                schoolRepository.getSchoolDetailsById(request, async (schoolDataErr, schoolDataRes) => {
                     if (schoolDataErr) {
                         console.log(schoolDataErr);
                         callback(schoolDataErr, schoolDataRes);
@@ -33,24 +34,14 @@ exports.sendScannerLink = function (request, callback) {
                             };
 
                             console.log("MAIL PAYLAOD : ", mailPayload);
-                            /** PUBLISH SNS **/
-                            let mailParams = {
-                                Message: JSON.stringify(mailPayload),
-                                TopicArn: process.env.SEND_OTP_ARN
-                            };
-
-                            dynamoDbCon.sns.publish(mailParams, function (err, data) {
-                                if (err) {
-                                    console.log("SNS PUBLISH ERROR");
-                                    console.log(err, err.stack);
-                                    callback(400, "SNS ERROR");
-                                }
-                                else {
-                                    console.log("SNS PUBLISH SUCCESS");
-                                    callback(err, constant.messages.UPLOAD_URL_Sent);
-                                }
-                            });
-                            /** END PUBLISH SNS **/
+                            let dataEmail = await sendMail.process(mailPayload)
+                            if (dataEmail.httpStatusCode == 200) {
+                                callback(200, constant.messages.UPLOAD_URL_Sent);
+                            }
+                            else{
+                                console.log(dataEmail)
+                                callback(400, "SNS ERROR");
+                            }
                         }
                         else {
                             console.log(constant.messages.SCHOOL_IS_INACTIVE);

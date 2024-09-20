@@ -1,9 +1,10 @@
 const dynamoDbCon = require('../awsConfig');
-const {userRepository , schoolRepository} = require("../repository")
+const { userRepository, schoolRepository } = require("../repository")
 const constant = require('../constants/constant');
 const helper = require('../helper/helper');
 const { nextTick } = require("process");
 const { futimesSync } = require('fs');
+let sendMail = require("./emailService");
 
 exports.userLogin = function (request, callback) {
 
@@ -251,8 +252,7 @@ exports.userLogout = function (request, callback) {
     })
 }
 
-exports.LoginWithoutPassword = function (request, callback) {
-    console.log("LoginWithoutPassword : ", request);
+exports.LoginWithoutPassword = function (request, callback)  {
     userRepository.fetchUserDataByEmail(request, function (fetch_user_data_err, fetch_user_data_response) {
         if (fetch_user_data_err) {
             console.log(fetch_user_data_err);
@@ -262,7 +262,7 @@ exports.LoginWithoutPassword = function (request, callback) {
 
                 /** CHECK SCHOOL STATUS **/
                 request.data.school_id = fetch_user_data_response.Items[0].school_id;
-                schoolRepository.getSchoolDetailsById(request, (schoolDataErr, schoolDataRes) => {
+                schoolRepository.getSchoolDetailsById(request, async (schoolDataErr, schoolDataRes) => {
                     if (schoolDataErr) {
                         console.log(schoolDataErr);
                         callback(schoolDataErr, schoolDataRes);
@@ -278,37 +278,24 @@ exports.LoginWithoutPassword = function (request, callback) {
                                 "mailFor": "Send OTP",
                             };
 
-                            console.log("MAIL PAYLAOD : ", mailPayload);
-                            /** PUBLISH SNS **/
-                            let mailParams = {
-                                Message: JSON.stringify(mailPayload),
-                                TopicArn: process.env.SEND_OTP_ARN
-                            };
-
-                            dynamoDbCon.sns.publish(mailParams, function (err, data) {
-                                if (err) {
-                                    console.log("SNS PUBLISH ERROR");
-                                    console.log(err, err.stack);
-                                    callback(400, "SNS ERROR");
-                                }
-                                else {
-                                    console.log("SNS PUBLISH SUCCESS");
-
-                                    let teacher_id = fetch_user_data_response.Items[0].teacher_id
-                                    request.data["user_otp"] = user_otp;
-                                    request.data["teacher_id"] = teacher_id;
-                                    userRepository.updateUserOtp(request, function (update_user_otp_err, update_user_otp_response) {
-                                        if (update_user_otp_err) {
-                                            console.log(update_user_otp_err);
-                                            callback(update_user_otp_err, update_user_otp_response);
-                                        } else {
-                                            callback(update_user_otp_err, update_user_otp_response);
-                                        }
-                                    })
-
-                                }
-                            });
-                            /** END PUBLISH SNS **/
+                            let dataEmail = await sendMail.process(mailPayload)
+                            if (dataEmail.httpStatusCode == 200) {
+                                let teacher_id = fetch_user_data_response.Items[0].teacher_id
+                                request.data["user_otp"] = user_otp;
+                                request.data["teacher_id"] = teacher_id;
+                                userRepository.updateUserOtp(request, function (update_user_otp_err, update_user_otp_response) {
+                                    if (update_user_otp_err) {
+                                        console.log(update_user_otp_err);
+                                        callback(update_user_otp_err, update_user_otp_response);
+                                    } else {
+                                        callback(update_user_otp_err, update_user_otp_response);
+                                    }
+                                })
+                            }
+                            else{
+                                console.log(dataEmail)
+                                callback(400, "SNS ERROR");
+                            }
                         }
                         else {
                             console.log(constant.messages.SCHOOL_IS_INACTIVE);
