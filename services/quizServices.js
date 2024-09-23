@@ -12,94 +12,42 @@ const classTestRepository = require("../repository/classTestRepository");
 
 exports.checkDuplicateQuizName = async (request) => {
     const quizData_response = await quizRepository.checkDuplicateQuizName2(request)
-    console.log(quizData_response);
     if (quizData_response.Items.length > 0) {
         throw helper.formatErrorResponse(constant.messages.DUPLICATE_QUIZ_NAME, 400);
     }
     return quizData_response
 }
 
-exports.updateQuizStatus = (request, callback) => {
-    if (request.data.quiz_status == constant.status.active) {
-        quizRepository.fetchQuizDataById(request, function (preQuiz_error, preQuiz_response) {
-            if (preQuiz_error) {
-                console.log(preQuiz_error);
-                callback(preQuiz_error, preQuiz_response);
-            } else {
-                console.log(preQuiz_response);
-                request.data.client_class_id = preQuiz_response.Item.client_class_id;
-                request.data.chapter_id = preQuiz_response.Item.chapter_id;
-                request.data.subject_id = preQuiz_response.Item.subject_id;
-                request.data.section_id = preQuiz_response.Item.section_id;
-                request.data.learningType = preQuiz_response.Item.learningType;
-
-                quizRepository.fetchQuizData(request, async function (quizError, quizRes) {
-                    if (quizError) {
-                        console.log(quizError);
-                        callback(quizError, quizRes);
-                    } else {
-                        console.log("QUIZ RESPONSE : ", quizRes);
-                        if (quizRes.Items.length > 0) {
-                            if (preQuiz_response.Item.learningType === constant.prePostConstans.preLearningVal) {
-                                console.log(constant.messages.PRE_QUIZ_ALREADY_GENERATED);
-                                callback(400, constant.messages.PRE_QUIZ_ALREADY_GENERATED);
-                            }
-                            else {
-                                let resSelectedTop = [];
-                                await quizRes.Items.forEach(qData => {
-                                    resSelectedTop = [...resSelectedTop, ...qData.selectedTopics];
-                                })
-
-                                console.log("SELECTED TOPICS : ", resSelectedTop);
-                                let duplicatedTopics = await checkDuplicateTopics(resSelectedTop, preQuiz_response.Item.selectedTopics);
-
-                                console.log("DUPLICATED TOPICS : ", duplicatedTopics);
-
-                                if (duplicatedTopics.length > 0) {
-                                    console.log(constant.messages.POST_QUIZ_ALREADY_GENERATED);
-                                    callback(400, constant.messages.POST_QUIZ_ALREADY_GENERATED);
-                                }
-                                else {
-                                    quizRepository.updateQuizStatus(request, function (statusErr, statusRes) {
-                                        if (statusErr) {
-                                            callback(statusErr, statusRes);
-                                        }
-                                        else {
-                                            console.log("status updated");
-                                            callback(statusErr, statusRes);
-                                        }
-                                    })
-                                }
-                            }
-                        }
-                        else {
-                            quizRepository.updateQuizStatus(request, function (statusErr, statusRes) {
-                                if (statusErr) {
-                                    callback(statusErr, statusRes);
-                                }
-                                else {
-                                    console.log("status updated");
-                                    callback(statusErr, statusRes);
-                                }
-                            })
-                        }
-                    }
-                })
-            }
-        })
+exports.updateQuizStatus = async (request) => {
+    if (request.data.quiz_status !== constant.status.active) {
+        return await quizRepository.updateQuizStatus2(request);
     }
-    else {
-        quizRepository.updateQuizStatus(request, function (status_error, status_response) {
-            if (status_error) {
-                console.log(status_error);
-                callback(status_error, status_response);
-            } else {
-                console.log(status_response);
-                callback(status_error, status_response);
-            }
-        })
+
+    const preQuiz_response = await quizRepository.fetchQuizDataById2(request);
+    if (!preQuiz_response.Item) throw new Error('Error fetching preQuiz data');
+
+    const { client_class_id, chapter_id, subject_id, section_id, learningType, selectedTopics } = preQuiz_response.Item;
+    Object.assign(request.data, { client_class_id, chapter_id, subject_id, section_id, learningType });
+
+    const quizRes = await quizRepository.fetchQuizData2(request);
+    if (quizRes.Items.length > 0) {
+        if (learningType === constant.prePostConstans.preLearningVal) {
+            throw new Error(constant.messages.PRE_QUIZ_ALREADY_GENERATED);
+        }
+
+        const resSelectedTop = quizRes.Items.flatMap(qData => qData.selectedTopics);
+        const duplicatedTopics = await checkDuplicateTopics(resSelectedTop, selectedTopics);
+
+        if (duplicatedTopics.length > 0) {
+            throw new Error(constant.messages.POST_QUIZ_ALREADY_GENERATED);
+        }
     }
-}
+
+    const statusRes = await quizRepository.updateQuizStatus2(request);
+    console.log("status updated");
+    return statusRes;
+};
+
 
 const checkDuplicateTopics = async (resTopics, checkTopics) => {
     let dupTopics = [];
@@ -115,34 +63,43 @@ exports.fetchQuizBasedonStatus = async (request) => await quizRepository.getQuiz
 
 
 exports.getQuizResult = async (request) => {
-    const result_response = await quizRepository.getQuizResult2(request);
+    const result_response = await quizRepository.getQuizResult2(request)
 
-    if (!result_response.Items || result_response.Items.length === 0) {
-        throw helper.formatErrorResponse("NO STUDENT RESULT!", 400);
-    }
-    for (let index = 0; index < result_response.Items[0].answer_metadata.length; index++) {
-        const metadata = result_response.Items[0].answer_metadata[index];
-        const url = metadata.url || "";
+    if (result_response.Items.length > 0) {
+        let contentURL;
+        async function setContentURL(index) {
 
-        if (url.includes("quiz_uploads/") && url.includes("student_answered_sheets/") && url !== "N.A.") {
-            const contentURL = await helper.getS3SignedUrl(url);
-            console.log("contentURL", contentURL);
-            result_response.Items[0].answer_metadata[index]["content_url"] = contentURL;
-        }
-    }
+            if (index < result_response.Items[0].answer_metadata.length) {
+                contentURL = "";
+                if (((JSON.stringify(result_response.Items[0].answer_metadata[index].url).includes("quiz_uploads/")) && (JSON.stringify(result_response.Items[0].answer_metadata[index].url).includes("student_answered_sheets/"))) && result_response.Items[0].answer_metadata[index].url != "" && result_response.Items[0].answer_metadata[index].url != "N.A.") {
+
+                    contentURL = await helper.getS3SignedUrl(result_response.Items[0].answer_metadata[index].url);
+                    console.log("contentURL", contentURL);
+                    result_response.Items[0].answer_metadata[index]["content_url"] = contentURL;
+
+                    index++;
+                    setContentURL(index);
+                } else {
+                    index++;
+                    setContentURL(index);
+                }
+            } else {
+                console.log("Loop ended!", result_response.Items[0].answer_metadata);
+            }
+        } setContentURL(0);
+    }    
     return result_response;
-};
+}
+
 
 exports.editStudentQuizMarks = async (request) => {
     try {
-        // Fetch quiz data
         const quizTestRes = await quizRepository.fetchQuizDataById2(request);
 
         if (quizTestRes.Item.quiz_status !== "Active") {
             throw helper.formatErrorResponse(constant.messages.NO_DATA, 400);
         }
 
-        // Fetch school data
         const schoolDataRes = await schoolRepository.getSchoolDetailsById2(request);
 
         let classPassPercentage = 0;
@@ -243,14 +200,11 @@ exports.viewQuizQuestionPaper = (request, callback) => {
     })
 }
 
-exports.setQuestionPaperView = (questionIDs, questionData, callback) => {
-
+exports.setQuestionPaperView = (questionIDs, questionData, callback) => {    
     let individualQuestion = [];
 
     async function setQuestionsData(i) {
-
         if (i < questionIDs.length) {
-
             const { index, matchedQuestion } = await questionData.reduce((acc, value, currentIndex) => {
                 if (value.question_id === questionIDs[i]) {
                     acc.index = currentIndex;
@@ -258,9 +212,7 @@ exports.setQuestionPaperView = (questionIDs, questionData, callback) => {
                 }
                 return acc;
             }, {});
-
             individualQuestion.push(matchedQuestion);
-
             await helper.getAnswerContentFileUrl(individualQuestion[i].answers_of_question)
                 .then(url => {
                     individualQuestion[i].answers_of_question = url;
@@ -295,14 +247,14 @@ exports.fetchQuizTemplates = async (request) => {
 
                 const questionTemp = quizTemplate.question_sheet || "N.A.";
                 const questionUrlCheck = constant.quizFolder[`questionPapersSet${set_code.toUpperCase()}`].split("/")[0];
-                quizTemplate.question_sheet_url = questionTemp.includes(questionUrlCheck) 
-                    ? await helper.getS3SignedUrl(questionTemp) 
+                quizTemplate.question_sheet_url = questionTemp.includes(questionUrlCheck)
+                    ? await helper.getS3SignedUrl(questionTemp)
                     : "N.A.";
 
                 const answerTemp = quizTemplate.answer_sheet || "N.A.";
                 const answerUrlCheck = constant.quizFolder[`questionPapersSet${set_code.toUpperCase()}`].split("/")[0];
-                quizTemplate.answer_sheet_url = answerTemp.includes(answerUrlCheck) 
-                    ? await helper.getS3SignedUrl(answerTemp) 
+                quizTemplate.answer_sheet_url = answerTemp.includes(answerUrlCheck)
+                    ? await helper.getS3SignedUrl(answerTemp)
                     : "N.A.";
             }
         } else {
@@ -318,8 +270,8 @@ exports.fetchQuizTemplates = async (request) => {
 
 
 
-exports.resetQuizEvaluationStatus = async(request) => await quizResultRepository.resetQuizEvaluationStatus2(request)
-      
+exports.resetQuizEvaluationStatus = async (request) => await quizResultRepository.resetQuizEvaluationStatus2(request)
+
 
 /** EVALUATION API'S **/
 
@@ -668,17 +620,17 @@ const knowPassOrFail = (marks_details, quesAndAns, individualPassPercentage) => 
     })
 };
 
-// exports.fetchAllQuizDetails = function (request, callback) {
-//     /** FETCH USER BY EMAIL **/
-//     quizRepository.getAllQuizData(request, function (fetch_quiz_err, fetch_quiz_response) {
-//         if (fetch_quiz_err) {
-//             console.log(fetch_quiz_err);
-//             callback(fetch_quiz_err, fetch_quiz_response);
-//         } else {
-//             callback(0, fetch_quiz_response)
-//         }
-//     })
-// }
+exports.fetchAllQuizDetails = function (request, callback) {
+    /** FETCH USER BY EMAIL **/
+    quizRepository.getAllQuizData(request, function (fetch_quiz_err, fetch_quiz_response) {
+        if (fetch_quiz_err) {
+            console.log(fetch_quiz_err);
+            callback(fetch_quiz_err, fetch_quiz_response);
+        } else {
+            callback(0, fetch_quiz_response)
+        }
+    })
+}
 
 
 // exports.comparingQuizAnswer = async (markDetails, quesAns, individualPassPercentage) => {
