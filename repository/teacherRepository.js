@@ -205,7 +205,6 @@ exports.fetchTeacherSubjectData2 = async (request) => {
         ExpressionAttributeValues: fromatedRequest.ExpressionAttributeValues,
         ProjectionExpression: "subject_id, subject_title"
     };
-    console.log({params});
     const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
     return data;
 

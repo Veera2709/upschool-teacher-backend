@@ -1,15 +1,9 @@
 const dynamoDbCon = require('../awsConfig');
-const userRepository = require("../repository/userRepository");
-const classTestRepository = require("../repository/classTestRepository");
-const scannerRepository = require("../repository/scannerRepository");
-const schoolRepository = require("../repository/schoolRepository");
-const testResultRepository = require("../repository/testResultRepository");
-const studentRepository = require("../repository/studentRepository");
-const quizRepository = require("../repository/quizRepository")
-const quizResultRepository = require("../repository/quizResultRepository")
+const { userRepository, classTestRepository, scannerRepository, schoolRepository, testResultRepository, studentRepository, quizRepository, quizResultRepository } = require("../repository")
 const constant = require('../constants/constant');
 const helper = require('../helper/helper');
 const ocrServices = require('./ocrServices');
+let sendMail = require("./emailService");
 
 exports.sendScannerLink = function (request, callback) {
     console.log("sendScannerLink Services : ", request);
@@ -23,7 +17,7 @@ exports.sendScannerLink = function (request, callback) {
 
                 /** CHECK SCHOOL STATUS **/
                 request.data.school_id = fetch_user_data_response.Items[0].school_id;
-                schoolRepository.getSchoolDetailsById(request, (schoolDataErr, schoolDataRes) => {
+                schoolRepository.getSchoolDetailsById(request, async (schoolDataErr, schoolDataRes) => {
                     if (schoolDataErr) {
                         console.log(schoolDataErr);
                         callback(schoolDataErr, schoolDataRes);
@@ -40,24 +34,14 @@ exports.sendScannerLink = function (request, callback) {
                             };
 
                             console.log("MAIL PAYLAOD : ", mailPayload);
-                            /** PUBLISH SNS **/
-                            let mailParams = {
-                                Message: JSON.stringify(mailPayload),
-                                TopicArn: process.env.SEND_OTP_ARN
-                            };
-
-                            dynamoDbCon.sns.publish(mailParams, function (err, data) {
-                                if (err) {
-                                    console.log("SNS PUBLISH ERROR");
-                                    console.log(err, err.stack);
-                                    callback(400, "SNS ERROR");
-                                }
-                                else {
-                                    console.log("SNS PUBLISH SUCCESS");
-                                    callback(err, constant.messages.UPLOAD_URL_Sent);
-                                }
-                            });
-                            /** END PUBLISH SNS **/
+                            let dataEmail = await sendMail.process(mailPayload)
+                            if (dataEmail.httpStatusCode == 200) {
+                                callback(200, constant.messages.UPLOAD_URL_Sent);
+                            }
+                            else {
+                                console.log(dataEmail)
+                                callback(400, "SNS ERROR");
+                            }
                         }
                         else {
                             console.log(constant.messages.SCHOOL_IS_INACTIVE);
@@ -77,7 +61,7 @@ exports.sendScannerLink = function (request, callback) {
 exports.sendOTPForScanning = function (request, callback) {
     console.log("sendOTPForScanning Services : ", request);
     request["teacher_id"] = request.data.teacher_id;
-    userRepository.fetchUserDataByUserId(request, function (fetch_user_data_err, fetch_user_data_response) {
+    userRepository.fetchUserDataByUserId(request, async function (fetch_user_data_err, fetch_user_data_response) {
         if (fetch_user_data_err) {
             console.log(fetch_user_data_err);
             callback(fetch_user_data_err, fetch_user_data_response);
@@ -94,19 +78,9 @@ exports.sendOTPForScanning = function (request, callback) {
                 };
 
                 console.log("MAIL PAYLAOD : ", mailPayload);
-                /** PUBLISH SNS **/
-                let mailParams = {
-                    Message: JSON.stringify(mailPayload),
-                    TopicArn: process.env.SEND_OTP_ARN
-                };
-
-                dynamoDbCon.sns.publish(mailParams, function (err, data) {
-                    if (err) {
-                        console.log("SNS PUBLISH ERROR");
-                        console.log(err, err.stack);
-                        callback(400, "SNS ERROR");
-                    }
-                    else {
+                let dataEmail = await sendMail.process(mailPayload)
+                if (dataEmail.httpStatusCode == 200) {
+                    {
                         console.log("SNS PUBLISH SUCCESS");
 
                         // Fetch upschool_scanner_session_info data to either insert or update the OTP
@@ -153,8 +127,11 @@ exports.sendOTPForScanning = function (request, callback) {
                         });
 
                     }
-                });
-                /** END PUBLISH SNS **/
+                }
+                else {
+                    console.log(dataEmail)
+                    callback(400, "SNS ERROR");
+                }
 
             } else {
                 callback(400, constant.messages.TEACHER_DOESNOT_EXISTS);
@@ -388,9 +365,9 @@ exports.setValues = async function (words, callback) {
                 testID = word.split(":")[1]
             } else if (word.startsWith("rollno") && word.split(":")[1]) {
                 rollNo = word.split(":")[1]
-            } else if(word.startsWith("quizid") && word.split(":")[1] ) {
+            } else if (word.startsWith("quizid") && word.split(":")[1]) {
                 quizID = word.split(":")[1]
-            }else if(word.startsWith("set") && (word.split(":").length === 2 && word.split(":")[1] === ("a" || "b" || "c"))) {
+            } else if (word.startsWith("set") && (word.split(":").length === 2 && word.split(":")[1] === ("a" || "b" || "c"))) {
                 quiz_set = word.split(":")[1]
             }
         }
@@ -413,15 +390,14 @@ exports.fetchSignedURLForQuizAnswers = async function (request, callback) {
 }
 
 
-exports.uploadQuizAnswerSheets = function (request, callback)
-{
+exports.uploadQuizAnswerSheets = function (request, callback) {
     let quizPageMetadata = {};
 
     ocrServices.readScannedPage(request, async function (scannedErr, scannedRes) {
         if (scannedErr) {
             console.log(scannedErr);
             callback(scannedErr, scannedRes);
-        } 
+        }
         else {
             console.log("BEFORE FORMATTING : ", scannedRes.data.text);
             if (scannedRes.data.text) {
@@ -459,16 +435,16 @@ exports.uploadQuizAnswerSheets = function (request, callback)
                                 else {
                                     if (helper.isEmptyObject(fetch_quiz_data_response.Item)) {
                                         callback(constant.messages.COULDNOT_READ_QUIZ_ID, 0);
-                                    } 
-                                    else {                                    
-                                       
-                                        
+                                    }
+                                    else {
+
+
                                         studentRepository.fetchStudentDataByRollNoClassSection(request, function (fetch_student_data_err, fetch_student_data_response) {
                                             if (fetch_student_data_err) {
                                                 console.log(fetch_student_data_err);
                                                 callback(fetch_student_data_err, fetch_student_data_response);
                                             } else {
-                                                
+
                                                 if (fetch_student_data_response.Items.length > 0) {
                                                     request.data.student_id = fetch_student_data_response.Items[0].student_id;
                                                     quizResultRepository.fetchQuizResultDataOfStudent(request, async function (fetch_quiz_result_err, fetch_quiz_result_response) {
@@ -480,7 +456,7 @@ exports.uploadQuizAnswerSheets = function (request, callback)
                                                             console.log(fetch_quiz_result_response);
 
                                                             if (fetch_quiz_result_response.Items.length === 0) {
-                                                               
+
                                                                 quizResultRepository.insertQuizDataOfStudent(request, function (insert_quiz_data_of_student_err, insert_quiz_data_of_student_response) {
                                                                     if (insert_quiz_data_of_student_err) {
                                                                         console.log(insert_quiz_data_of_student_err);
@@ -502,7 +478,7 @@ exports.uploadQuizAnswerSheets = function (request, callback)
                                                                         confidence_rate: quizPageMetadata.answer_metadata[0].confidence_rate,
                                                                         studentAnswer: quizPageMetadata.answer_metadata[0].studentAnswer
                                                                     });
-                                                                } 
+                                                                }
                                                                 else {
 
                                                                     await fetch_quiz_result_response.Items[0].answer_metadata.forEach((meta, i) => {
@@ -513,7 +489,7 @@ exports.uploadQuizAnswerSheets = function (request, callback)
                                                                             fetch_quiz_result_response.Items[0].quiz_set = quizPageMetadata.quiz_set;
                                                                         }
                                                                     });
-                                                                    
+
                                                                 }
                                                                 /** UPDATE QUERY **/
                                                                 let updateRequest = {
@@ -525,7 +501,7 @@ exports.uploadQuizAnswerSheets = function (request, callback)
                                                                 }
 
                                                                 console.log("UPDATE PAGE!");
-                                                                console.log(fetch_quiz_result_response.Items[0].answer_metadata); 
+                                                                console.log(fetch_quiz_result_response.Items[0].answer_metadata);
 
                                                                 quizResultRepository.updateQuizDataOfStudent(updateRequest, function (update_quiz_data_of_student_err, update_quiz_data_of_student_response) {
                                                                     if (update_quiz_data_of_student_err) {
@@ -535,7 +511,7 @@ exports.uploadQuizAnswerSheets = function (request, callback)
                                                                         callback(update_quiz_data_of_student_err, update_quiz_data_of_student_response);
                                                                     }
                                                                 });
-                                                                /** END UPDATE QUERY **/                                                              
+                                                                /** END UPDATE QUERY **/
                                                             }
                                                         }
                                                     })

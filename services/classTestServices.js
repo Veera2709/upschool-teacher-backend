@@ -1,14 +1,5 @@
 const dynamoDbCon = require('../awsConfig');
-const conceptRepository = require("../repository/conceptRepository");
-const digicardRepository = require("../repository/digicardRepository");
-const classTestRepository = require("../repository/classTestRepository");
-const testQuestionPaperRepository = require("../repository/testQuestionPaperRepository");
-const commonRepository = require("../repository/commonRepository");
-const blueprintRepository = require("../repository/blueprintRepository");
-const classRepository = require("../repository/classRepository");
-const subjectRepository = require("../repository/subjectRepository");
-const sectionRepository = require("../repository/sectionRepository");
-const testResultRepository = require("../repository/testResultRepository");
+const { classTestRepository,testQuestionPaperRepository,commonRepository,classRepository,testResultRepository} = require("../repository")
 const commonServices = require("../services/commonServices");
 const { TABLE_NAMES } = require('../constants/tables');
 const constant = require('../constants/constant');
@@ -17,23 +8,24 @@ const qs = require('qs');
 const axios = require('axios');
 const ocrServices = require('./ocrServices');
 const { resolve } = require('bluebird');
+const { postAPICall } = require('../apiHelper/httpCommon');
 
 exports.addClassTest = async (request) => {
 
     const fetch_class_test_res = await classTestRepository.fetchClassTestByName2(request)
     if (fetch_class_test_res.Items.length === 0) {
         request.data.class_test_id = helper.getRandomString();
-        const options = {
-            method: 'POST',
-            headers: { 'content-type': 'application/x-www-form-urlencoded' },
-            data: qs.stringify(request),
-            url: process.env.PDF_GENERATION_URL + '/createQuestionAndAnswerPapers',
-        };
-        const pdfData = await axios(options);
+        // const options = {
+        //     method: 'POST',
+        //     headers: { 'content-type': 'application/x-www-form-urlencoded' },
+        //     data: qs.stringify(request),
+        //     url: process.env.PDF_GENERATION_URL + '/createQuestionAndAnswerPapers',
+        // };
+        const headers = { 'content-type': 'application/x-www-form-urlencoded' }
+        // const pdfData = await axios(options);
+        const pdfData = await postAPICall(process.env.PDF_GENERATION_URL + '/createQuestionAndAnswerPapers',qs.stringify(request),headers)
         request.data.answer_sheet_template = pdfData.data.answer_sheet_template;
-        request.data.question_paper_template = pdfData.data.question_paper_template;
-        console.log("pdfData : ", pdfData.data);
-        console.log("FINAL INSERT REQUEST : ", request.data);
+        request.data.question_paper_template = pdfData.data.question_paper_template;     
 
         return await classTestRepository.insertClassTest2(request);
     }
@@ -47,7 +39,6 @@ exports.getClassTestbyId = async (request) => {
     request.data.class_test_status = "Active";
     const classTestRes = await classTestRepository.getClassTestIdAndName2(request)
 
-    console.log("CLASS TEST DATA : ", classTestRes);
     let questionPaperTEmp = classTestRes.Items[0].question_paper_template ? classTestRes.Items[0].question_paper_template : "N.A.";
     let answerSheetTemp = classTestRes.Items[0].answer_sheet_template ? classTestRes.Items[0].answer_sheet_template : "N.A.";
 
@@ -55,9 +46,7 @@ exports.getClassTestbyId = async (request) => {
     let answerUrlCheck = constant.testFolder.answerSheets.split("/")[0];
 
     classTestRes.Items[0].question_paper_template_url = questionPaperTEmp.includes(questionUrlCheck) ? await helper.getS3SignedUrl(questionPaperTEmp) : "N.A.";
-
     classTestRes.Items[0].answer_sheet_template_url = answerSheetTemp.includes(answerUrlCheck) ? await helper.getS3SignedUrl(answerSheetTemp) : "N.A.";
-
 
     return classTestRes
 

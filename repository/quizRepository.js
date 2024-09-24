@@ -37,6 +37,24 @@ exports.fetchQuizData = function (request, callback) {
         }
     });
 }
+exports.fetchQuizData2 = async (request) => {
+    const params = {
+        TableName: TABLE_NAMES.upschool_quiz_table,
+                IndexName: indexName.Indexes.common_id_index,
+                KeyConditionExpression: "common_id = :common_id",
+                FilterExpression: "client_class_id = :client_class_id AND section_id = :section_id AND subject_id = :subject_id AND quiz_status = :quiz_status AND chapter_id = :chapter_id AND learningType = :learningType",
+                ExpressionAttributeValues: {
+                    ":common_id": constant.constValues.common_id,
+                    ":client_class_id": request.data.client_class_id,
+                    ":section_id": request.data.section_id,
+                    ":subject_id": request.data.subject_id,
+                    ":chapter_id": request.data.chapter_id,
+                    ":learningType": request.data.learningType,
+                    ":quiz_status": "Active"
+                }
+    };
+    return await baseRepositoryNew.DATABASE_TABLE2.query(params); 
+};
 
 exports.addQuiz = function (request, callback) {
 
@@ -116,6 +134,25 @@ exports.checkDuplicateQuizName = function (request, callback) {
         }
     })
 }
+exports.checkDuplicateQuizName2 = async (request) => {
+    let params = {
+        TableName: TABLE_NAMES.upschool_quiz_table,
+        IndexName: indexName.Indexes.common_id_index,
+        KeyConditionExpression: "common_id = :common_id",
+        FilterExpression: "chapter_id = :chapter_id AND client_class_id = :client_class_id AND section_id = :section_id AND subject_id = :subject_id AND  learningType = :learningType AND lc_quiz_name = :lc_quiz_name",
+        ExpressionAttributeValues: {
+            ":common_id": constant.constValues.common_id,
+            ":chapter_id": request.data.chapter_id,
+            ":client_class_id": request.data.client_class_id,
+            ":section_id": request.data.section_id,
+            ":subject_id": request.data.subject_id,
+            ":learningType": request.data.learningType,
+            ":lc_quiz_name": request.data.quiz_name.toLowerCase().replace(/ /g, ''),
+        }
+
+    };
+    return await baseRepositoryNew.DATABASE_TABLE2.query(params);
+}
 
 exports.updateQuizTemplateDetails = function (request, callback) {
     dynamoDbCon.getDB(async function (DBErr, dynamoDBCall) {
@@ -169,6 +206,20 @@ exports.updateQuizStatus = function (request, callback) {
         }
     })
 }
+exports.updateQuizStatus2 = async (request) => {
+    let params = {
+        TableName: TABLE_NAMES.upschool_quiz_table,
+        Key: {
+            "quiz_id": request.data.quiz_id
+        },
+        UpdateExpression: "SET quiz_status = :quiz_status, updated_ts = :updated_ts",
+        ExpressionAttributeValues: {
+            ":quiz_status": request.data.quiz_status,
+            ":updated_ts": await helper.getCurrentTimestamp(),
+        }
+    };
+ return await baseRepositoryNew.DATABASE_TABLE2.updateService(params);
+}
 
 exports.getQuizBasedonStatus = function (request, callback) {
 
@@ -199,6 +250,27 @@ exports.getQuizBasedonStatus = function (request, callback) {
             DATABASE_TABLE.queryRecord(docClient, read_params, callback);
         }
     });
+}
+
+exports.getQuizBasedonStatus2 = async (request) => {
+    let params = {
+        TableName: TABLE_NAMES.upschool_quiz_table,
+                IndexName: indexName.Indexes.common_id_index,
+                KeyConditionExpression: "common_id = :common_id",
+                FilterExpression: "quiz_status = :quiz_status AND client_class_id = :client_class_id AND section_id = :section_id AND subject_id = :subject_id AND chapter_id = :chapter_id",
+                ExpressionAttributeValues: {
+                    ":common_id": constant.constValues.common_id,
+                    ":client_class_id": request.data.client_class_id,
+                    ":section_id": request.data.section_id,
+                    ":subject_id": request.data.subject_id,
+                    ":chapter_id": request.data.chapter_id,
+                    ":quiz_status": request.data.quiz_status
+                },
+                ProjectionExpression: "quizMode, quiz_status, learningType, quiz_id, quiz_name, chapter_id"
+
+    };
+    const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    return data.Items;
 }
 
 exports.fetchQuizDataById = function (request, callback) {
@@ -263,6 +335,22 @@ exports.getQuizResult = function (request, callback) {
         }
     });
 }
+exports.getQuizResult2 = async (request) => {
+    let params = {
+        TableName: TABLE_NAMES.upschool_quiz_result,
+                IndexName: indexName.Indexes.common_id_index,
+                KeyConditionExpression: "common_id = :common_id",
+                FilterExpression: "quiz_id = :quiz_id AND student_id = :student_id",
+                ExpressionAttributeValues: {
+                    ":common_id": constant.constValues.common_id,
+                    ":quiz_id": request.data.quiz_id,
+                    ":student_id": request.data.student_id
+                },
+                ProjectionExpression: "answer_metadata, marks_details, result_id, evaluated"
+    };
+    const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    return data;
+}
 exports.modifyStudentMarks = function (request, callback) {
 
     dynamoDbCon.getDB(function (DBErr, dynamoDBCall) {
@@ -289,6 +377,22 @@ exports.modifyStudentMarks = function (request, callback) {
             DATABASE_TABLE.updateRecord(docClient, update_params, callback);
         }
     });
+}
+exports.modifyStudentMarks2 = async (request) => {
+    let params = {
+        TableName: TABLE_NAMES.upschool_quiz_result,
+                Key: {
+                    "result_id": request.data.result_id
+                },
+                UpdateExpression: "set marks_details = :marks_details, updated_ts = :updated_ts, isPassed = :isPassed",
+                ExpressionAttributeValues: {
+                    ":marks_details": request.data.marks_details,
+                    ":isPassed": request.data.passStatus,
+                    ":updated_ts": helper.getCurrentTimestamp()
+                },
+    };
+    const data = await baseRepositoryNew.DATABASE_TABLE2.updateService(params);
+    return data;
 }
 
 exports.fetchQuizTemplates = function (request, callback) {
@@ -317,7 +421,21 @@ exports.fetchQuizTemplates = function (request, callback) {
         }
     });
 }
+exports.fetchQuizTemplates2 = async (request) => {
+    let params = {
+        TableName: TABLE_NAMES.upschool_quiz_table,
 
+                KeyConditionExpression: "quiz_id = :quiz_id",
+                FilterExpression: "quiz_status = :quiz_status",
+                ExpressionAttributeValues: {
+                    ":quiz_id": request.data.quiz_id,
+                    ":quiz_status": request.data.quiz_status,
+                },
+                ProjectionExpression: "quiz_id, quiz_name, quiz_template_details",
+    };
+    const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    return data;
+}
 
 
 exports.checkPreQuiz = function(request, callback){

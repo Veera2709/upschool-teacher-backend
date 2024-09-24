@@ -1,0 +1,13 @@
+const axios = require('axios')
+
+const getAPICall = async (url, headers = {}) => (await axios.get(url, headers)).data;
+const postAPICall = async (url, data, headers = {}) => await axios.post(url, data, headers);
+
+const getAPICallWithoutHeader = async (url) => (await axios.get(url));
+
+module.exports = {
+    getAPICall,
+    postAPICall,
+
+    getAPICallWithoutHeader
+}

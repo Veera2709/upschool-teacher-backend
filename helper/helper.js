@@ -7,6 +7,7 @@ const constant = require('../constants/constant');
 const {groupTypes } = require('../constants/constant');
 const { constants } = require("buffer");
 const { StatusCodes } = require('http-status-codes');
+const fs = require("fs");
 
 const excelEpoc = new Date(1900, 0, 0).getTime();
 const msDay = 86400000;
@@ -1153,6 +1154,7 @@ exports.processRows = (resultsData) => {
   {
     return res.status(statusCode).json(data);
   }
+  exports.formatErrorResponse = (errorMessage, status = '') => {  let error = new Error(errorMessage);  error.status = status;  return error;};
   exports.formatResponse2 = (result) => ({ "Items": result });
   exports.getDataByFilterKey = async (request) => {
    console.log("test2request", request);
@@ -1197,3 +1199,7 @@ exports.formatDate =(isoString) => {
   
     return `${day}-${month}-${year}`;
   }
+
+  exports.fortmatData = (data) => JSON.stringify(data, null, 2);
+
+  exports.readFile = async filePath => await fs.promises.readFile(filePath, 'utf8');

@@ -1,13 +1,7 @@
 const fs = require("fs");
 const dynamoDbCon = require("../awsConfig");
-const topicRepository = require("../repository/topicRepository");
-const chapterRepository = require("../repository/chapterRepository");
-const teacherRepository = require("../repository/teacherRepository");
-const conceptRepository = require("../repository/conceptRepository");
-const digicardRepository = require("../repository/digicardRepository");
-const teachingActivityRepository = require("../repository/teachingActivityRepository");
+const {topicRepository,chapterRepository,teacherRepository,conceptRepository,digicardRepository,teachingActivityRepository} = require("../repository")
 const teacherServices = require("../services/teacherServices");
-const commonServices = require("../services/commonServices");
 const constant = require("../constants/constant");
 const helper = require("../helper/helper");
 const { nextTick } = require("process");
@@ -252,13 +246,27 @@ exports.splitActiveAndArchivedDigicards = async function (request, digicardList,
     }
   });
 }
-exports.getTopicsBasedonChapters = async function (request, callback) {
-  const chapter_response = await chapterRepository.fetchChaptersIDandChapterTopicID2({ chapter_array: request.data.chapter_array, condition: "OR" })
+exports.getTopicsBasedonChapters = async (request)=> {
+  try {
+    if (!Array.isArray(request.data.chapter_array) || request.data.chapter_array.length === 0) {
+      throw helper.formatErrorResponse(constant.messages.INVALID_REQUEST_FORMAT, 400);
+    }
+         const chapter_array = request.data.chapter_array.map((val) => ({ "chapter_id": val }));
+        const chapter_response = await chapterRepository.fetchChaptersIDandChapterTopicID2({ items: chapter_array ,condition:"OR"});
+    if (chapter_response.Items.length === 0) {
+      return chapter_response.Items;
+    }
 
-  let topic_array = [];
-  await chapter_response.Items.forEach((e) => {
-    topic_array.push(...e.prelearning_topic_id)
-    topic_array.push(...e.postlearning_topic_id)
-  })
-  return await topicRepository.fetchTopicIDDisplayTitleData2({ topic_array: topic_array, condition: "OR" })
-}
+    const topic_array = chapter_response.Items.reduce((acc, e) => {
+      acc.push(...e.prelearning_topic_id, ...e.postlearning_topic_id);
+      return acc;
+    }, []);
+    const formatted_topic_array = topic_array.map((val) => ({ topic_id: val }));
+    const topic_response = await topicRepository.fetchTopicIDDisplayTitleData2({items: formatted_topic_array ,condition:"OR"});
+    return topic_response.Items;
+
+  } catch (error) {
+    console.error(error);
+    throw helper.formatErrorResponse(error.message || constant.messages.INVALID_REQUEST_FORMAT, 400);
+  }
+};

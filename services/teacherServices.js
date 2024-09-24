@@ -1,23 +1,11 @@
 const dynamoDbCon = require('../awsConfig');
-const digicardExtension = require("../repository/digicardExtension");
-const userRepository = require("../repository/userRepository");
-const chapterRepository = require("../repository/chapterRepository");
-const topicRepository = require("../repository/topicRepository");
-const subjectRepository = require("../repository/subjectRepository");
-const teacherRepository = require("../repository/teacherRepository");
-const schoolRepository = require("../repository/schoolRepository");
-const unitRepository = require("../repository/unitRepository");
-const quizRepository = require("../repository/quizRepository");
-const conceptRepository = require("../repository/conceptRepository");
-const digicardRepository = require("../repository/digicardRepository");
-const settingsRepository = require("../repository/settingsRepository");
-const groupRepository = require("../repository/groupRepository");
 const questionServices = require("./questionServices");
-const teachingActivityRepository = require("../repository/teachingActivityRepository");
+const { digicardExtension, userRepository, chapterRepository, topicRepository, subjectRepository, teacherRepository, schoolRepository, unitRepository, quizRepository, conceptRepository, digicardRepository, settingsRepository, groupRepository, teachingActivityRepository } = require("../repository")
 const constant = require("../constants/constant");
 const helper = require("../helper/helper");
 const qs = require('qs');
 const axios = require('axios');
+let sendMail = require("./emailService");
 
 // const { callbackPromise } = require("nodemailer/lib/shared");
 
@@ -25,23 +13,19 @@ exports.getTeacherClasses = async (request) => {
   const individual_teacher_response = await teacherRepository.fetchTeacherByID2(request)
   const client_class_id = individual_teacher_response.Items[0].teacher_section_allocation.map((val) => ({ "client_class_id": val.client_class_id }));
 
-  const teacher_client_class_response = await teacherRepository.fetchTeacherClientClassData2({ items: client_class_id, condition: "OR" })
-  return teacher_client_class_response
+  return await teacherRepository.fetchTeacherClientClassData2({ items: client_class_id, condition: "OR" })
 };
 exports.getTeacherSectionsBasedonClass = async (request) => {
   const individual_teacher_response = await teacherRepository.fetchTeacherByID2(request)
   let section_ids = (individual_teacher_response.Items[0].teacher_section_allocation.filter((e) => e.client_class_id == request.data.client_class_id)).map(({ section_id }) => ({ section_id }));
 
-  const teacher_section_response = await teacherRepository.fetchTeacherSectionData2({ items: section_ids, condition: "OR" })
-  return teacher_section_response
-
+  return await teacherRepository.fetchTeacherSectionData2({ items: section_ids, condition: "OR" })
 };
 exports.getTeacherSubjectsBasedonSection = async (request) => {
   const individual_teacher_response = await teacherRepository.fetchTeacherByID2(request)
   let subject_ids = individual_teacher_response.Items[0].teacher_info.filter((e) => e.client_class_id == request.data.client_class_id && e.section_id == request.data.section_id && e.info_status === "Active").map(({ subject_id }) => ({ subject_id }));
 
-  const teacher_subject_response = await teacherRepository.fetchTeacherSubjectData2({ items: subject_ids, condition: "OR" })
-  return teacher_subject_response
+  return await teacherRepository.fetchTeacherSubjectData2({ items: subject_ids, condition: "OR" })
 };
 exports.teacherSubjectandActivityCheck = function (request, callback) {
   /** FETCH USER BY EMAIL **/
@@ -2425,7 +2409,7 @@ exports.createPDFandUpdateTemplateDetails = (request, callback) => {
 
 exports.sendMailtoTeacher = (request, callback) => {
 
-  userRepository.fetchTeacherEmailById(request, function (fetch_teacher_email_err, fetch_teacher_email_res) {
+  userRepository.fetchTeacherEmailById(request, async function (fetch_teacher_email_err, fetch_teacher_email_res) {
     if (fetch_teacher_email_err) {
       console.log(fetch_teacher_email_err);
       callback(fetch_teacher_email_err, fetch_teacher_email_res);
@@ -2439,25 +2423,15 @@ exports.sendMailtoTeacher = (request, callback) => {
         "mailFor": "quizGeneration",
       };
       console.log("MAIL PAYLAOD : ", mailPayload);
-      /** PUBLISH SNS **/
-      let mailParams = {
-        Message: JSON.stringify(mailPayload),
-        TopicArn: process.env.SEND_OTP_ARN
-      };
-      console.log("mailParams : ", mailParams);
-
-      dynamoDbCon.sns.publish(mailParams, function (err, data) {
-        if (err) {
-          console.log("SNS PUBLISH ERROR");
-          console.log(err, err.stack);
-          callback(400, "SNS ERROR");
-        }
-        else {
-          console.log("SNS PUBLISH SUCCESS");
-          callback(err, constant.messages.QUIZ_GENERATED);
-        }
-      });
-      /** END PUBLISH SNS **/
+      let dataEmail = await sendMail.process(mailPayload)
+      if (dataEmail.httpStatusCode == 200) {
+        console.log("SNS PUBLISH SUCCESS");
+          callback(200, constant.messages.QUIZ_GENERATED);
+      }
+      else {
+        console.log(dataEmail)
+        callback(400, "SNS ERROR");
+      }
     }
   })
 

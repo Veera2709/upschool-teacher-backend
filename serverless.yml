@@ -371,4 +371,13 @@ functions:
           path: /v1/getIndividualQuizReport
           method: POST
           cors: true   
+      - http:
+          path: /v1/comprehensivePerformanceChapterWise
+          method: POST
+          cors: true 
+      - http:
+          path: /v1/comprehensivePerformanceTopicWise
+          method: POST
+          cors: true  
+
 

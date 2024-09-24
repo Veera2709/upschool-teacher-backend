@@ -1,4 +1,4 @@
-const teacherServices = require("../services/teacherServices");
+const {teacherServices} = require("../services");
 const constant = require("../constants/constant");
 const { formatResponse } = require("../helper/helper");
 
@@ -20,15 +20,7 @@ exports.fetchTeacherSectionsBasedonClass = async (req, res, next) => {
         next(error)
     }
 };
-exports.fetchTeacherSectionsBasedonClass = async (req, res, next) => {
-    try {
-        const request = req.body;
-        const reportData = await teacherServices.getTeacherSectionsBasedonClass(request);
-        return formatResponse(res, reportData);
-    } catch (error) {
-        next(error)
-    }
-};exports.fetchTeacherSubjectsBasedonSection = async (req, res, next) => {
+exports.fetchTeacherSubjectsBasedonSection = async (req, res, next) => {
     try {
         const request = req.body;
         const reportData = await teacherServices.getTeacherSubjectsBasedonSection(request);

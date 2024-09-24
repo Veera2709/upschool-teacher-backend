@@ -1,4 +1,5 @@
-const blueprintServices = require("../services/blueprintServices");
+const {blueprintServices} = require("../services");
+const { formatResponse } = require("../helper/helper");
 
 exports.fetchBlueprintById = (req, res, next) => {
     let request = req.body;    
@@ -24,22 +25,15 @@ exports.fetchQuestionBasedOnBlueprint = async (req, res, next) => {
         }
     });
 };
-
-exports.fetchAllBluePrints = (req, res, next) => {
-    console.log("fetchAllBluePrints : ");
-    let request = req.body;    
-    request.data.blueprint_status = 'Active'; 
-
-    blueprintServices.getAllBluePrints(request, function (blue_prints_err, blue_prints_response) {
-        if (blue_prints_err) { 
-            res.status(blue_prints_err).json(blue_prints_response);
-        } else {
-            console.log("Blue Prints Fetched Successfully"); 
-            res.json(blue_prints_response);
-        }
-    });
+exports.fetchAllBluePrints = async (req, res, next) => {
+    try {
+        const request = req.body;
+        const reportData = await blueprintServices.getAllBluePrints(request);
+        return formatResponse(res, reportData);
+    } catch (error) {
+        next(error)
+    }
 };
-
 exports.addBluePrint = (req, res, next) => {
     console.log("addBluePrint : ");
     let request = req.body;    
