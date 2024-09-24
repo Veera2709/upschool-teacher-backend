@@ -315,8 +315,7 @@ exports.changeUserStatus2 = async (request) => {
                     ":updated_ts": helper.getCurrentTimestamp(),
                 },
     };
-    const data = await baseRepositoryNew.DATABASE_TABLE2.updateService(params);
-    return data;
+    return await baseRepositoryNew.DATABASE_TABLE2.updateService(params);
 }
 
 exports.fetchBulkUserssData = function (request, callback) {

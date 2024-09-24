@@ -5,6 +5,8 @@ const { QueryCommand, UpdateCommand, BatchWriteCommand, DynamoDBDocumentClient, 
 
 const ddbDocClient = DynamoDBDocumentClient.from(client);
 
+const createMany =async(params)=> await client.send(new BatchWriteCommand(params));
+
 const deleteItem = async (params) => await client.send(new DeleteCommand(params));
 
 const deleteMany = async (params) =>  await ddbDocClient.send(new BatchWriteCommand(params));
@@ -23,6 +25,8 @@ const updateService = async (params) => await ddbDocClient.send(new UpdateComman
       
 
 exports.DATABASE_TABLE2 = {
+    createMany,
+    
     deleteItem,
     deleteMany,
 
@@ -36,4 +40,5 @@ exports.DATABASE_TABLE2 = {
     scanTable,
     
     updateService,
+    
 }

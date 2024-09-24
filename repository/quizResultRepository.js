@@ -190,6 +190,22 @@ exports.fetchStudentQuiRresultMetadata = function (request, callback) {
     });
 }
 
+exports.fetchStudentQuiRresultMetadata2 = async (request) => {
+    let params = {
+        TableName: TABLE_NAMES.upschool_quiz_result,
+                IndexName: indexName.Indexes.common_id_index,
+                KeyConditionExpression: "common_id = :common_id",
+                FilterExpression: "quiz_id = :quiz_id AND evaluated = :evaluated",
+                ExpressionAttributeValues: {
+                    ":quiz_id": request.data.quiz_id,
+                    ":evaluated": "No",
+                    ":common_id": constant.constValues.common_id
+                }
+    };
+
+    return await baseRepositoryNew.DATABASE_TABLE2.query(params);
+}
+
 exports.fetchQuizResultByQuizId = async (request) => {
     let params = {
         TableName: TABLE_NAMES.upschool_quiz_result,
