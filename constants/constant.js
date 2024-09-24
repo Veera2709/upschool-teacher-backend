@@ -289,3 +289,7 @@ exports.groupTypes = {
     Intermediate: "Intermediate", 
     Advanced: "Advanced"
 }; 
+
+exports.awsConstants ={
+    batchSize : 25
+}
