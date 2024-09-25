@@ -383,5 +383,7 @@ functions:
           path: /v1/viewClassReportQuestions
           method: POST
           cors: true  
-
-
+      - http:
+          path: /v1/comprehensivePerformanceConceptWise
+          method: POST
+          cors: true  

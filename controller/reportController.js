@@ -109,3 +109,13 @@ exports.comprehensivePerformanceTopicWise = async (req, res, next) => {
         next(error)
     }
 };
+
+exports.comprehensivePerformanceConceptWise = async (req, res, next) => {
+    try {
+        const request = req.body;
+        const reportData = await reportServices.comprehensivePerformanceConceptWise(request);
+        return formatResponse(res, reportData);
+    } catch (error) {
+        next(error)
+    }
+};
