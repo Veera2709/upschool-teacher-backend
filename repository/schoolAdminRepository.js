@@ -90,8 +90,8 @@ exports.insertSchoolAdmin2 = async (request) => {
         }
 
     }
-    const data = (await baseRepositoryNew.DATABASE_TABLE2.putItem(params)).$metadata.httpStatusCode;
-    return data;
+    return (await baseRepositoryNew.DATABASE_TABLE2.putItem(params)).$metadata.httpStatusCode;
+   
 }
 exports.updateSchoolAdmin = function (request, callback) {
 

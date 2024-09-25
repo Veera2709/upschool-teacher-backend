@@ -89,18 +89,16 @@ exports.resetQuizEvaluationStatus = async (req, res, next) => {
         next(error)
     }
 };
-exports.startQuizEvaluation = (req, res, next) => {
-    console.log("Quiz Evaluation Start!");
-    let request = req.body;
-    quizServices.startQuizEvaluationProcess(request, function (quizEvaluationErr, quizEvaluationRes) {
-        if (quizEvaluationErr) {
-            res.status(quizEvaluationErr).json(quizEvaluationRes);
-        } else {
-            console.log("Quiz Evaluation Completed!");
-            res.json(quizEvaluationRes);
-        }
-    });
+exports.startQuizEvaluation = async (req, res, next) => {
+    try {
+        const request = req.body;
+        const reportData = await quizServices.startQuizEvaluationProcess(request);
+        return formatResponse(res, reportData);
+    } catch (error) {
+        next(error)
+    }
 };
+
 exports.fetchAllQuizDetails = (req, res, next) => {
     let request = req.body;
     request["token"] = req.header('Authorization');

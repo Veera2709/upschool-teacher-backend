@@ -238,122 +238,112 @@ exports.fetchBulkDataWithProjection = function (request, callback) {
       callback(500, constant.messages.DATABASE_ERROR);
     } else {
 
-        let { IdArray, fetchIdName, TableName, projectionExp } = request;
-    //   let IdArray = request.IdArray;
-    //   let fetchIdName = request.fetchIdName;
-    //   let TableName = request.TableName;
-    //   let projectionExp = request.projectionExp;
+      let { IdArray, fetchIdName, TableName, projectionExp } = request;
+      //   let IdArray = request.IdArray;
+      //   let fetchIdName = request.fetchIdName;
+      //   let TableName = request.TableName;
+      //   let projectionExp = request.projectionExp;
 
-        let filterExpDynamic = fetchIdName + "= :" + fetchIdName;
-        let expAttributeVal = {};
+      let filterExpDynamic = fetchIdName + "= :" + fetchIdName;
+      let expAttributeVal = {};
 
-        let docClient = dynamoDBCall;
-        let FilterExpressionDynamic = "";
-        let ExpressionAttributeValuesDynamic = {};
+      let docClient = dynamoDBCall;
+      let FilterExpressionDynamic = "";
+      let ExpressionAttributeValuesDynamic = {};
 
-        IdArray = [...new Set(IdArray)];
+      IdArray = [...new Set(IdArray)];
 
-        console.log("IdArray : ", IdArray);
-        if (IdArray.length === 0) {
-            console.log("EMPTY BULK ID");
-            callback(0, { Items: [] });
-        } 
-        else if (IdArray.length === 1) 
-        {
-            expAttributeVal[":" + fetchIdName] = IdArray[0];
+      console.log("IdArray : ", IdArray);
+      if (IdArray.length === 0) {
+        console.log("EMPTY BULK ID");
+        callback(0, { Items: [] });
+      }
+      else if (IdArray.length === 1) {
+        expAttributeVal[":" + fetchIdName] = IdArray[0];
 
-            let read_params = {
-                TableName: TableName,
-                KeyConditionExpression: "" + fetchIdName + " = :" + fetchIdName + "",
-                ExpressionAttributeValues: expAttributeVal,
-                ProjectionExpression: projectionExp,
-            };
+        let read_params = {
+          TableName: TableName,
+          KeyConditionExpression: "" + fetchIdName + " = :" + fetchIdName + "",
+          ExpressionAttributeValues: expAttributeVal,
+          ProjectionExpression: projectionExp,
+        };
 
-            // console.log("READ PARAMS : ", read_params);
+        // console.log("READ PARAMS : ", read_params);
 
-            DATABASE_TABLE.queryRecord(docClient, read_params, callback);
-        } 
-        else {
-            IdArray.forEach((element, index) => {
-                if (index < IdArray.length - 1) {
-                    FilterExpressionDynamic = FilterExpressionDynamic + filterExpDynamic + index + " OR ";
-                    ExpressionAttributeValuesDynamic[":" + fetchIdName + "" + index] = element + "";
-                } else {
-                    FilterExpressionDynamic = FilterExpressionDynamic + filterExpDynamic + index + "";
-                    ExpressionAttributeValuesDynamic[":" + fetchIdName + "" + index] = element;
-                }
-            });
+        DATABASE_TABLE.queryRecord(docClient, read_params, callback);
+      }
+      else {
+        IdArray.forEach((element, index) => {
+          if (index < IdArray.length - 1) {
+            FilterExpressionDynamic = FilterExpressionDynamic + filterExpDynamic + index + " OR ";
+            ExpressionAttributeValuesDynamic[":" + fetchIdName + "" + index] = element + "";
+          } else {
+            FilterExpressionDynamic = FilterExpressionDynamic + filterExpDynamic + index + "";
+            ExpressionAttributeValuesDynamic[":" + fetchIdName + "" + index] = element;
+          }
+        });
 
-            let read_params = {
-                TableName: TableName,
-                FilterExpression: FilterExpressionDynamic,
-                ExpressionAttributeValues: ExpressionAttributeValuesDynamic,
-                ProjectionExpression: projectionExp,
-            };
+        let read_params = {
+          TableName: TableName,
+          FilterExpression: FilterExpressionDynamic,
+          ExpressionAttributeValues: ExpressionAttributeValuesDynamic,
+          ProjectionExpression: projectionExp,
+        };
 
-            console.log("READ PARAMETER : ", read_params);
+        console.log("READ PARAMETER : ", read_params);
 
-            DATABASE_TABLE.scanRecord(docClient, read_params, callback);
-        }
+        DATABASE_TABLE.scanRecord(docClient, read_params, callback);
+      }
     }
   });
 };
 exports.fetchBulkDataWithProjection2 = async (request) => {
-  console.log({request});
-  const fromatedRequest = await helper.getDataByFilterKey(request);   
- console.log("testrequest",request);
- const params = {
-     TableName: TABLE_NAMES.upschool_test_result,
-     IndexName: indexName.Indexes.common_id_index,
-     KeyConditionExpression: "common_id = :common_id",
-     FilterExpression: fromatedRequest.FilterExpression,
-     ExpressionAttributeValues: fromatedRequest.ExpressionAttributeValues,
- };
+  console.log({ request });
+  const fromatedRequest = await helper.getDataByFilterKey(request);
+  console.log("testrequest", request);
+  const params = {
+    TableName: TABLE_NAMES.upschool_test_result,
+    IndexName: indexName.Indexes.common_id_index,
+    KeyConditionExpression: "common_id = :common_id",
+    FilterExpression: fromatedRequest.FilterExpression,
+    ExpressionAttributeValues: fromatedRequest.ExpressionAttributeValues,
+  };
 
- console.log({params});   
+  console.log({ params });
 
- try {
-     const result = await baseRepositoryNew.DATABASE_TABLE2.query(params);     
-     return result;
- } catch (error) {
-     console.error(`Error fetching quiz results:`, error);
-     throw error;
- }
+  try {
+    const result = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    return result;
+  } catch (error) {
+    console.error(`Error fetching quiz results:`, error);
+    throw error;
+  }
 };
 
-exports.bulkBatchWrite = async (itemsToWrite, userTable, callback) => {
-    if (itemsToWrite.length > 0) {
-        dynamoDbCon.getDB(async function (DBErr, dynamoDBCall) {
-            if (DBErr) {
-                console.log(constant.messages.DATABASE_ERROR);
-                console.log(DBErr);
-                callback(500, constant.messages.DATABASE_ERROR);
-            } else {
-                /** CALL BATCH WRITE **/
-                const batchSize = 25;
-                const promises = [];
-            
-                for (let i = 0; i < itemsToWrite.length; i += batchSize) {
-                    const batch = itemsToWrite.slice(i, i + batchSize);
-                    promises.push(exports.performBatchWrite(batch, userTable, dynamoDBCall));
-                }
-            
-                try {
-                    await Promise.all(promises);
-                    console.log('All batch writes completed.');
-                    callback(0, 200);
-                } catch (error) {
-                    console.error(`Error in batch writes: ${error.message}`);
-                    callback(400, `Error in batch writes: ${error.message}`);
-                }
-                /** END CALL BATCH WRITE **/
-            }
-        })        
-    } else {
-        console.log("EMPTY BATCH ITEM!");
-        callback(0, 200);
-    }
+exports.bulkBatchWrite = async (itemsToWrite, userTable) => {
+  if (itemsToWrite.length > 0) {
+    
+        const batchSize = constant.awsConstants.batchSize;
+        const promises = [];
+
+        for (let i = 0; i < itemsToWrite.length; i += batchSize) {
+          const batch = itemsToWrite.slice(i, i + batchSize);
+          console.log({ batch });
+          promises.push(exports.performBatchWrite(batch, userTable));
+        }
+
+        try {
+          await Promise.all(promises);
+          return 200;
+        } catch (error) {
+          throw helper.formatErrorResponse(error.message, 400);
+
+        }
+  } else {
+    return 200;
+  }
 };
+
 
 // async function performBatchWrite(batch, userTable) {
 //     const params = { RequestItems: { 'YourTableName': batch } };
@@ -365,25 +355,26 @@ exports.bulkBatchWrite = async (itemsToWrite, userTable, callback) => {
 //     }
 // }
 
-exports.performBatchWrite = async (batch, userTable, docClient) => {
+exports.performBatchWrite = async (batch, userTable) => {
 
-    const putReqs = await batch.map((item) => ({
-        PutRequest: {
-            Item: item,
-        },
-    }));
+  const putReqs = await batch.map((item) => ({
+    PutRequest: {
+      Item: item,
+    },
+  }));
 
-    let ItemsObjects = {};
-    ItemsObjects[userTable] = putReqs;
+  let ItemsObjects = {};
+  ItemsObjects[userTable] = putReqs;
 
-    const req = {
-        RequestItems: ItemsObjects,
-    };
+  const req = {
+    RequestItems: ItemsObjects,
+  };
 
-    try {
-        await docClient.batchWrite(req).promise();
-        console.log("Doing batch wirte...");
-    } catch (error) {
-        console.error(`Error in batch write: ${error.message}`);
-    }    
+  try {
+    await baseRepositoryNew.DATABASE_TABLE2.createMany(req).promise();
+
+    console.log("Doing batch wirte...");
+  } catch (error) {
+    console.error(`Error in batch write: ${error.message}`);
+  }
 }
