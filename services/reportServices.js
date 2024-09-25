@@ -1,4 +1,4 @@
-const { schoolRepository,studentRepository,subjectRepository,unitRepository,quizRepository,settingsRepository,questionRepository,quizResultRepository,classTestRepository,chapterRepository,topicRepository,conceptRepository} = require("../repository")
+const { schoolRepository, studentRepository, subjectRepository, unitRepository, quizRepository, settingsRepository, questionRepository, quizResultRepository, classTestRepository, chapterRepository, topicRepository, conceptRepository } = require("../repository")
 const { getS3SignedUrl, cleanAthenaResponse, formatDate } = require("../helper/helper");
 
 exports.getAssessmentDetails = async (request) => {
@@ -84,13 +84,13 @@ exports.getTargetedLearningExpectation = async (request) => {
   const classPercentagePre = schoolDataRes.Items[0].pre_quiz_config.class_percentage;
   const classPercentagePost = schoolDataRes.Items[0].post_quiz_config.class_percentage;
 
-  if(!classPercentagePre || !classPercentagePost) return;
+  if (!classPercentagePre || !classPercentagePost) return;
   const studentDataRes = await studentRepository.getStudentsData2(request)
   let classStrength = studentDataRes?.Items?.length;
   const quizDataRes = await quizRepository.fetchAllQuizBasedonSubject2(request);
   const quizIds = quizDataRes.Items.map(val => val.quiz_id);
 
-  const quizResultDataRes = quizIds.length && await quizResultRepository.fetchBulkQuizResultsByID2({unit_Quiz_id : quizIds})
+  const quizResultDataRes = quizIds.length && await quizResultRepository.fetchBulkQuizResultsByID2({ unit_Quiz_id: quizIds })
 
   totalTopics = quizDataRes && quizDataRes.Items.reduce((acc, val) => acc + val.selectedTopics?.length, 0);
 
@@ -225,7 +225,7 @@ exports.preLearningSummaryDetails = async (request) => {
       if (chapter) {
         Object.assign(chapter, {
           quiz_id: quiz.quiz_id,
-          startDate:formatDate(quiz.created_ts),
+          startDate: formatDate(quiz.created_ts),
           notConsideredTopics: quiz.not_considered_topics,
         });
         quizIds.push(quiz.quiz_id);
@@ -352,13 +352,13 @@ exports.viewAnalysisIndividualReport = async (request) => {
     const questionIds = questionTrackDetails.map(val => val.question_id);
     const topicIds = questionTrackDetails.map(val => val.topic_id);
 
-      const questions =await questionRepository.fetchBulkQuestionsNameById2({ question_id: questionIds });
+    const questions = await questionRepository.fetchBulkQuestionsNameById2({ question_id: questionIds });
 
-      const topicNames = await topicRepository.fetchBulkTopicsIDName2({ unit_Topic_id: topicIds });
+    const topicNames = await topicRepository.fetchBulkTopicsIDName2({ unit_Topic_id: topicIds });
 
-      const cognitiveSkillNames =await settingsRepository.fetchBulkCognitiveSkillNameById2({
-        cognitive_id: questions.map(que => que.cognitive_skill),
-      });
+    const cognitiveSkillNames = await settingsRepository.fetchBulkCognitiveSkillNameById2({
+      cognitive_id: questions.map(que => que.cognitive_skill),
+    });
 
     await Promise.all(
       questions.map(async que => {
@@ -424,6 +424,7 @@ exports.viewClassReportQuestions = async (request) => {
   });
 
   questions.Items.map((question, i) => {
+    question.questionNo = (i + 1)
     const allAnswers = quizResultMarksData.flat().filter(ans => ans.question_id === question.question_id)
     question.cognitive_skill = cognitiveSkillNames.Items.find(e => e.cognitive_id).cognitive_name;
     //% of most common answer for objective (descriptive we wont show anything)
@@ -494,10 +495,10 @@ exports.viewClassReportQuestions = async (request) => {
 
   const difficultyResult = Object.keys(levelTotals).map(level => ({
     level,
-    percentage: levelTotals[level].total / levelTotals[level].count,
-    questionscount: levelTotals[level].count
+    averagePercentage: levelTotals[level].total / levelTotals[level].count,
+    noOfQuestions: levelTotals[level].count
   }));
-  return { questions:questions.Items, cognitiveSkillAverageData: cognitiveResult, difficultyLevelAverageData: difficultyResult }
+  return { questions: questions.Items, cognitiveSkillAverageData: cognitiveResult, difficultyLevelAverageData: difficultyResult }
 }
 
 exports.preLearningBlueprintDetails = async (request) => {
