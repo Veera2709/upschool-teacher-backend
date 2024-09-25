@@ -497,18 +497,27 @@ exports.fetchAllQuizBasedonSubject = function (request, callback) {
     });
 }
 exports.fetchAllQuizBasedonSubject2 = async (request) => {
+
+    let filterExpression = "subject_id = :subject_id AND section_id = :section_id AND client_class_id = :client_class_id AND quiz_status = :quiz_status";
+    let expressionAttributeValues = {
+        ":common_id": constant.constValues.common_id,
+        ":quiz_status": request.data.quiz_status,
+        ":section_id": request.data.section_id,
+        ":subject_id": request.data.subject_id,
+        ":client_class_id": request.data.client_class_id,
+    };
+
+    if (request.data.learningType !== undefined) {
+        filterExpression += " AND learningType = :learningType";
+        expressionAttributeValues[":learningType"] = request.data.learningType;
+    }
+
     let params = {
         TableName: TABLE_NAMES.upschool_quiz_table,
         IndexName: indexName.Indexes.common_id_index,
         KeyConditionExpression: "common_id = :common_id",
-        FilterExpression: "subject_id = :subject_id AND section_id = :section_id AND client_class_id = :client_class_id AND quiz_status = :quiz_status",
-        ExpressionAttributeValues: {
-            ":common_id": constant.constValues.common_id,
-            ":quiz_status": request.data.quiz_status,
-            ":section_id": request.data.section_id,
-            ":subject_id": request.data.subject_id,
-            ":client_class_id": request.data.client_class_id,
-        }
+        FilterExpression: filterExpression,
+        ExpressionAttributeValues: expressionAttributeValues
     };
 
     return await baseRepositoryNew.DATABASE_TABLE2.query(params);
@@ -547,13 +556,14 @@ exports.fetchAllQuizBasedonChapter = async (request) => {
         TableName: TABLE_NAMES.upschool_quiz_table,
         IndexName: indexName.Indexes.common_id_index,
         KeyConditionExpression: "common_id = :common_id",  
-        FilterExpression: "chapter_id = :chapter_id AND quiz_status = :quiz_status AND subject_id = :subject_id AND client_class_id = :client_class_id AND section_id = :section_id", 
+        FilterExpression: "chapter_id = :chapter_id AND quiz_status = :quiz_status AND subject_id = :subject_id AND client_class_id = :client_class_id AND section_id = :section_id AND learningType = :learningType", 
         ExpressionAttributeValues: {
             ":common_id": constant.constValues.common_id,
             ":client_class_id": request.data.client_class_id,
             ":subject_id": request.data.subject_id,
             ":section_id": request.data.section_id,
             ":chapter_id": request.data.chapter_id,
+            ":learningType" : request.data.learningType,
             ":quiz_status": "Active",
         }
     };
