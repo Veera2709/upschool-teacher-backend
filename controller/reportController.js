@@ -60,6 +60,15 @@ exports.viewAnalysisIndividualReport =async (req, res, next) => {
     }
 };
 
+exports.viewClassReportQuestions =async (req, res, next) => {
+    try {
+    let request = req.body;
+    const reportData =  await reportServices.viewClassReportQuestions(request);
+    return formatResponse(res, reportData);
+    } catch (error) {
+    next(error)
+    }
+};
 
 exports.preLearningBlueprintDetails = async (req, res, next) => {
     try {
@@ -95,6 +104,16 @@ exports.comprehensivePerformanceTopicWise = async (req, res, next) => {
     try {
         const request = req.body;
         const reportData = await reportServices.comprehensivePerformanceTopicWise(request);
+        return formatResponse(res, reportData);
+    } catch (error) {
+        next(error)
+    }
+};
+
+exports.comprehensivePerformanceConceptWise = async (req, res, next) => {
+    try {
+        const request = req.body;
+        const reportData = await reportServices.comprehensivePerformanceConceptWise(request);
         return formatResponse(res, reportData);
     } catch (error) {
         next(error)
