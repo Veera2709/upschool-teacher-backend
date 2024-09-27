@@ -518,9 +518,10 @@ exports.viewClassReportQuestions = async (request) => {
 }
 
 exports.viewClassReportFocusArea = async (request) => {
-  const [quizData, quizResult] = await Promise.all([
+  const [quizData, quizResult, schoolDataRes] = await Promise.all([
     quizRepository.fetchQuizDataById2(request),
-    quizResultRepository.fetchQuizResultByQuizId(request)
+    quizResultRepository.fetchQuizResultByQuizId(request),
+    schoolRepository.getSchoolDetailsById2(request)
   ]);
   //numb of students who attended
   const quizResultMarksData = quizResult.Items.map(item => {
@@ -573,29 +574,26 @@ exports.viewClassReportFocusArea = async (request) => {
   const groupedMarks = marksOfEachStudent.reduce((acc, item) => {
     // Find the existing student entry
     const existingStudent = acc.find(student => student.studentid === item.studentid);
-    
-    if (existingStudent) {
-        // If the student exists, push the new marks and questionId into their array
-        existingStudent.details.push({
-            marks: item.marks,
-            questionId: item.questionId
-        });
-    } else {
-        // If the student doesn't exist, create a new entry
-        acc.push({
-            studentid: item.studentid,
-            details: [{
-                marks: item.marks,
-                questionId: item.questionId
-            }]
-        });
-    }
-    
-    return acc;
-}, []);
 
-  console.log({ groupedMarks });
-  //
+    if (existingStudent) {
+      // If the student exists, push the new marks and questionId into their array
+      existingStudent.details.push({
+        marks: item.marks,
+        questionId: item.questionId
+      });
+    } else {
+      // If the student doesn't exist, create a new entry
+      acc.push({
+        studentid: item.studentid,
+        details: [{
+          marks: item.marks,
+          questionId: item.questionId
+        }]
+      });
+    }
+
+    return acc;
+  }, []);
   const noOfQuestionsperConcept = conceptIdsSetA.reduce((acc, curr) => {
     acc[curr] = (acc[curr] || 0) + 1;
     return acc
@@ -603,46 +601,48 @@ exports.viewClassReportFocusArea = async (request) => {
   console.log({ noOfQuestionsperConcept })
   const conceptNames = conceptIdsSetA.length && await conceptRepository.fetchBulkConceptsIDName2({ unit_Concept_id: conceptIdsSetA });
   let conceptsToFocus = [];
-  conceptAndQuestions.map((item) => {
+  // let failedStudents = [];
+  conceptAndQuestions.map(async (item) => {
     item.numberOfQuestions = noOfQuestionsperConcept[item.concept] || 0;
     item.name = conceptNames.find((c) => c.concept_id == item.concept).display_name;
-    
+
     //%cal for pass
-    let passPercentage = "10" // should come from info table and failed students list
-      let studentsData = []
-    groupedMarks.map ((student)=>{
+    let passPercentage = request.config === "post_quiz_config" ? schoolDataRes.Items[0].post_quiz_config.class_percentage : schoolDataRes.Items[0].pre_quiz_config.class_percentage
+    let studentsData = []
+    groupedMarks.map((student) => {
       let marks = 0;
       console.log(student.studentid);
-      
-      item.questions.map((question)=>{
-        if(student.details.questionId == question)
-        {
+
+      item.questions.map((question) => {
+        if (student.details.questionId == question) {
           console.log(student.details.marks);
-          
-          marks=marks+Number(student.details.marks)
+
+          marks = marks + Number(student.details.marks)
         }
       })
-      let finalMarks = marks/item.questions.length
+      let finalMarks = marks / item.questions.length
       console.log(finalMarks);
-      
+
       let passed = finalMarks >= passPercentage ? true : false
-      studentsData.push({student:student.studentid,passed:passed})
+      studentsData.push({ student: student.studentid, passed: passed })
     })
-    console.log({studentsData});
+    // const studentIds = studentsData.filter((student)=>student.passed == false)
+    // const failedStudents = studentIds.length && await studentRepository.getStudentsByIdName2({ student_id: studentIds });
+    // console.log(failedStudents);
     const countPassed = studentsData.filter(student => student.passed).length;
     item.passed = countPassed / totalStudents //[%] value
     item.count = countPassed //pass % numerator
     item.totalStudents = totalStudents //pass % denominator
     if (item.passed >= passPercentage) {
       item.successMatrix = "yes";
-  } else {
+    } else {
       item.successMatrix = "no";
       conceptsToFocus.push(item.name);
-  }
-    
+    }
+
   })
   // console.log({ conceptAndQuestions });
-  return {conceptAndQuestions:conceptAndQuestions,conceptsToFocus:conceptsToFocus}
+  return { conceptAndQuestions: conceptAndQuestions, conceptsToFocus: conceptsToFocus }
   // return groupedMarks
 }
 
