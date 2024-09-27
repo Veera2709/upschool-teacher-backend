@@ -168,9 +168,6 @@ exports.fetchBulkConceptsIDName = function (request, callback) {
 
 exports.fetchBulkConceptsIDName2 = async (request) => {
     const unit_Concept_id = [...new Set(request.unit_Concept_id)]; // Remove duplicates
-    console.log("fetchConceptsData request:", request);
-    console.log("unit_Concept_id:", unit_Concept_id);
-
     if (unit_Concept_id.length === 1) {
         // Query when there's only one concept ID
         const params = {

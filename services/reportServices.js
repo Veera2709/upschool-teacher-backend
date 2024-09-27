@@ -395,7 +395,22 @@ exports.viewClassReportQuestions = async (request) => {
   ]);
   const quizResultMarksData = quizResult.Items.map(item => item.marks_details[0].qa_details);
   const totalStudents = quizResultMarksData.length;
-  const uniqueArray = [...new Set(Object.values(quizData.Item.question_track_details).flat())];
+  const questionMap = {};
+  for (const [setName, questions] of Object.entries(quizData.Item.question_track_details)) {
+    for (const { question_id } of questions) {
+      if (!questionMap[question_id]) {
+        questionMap[question_id] = [];
+      }
+      questionMap[question_id].push(setName);
+    }
+  }
+
+  const uniqueArray = [...new Set(Object.values(quizData.Item.question_track_details).flat())];//all unique questions
+  const uniqueArray1 = [...new Set(Object.keys(questionMap))];//which set the questions belong to
+  const questionSet = uniqueArray1.map(questionId => ({
+    question_id: questionId,
+    sets: questionMap[questionId]
+  }));
   const questionIds = uniqueArray.map(item => item.question_id);
   const conceptIds = uniqueArray.map(item => item.concept_id);
   const topicIds = uniqueArray.map(item => item.topic_id);
@@ -425,6 +440,7 @@ exports.viewClassReportQuestions = async (request) => {
 
   questions.Items.map((question, i) => {
     question.questionNo = (i + 1)
+    question.set = questionSet.find((q) => q.id == question.id).sets
     const allAnswers = quizResultMarksData.flat().filter(ans => ans.question_id === question.question_id)
     question.cognitive_skill = cognitiveSkillNames.Items.find(e => e.cognitive_id).cognitive_name;
     //% of most common answer for objective (descriptive we wont show anything)
@@ -499,6 +515,135 @@ exports.viewClassReportQuestions = async (request) => {
     noOfQuestions: levelTotals[level].count
   }));
   return { questions: questions.Items, cognitiveSkillAverageData: cognitiveResult, difficultyLevelAverageData: difficultyResult }
+}
+
+exports.viewClassReportFocusArea = async (request) => {
+  const [quizData, quizResult] = await Promise.all([
+    quizRepository.fetchQuizDataById2(request),
+    quizResultRepository.fetchQuizResultByQuizId(request)
+  ]);
+  //numb of students who attended
+  const quizResultMarksData = quizResult.Items.map(item => {
+    return {
+      marks: item.marks_details[0].qa_details, // Accessing qa_details
+      studentId: item.student_id // Accessing student_id
+    }
+  });
+  console.log(quizResultMarksData)
+  const totalStudents = quizResultMarksData.length;
+  const questionSetA = [...new Set(Object.values(quizData.Item.question_track_details.qp_set_a).flat())];//only set a for focus area
+  const conceptAndQuestions = questionSetA.reduce((acc, item) => {
+    const existingConcept = acc.find(concept => concept.concept === item.concept_id);
+    if (existingConcept) { existingConcept.questions.push(item.question_id); }
+    else {
+      acc.push({
+        concept: item.concept_id,
+        questions: [item.question_id]
+      });
+    }
+    return acc;
+  }, []);
+  const conceptIdsSetA = questionSetA.map(item => item.concept_id);//concepts for set A
+  const questionIdsSetA = questionSetA.map(item => item.question_id);//concepts for set A
+  console.log({ questionIdsSetA });
+  const marksOfEachStudent = [];
+  //get student marks based on question 
+  quizResultMarksData.map((qdata => {
+    qdata.marks.map((marks) => {
+      questionIdsSetA.map((question) => {
+        if (question === marks.question_id) {
+          let marksValue;
+          if (marks.modified_marks === 'N.A.') {
+            marksValue = marks.obtained_marks === 'N.A.' ? "0" : marks.obtained_marks;
+          } else {
+            marksValue = marks.modified_marks;
+          }
+
+          marksOfEachStudent.push({
+            studentid: qdata.studentId,
+            marks: marksValue,
+            questionId: question
+          });
+
+        }
+      })
+    })
+
+  }))
+  const groupedMarks = marksOfEachStudent.reduce((acc, item) => {
+    // Find the existing student entry
+    const existingStudent = acc.find(student => student.studentid === item.studentid);
+    
+    if (existingStudent) {
+        // If the student exists, push the new marks and questionId into their array
+        existingStudent.details.push({
+            marks: item.marks,
+            questionId: item.questionId
+        });
+    } else {
+        // If the student doesn't exist, create a new entry
+        acc.push({
+            studentid: item.studentid,
+            details: [{
+                marks: item.marks,
+                questionId: item.questionId
+            }]
+        });
+    }
+    
+    return acc;
+}, []);
+
+  console.log({ groupedMarks });
+  //
+  const noOfQuestionsperConcept = conceptIdsSetA.reduce((acc, curr) => {
+    acc[curr] = (acc[curr] || 0) + 1;
+    return acc
+  }, [])
+  console.log({ noOfQuestionsperConcept })
+  const conceptNames = conceptIdsSetA.length && await conceptRepository.fetchBulkConceptsIDName2({ unit_Concept_id: conceptIdsSetA });
+  let conceptsToFocus = [];
+  conceptAndQuestions.map((item) => {
+    item.numberOfQuestions = noOfQuestionsperConcept[item.concept] || 0;
+    item.name = conceptNames.find((c) => c.concept_id == item.concept).display_name;
+    
+    //%cal for pass
+    let passPercentage = "10" // should come from info table and failed students list
+      let studentsData = []
+    groupedMarks.map ((student)=>{
+      let marks = 0;
+      console.log(student.studentid);
+      
+      item.questions.map((question)=>{
+        if(student.details.questionId == question)
+        {
+          console.log(student.details.marks);
+          
+          marks=marks+Number(student.details.marks)
+        }
+      })
+      let finalMarks = marks/item.questions.length
+      console.log(finalMarks);
+      
+      let passed = finalMarks >= passPercentage ? true : false
+      studentsData.push({student:student.studentid,passed:passed})
+    })
+    console.log({studentsData});
+    const countPassed = studentsData.filter(student => student.passed).length;
+    item.passed = countPassed / totalStudents //[%] value
+    item.count = countPassed //pass % numerator
+    item.totalStudents = totalStudents //pass % denominator
+    if (item.passed >= passPercentage) {
+      item.successMatrix = "yes";
+  } else {
+      item.successMatrix = "no";
+      conceptsToFocus.push(item.name);
+  }
+    
+  })
+  // console.log({ conceptAndQuestions });
+  return {conceptAndQuestions:conceptAndQuestions,conceptsToFocus:conceptsToFocus}
+  // return groupedMarks
 }
 
 exports.preLearningBlueprintDetails = async (request) => {
@@ -664,7 +809,7 @@ exports.comprehensivePerformanceChapterWise = async (request) => {
   ]);
 
   // Remove duplicates using a Set
-   const questions =await questionRepository.fetchBulkQuestionsNameById2({ question_id : [...new Set(allQuestionIds)] });
+  const questions = await questionRepository.fetchBulkQuestionsNameById2({ question_id: [...new Set(allQuestionIds)] });
 
   const quizIds = quizDataRes.Items.map((val) => val.quiz_id);
 
@@ -674,74 +819,74 @@ exports.comprehensivePerformanceChapterWise = async (request) => {
       unit_Quiz_id: quizIds,
     }));
 
-    const performance = {};  
-    const quizResultsByStudent = quizResultDataRes.reduce((acc, result) => {
-      if (!acc[result.student_id]) acc[result.student_id] = [];
-      acc[result.student_id].push(result);
-      return acc;
-    }, {});
-  
-    const quizDataByQuizId = quizDataRes.Items.reduce((acc, quiz) => {
-      acc[quiz.quiz_id] = quiz;
-      return acc;
-    }, {});
-  
-    const chapterIds = new Set();
-    allStudentsData.Items.forEach(student => {
-      const { student_id, user_firstname, user_lastname } = student;
-      const studentResults = quizResultsByStudent[student_id] || [];
-      const studentPerformance = {};
-  
-      studentResults && studentResults.forEach(result => {
-        const { quiz_id, marks_details } = result;
-        const quizInfo = quizDataByQuizId[quiz_id];
-        const chapterId = quizInfo ? quizInfo.chapter_id : null;
-  
-        if (!chapterId) return; 
+  const performance = {};
+  const quizResultsByStudent = quizResultDataRes.reduce((acc, result) => {
+    if (!acc[result.student_id]) acc[result.student_id] = [];
+    acc[result.student_id].push(result);
+    return acc;
+  }, {});
 
-        chapterIds.add(chapterId)
-        if (!studentPerformance[chapterId]) {
-          studentPerformance[chapterId] = {
-            totalQuestions: 0,
-            totalMarks: 0,
-            obtainedMarks: 0,
-          };
-        }
-  
-        marks_details && marks_details.forEach(markDetail => {
-          markDetail.qa_details.forEach(qa => {
+  const quizDataByQuizId = quizDataRes.Items.reduce((acc, quiz) => {
+    acc[quiz.quiz_id] = quiz;
+    return acc;
+  }, {});
 
-           const marksData = questions.find(question => question.question_id == qa.question_id);
-            const obtainedMarks = parseFloat(qa.obtained_marks) || 0;
-            const modifiedMarks = parseFloat(qa.modified_marks) || 0;
-  
-            studentPerformance[chapterId].totalQuestions += 1;
-            studentPerformance[chapterId].totalMarks += marksData.marks;
-            studentPerformance[chapterId].obtainedMarks += modifiedMarks ? modifiedMarks : obtainedMarks;
-  
-          });
+  const chapterIds = new Set();
+  allStudentsData.Items.forEach(student => {
+    const { student_id, user_firstname, user_lastname } = student;
+    const studentResults = quizResultsByStudent[student_id] || [];
+    const studentPerformance = {};
+
+    studentResults && studentResults.forEach(result => {
+      const { quiz_id, marks_details } = result;
+      const quizInfo = quizDataByQuizId[quiz_id];
+      const chapterId = quizInfo ? quizInfo.chapter_id : null;
+
+      if (!chapterId) return;
+
+      chapterIds.add(chapterId)
+      if (!studentPerformance[chapterId]) {
+        studentPerformance[chapterId] = {
+          totalQuestions: 0,
+          totalMarks: 0,
+          obtainedMarks: 0,
+        };
+      }
+
+      marks_details && marks_details.forEach(markDetail => {
+        markDetail.qa_details.forEach(qa => {
+
+          const marksData = questions.find(question => question.question_id == qa.question_id);
+          const obtainedMarks = parseFloat(qa.obtained_marks) || 0;
+          const modifiedMarks = parseFloat(qa.modified_marks) || 0;
+
+          studentPerformance[chapterId].totalQuestions += 1;
+          studentPerformance[chapterId].totalMarks += marksData.marks;
+          studentPerformance[chapterId].obtainedMarks += modifiedMarks ? modifiedMarks : obtainedMarks;
+
         });
       });
-
-      
-      performance[student_id] = {
-        name: `${user_firstname} ${user_lastname}`,
-        performance: studentPerformance
-      };
-    });
-    
-    const chapterData = await chapterRepository.fetchBulkChaptersIDName2({unit_chapter_id : [...chapterIds]});
-
-    Object.values(performance).forEach(student => {
-      Object.keys(student.performance).forEach(chapterId => {
-        const chapter = chapterData.find(c => c.chapter_id === chapterId);
-        if (chapter) {
-          student.performance[chapterId].title = chapter.chapter_title;
-        }
-      });
     });
 
-    return performance;
+
+    performance[student_id] = {
+      name: `${user_firstname} ${user_lastname}`,
+      performance: studentPerformance
+    };
+  });
+
+  const chapterData = await chapterRepository.fetchBulkChaptersIDName2({ unit_chapter_id: [...chapterIds] });
+
+  Object.values(performance).forEach(student => {
+    Object.keys(student.performance).forEach(chapterId => {
+      const chapter = chapterData.find(c => c.chapter_id === chapterId);
+      if (chapter) {
+        student.performance[chapterId].title = chapter.chapter_title;
+      }
+    });
+  });
+
+  return performance;
 
 };
 
@@ -756,9 +901,9 @@ exports.comprehensivePerformanceTopicWise = async (request) => {
     ...quiz.question_track_details.qp_set_c.map(q => q.question_id)
   ]);
 
-   const questions =await questionRepository.fetchBulkQuestionsNameById2({ question_id : [...new Set(allQuestionIds)] });
+  const questions = await questionRepository.fetchBulkQuestionsNameById2({ question_id: [...new Set(allQuestionIds)] });
 
-  
+
   const quizIds = quizDataRes.Items.map((val) => val.quiz_id);
   const quizResultDataRes =
     quizIds.length > 0 &&
@@ -782,14 +927,14 @@ exports.comprehensivePerformanceTopicWise = async (request) => {
   }, {});
 
   const topicIds = new Set();
-  
+
   allStudentsData.Items.forEach((student) => {
 
     const { student_id, user_firstname, user_lastname } = student;
     const studentResults = quizResultsByStudent[student_id] || [];
     const studentPerformance = {};
 
-    studentResults.forEach((result , i) => {
+    studentResults.forEach((result, i) => {
       const { quiz_id, marks_details } = result;
       const quizInfo = quizDataByQuizId[quiz_id];
 
@@ -801,15 +946,15 @@ exports.comprehensivePerformanceTopicWise = async (request) => {
       marks_details.forEach((markDetail) => {
         const { set_key, qa_details } = markDetail;
 
-        if (!qa_details || !set_key) return; 
+        if (!qa_details || !set_key) return;
 
         const questionsForSet = questionTrackDetails[set_key] || [];
 
         questionsForSet.forEach((question) => {
           const { topic_id, question_id } = question;
-          if (!topic_id) return; 
+          if (!topic_id) return;
 
-          topicIds.add(topic_id); 
+          topicIds.add(topic_id);
 
           if (!studentPerformance[topic_id]) {
             studentPerformance[topic_id] = {
@@ -866,7 +1011,7 @@ exports.comprehensivePerformanceConceptWise = async (request) => {
     ...quiz.question_track_details.qp_set_c.map(q => q.question_id)
   ]);
 
-   const questions =await questionRepository.fetchBulkQuestionsNameById2({ question_id : [...new Set(allQuestionIds)] });
+  const questions = await questionRepository.fetchBulkQuestionsNameById2({ question_id: [...new Set(allQuestionIds)] });
 
   const quizIds = quizDataRes.Items.map((val) => val.quiz_id);
   const quizResultDataRes =
@@ -889,7 +1034,7 @@ exports.comprehensivePerformanceConceptWise = async (request) => {
   }, {});
 
   const conceptIds = new Set();
-  
+
   allStudentsData.Items.forEach((student) => {
     const { student_id, user_firstname, user_lastname } = student;
     const studentResults = quizResultsByStudent[student_id] || [];
@@ -906,15 +1051,15 @@ exports.comprehensivePerformanceConceptWise = async (request) => {
       marks_details.forEach((markDetail) => {
         const { set_key, qa_details } = markDetail;
 
-        if (!qa_details || !set_key) return; 
+        if (!qa_details || !set_key) return;
 
         const questionsForSet = questionTrackDetails[set_key] || [];
 
         questionsForSet.forEach((question) => {
           const { concept_id, question_id } = question;
-          if (!concept_id) return; 
+          if (!concept_id) return;
 
-          conceptIds.add(concept_id); 
+          conceptIds.add(concept_id);
 
           if (!studentPerformance[concept_id]) {
             studentPerformance[concept_id] = {
@@ -935,7 +1080,7 @@ exports.comprehensivePerformanceConceptWise = async (request) => {
               studentPerformance[concept_id].totalQuestions += 1;
               studentPerformance[concept_id].totalMarks += marksData.marks;
               studentPerformance[concept_id].obtainedMarks += modifiedMarks ? modifiedMarks : obtainedMarks;
-              
+
             }
           });
         });
