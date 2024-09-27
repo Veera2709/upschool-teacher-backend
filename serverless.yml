@@ -382,7 +382,11 @@ functions:
       - http:
           path: /v1/viewClassReportQuestions
           method: POST
-          cors: true  
+          cors: true 
+      - http:
+          path: /v1/viewClassReportFocusArea
+          method: POST
+          cors: true 
       - http:
           path: /v1/comprehensivePerformanceConceptWise
           method: POST
