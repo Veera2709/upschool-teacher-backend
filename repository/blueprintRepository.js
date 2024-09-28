@@ -38,10 +38,11 @@ exports.fetchActiveBluePrints2 = async (request) => {
         TableName: TABLE_NAMES.upschool_blueprint_table,
                 IndexName: indexName.Indexes.common_id_index,
                 KeyConditionExpression: "common_id = :common_id",
-                FilterExpression: "blueprint_status = :blueprint_status",
+                FilterExpression: "blueprint_status = :blueprint_status AND blueprint_type = :blueprint_type",
                 ExpressionAttributeValues: {
                     ":common_id": constant.constValues.common_id,
                     ":blueprint_status": "Active",
+                    ":blueprint_type" : request.data.blueprint_type
                 },
                 ProjectionExpression: "blueprint_id, blueprint_name, description, test_duration, display_name",
 
