@@ -17,26 +17,34 @@ exports.getTestQuestionPapersBasedonStatus = function (request, callback) {
 
             let docClient = dynamoDBCall;
 
+            let filterExpression = "client_class_id = :client_class_id AND section_id = :section_id AND subject_id = :subject_id AND question_paper_status = :question_paper_status";
+            let expressionAttributeValues = {
+                ":common_id": constant.constValues.common_id,
+                ":client_class_id": request.data.client_class_id,
+                ":section_id": request.data.section_id,
+                ":subject_id": request.data.subject_id,
+                ":question_paper_status": request.data.question_paper_status
+            };
+
+            if (request.data.blueprint_type) {
+                filterExpression += " AND blueprint_type = :blueprint_type";
+                expressionAttributeValues[":blueprint_type"] = request.data.blueprint_type;
+            }
+
             let read_params = {
                 TableName: TABLE_NAMES.upschool_test_question_paper,
                 IndexName: indexName.Indexes.common_id_index,
                 KeyConditionExpression: "common_id = :common_id",
-                FilterExpression: "client_class_id = :client_class_id AND section_id = :section_id AND subject_id = :subject_id AND question_paper_status = :question_paper_status",
-                ExpressionAttributeValues: {
-                    ":common_id": constant.constValues.common_id,
-                    ":client_class_id": request.data.client_class_id,
-                    ":section_id": request.data.section_id,
-                    ":subject_id": request.data.subject_id,
-                    ":question_paper_status": request.data.question_paper_status
-                },
+                FilterExpression: filterExpression,
+                ExpressionAttributeValues: expressionAttributeValues,
                 ProjectionExpression: ["question_paper_id", "question_paper_name", "blueprint_id"]
-
-            }
+            };
 
             DATABASE_TABLE.queryRecord(docClient, read_params, callback);
         }
     });
-}
+};
+
 exports.getTestQuestionPapersBasedonStatus2 = async (request) => {
     const params = {
         TableName: TABLE_NAMES.upschool_test_question_paper,
@@ -112,6 +120,7 @@ exports.insertTestQuestionPaper = function (request, callback) {
                     "common_id": constant.constValues.common_id,
                     "created_ts": helper.getCurrentTimestamp(),
                     "updated_ts": helper.getCurrentTimestamp(),
+                    "blueprint_type" : request.data.blueprint_type,
                 },
             }
             DATABASE_TABLE.putRecord(docClient, insert_question_paper_params, callback);
