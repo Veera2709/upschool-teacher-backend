@@ -141,6 +141,7 @@ app.post("/v1/comprehensivePerformanceChapterWise",reportController.comprehensiv
 app.post("/v1/comprehensivePerformanceTopicWise",reportController.comprehensivePerformanceTopicWise);
 app.post("/v1/comprehensivePerformanceConceptWise",reportController.comprehensivePerformanceConceptWise);
 app.post("/v1/viewClassReportQuestions",reportController.viewClassReportQuestions);
+app.post("/v1/viewClassReportFocusArea",reportController.viewClassReportFocusArea);
 
 
 function haltOnTimedout(req, res, next) {

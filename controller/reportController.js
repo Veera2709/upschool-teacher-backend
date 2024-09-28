@@ -70,6 +70,16 @@ exports.viewClassReportQuestions =async (req, res, next) => {
     }
 };
 
+exports.viewClassReportFocusArea =async (req, res, next) => {
+    try {
+    let request = req.body;
+    const reportData =  await reportServices.viewClassReportFocusArea(request);
+    return formatResponse(res, reportData);
+    } catch (error) {
+    next(error)
+    }
+};
+
 exports.preLearningBlueprintDetails = async (req, res, next) => {
     try {
     let request = req.body;

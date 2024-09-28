@@ -1,4 +1,4 @@
-const {getAPICall , postAPICall} = require('./httpCommon')
+const { getAPICall, postAPICall } = require('./httpCommon')
 
 module.exports = {
     getAPICall,
