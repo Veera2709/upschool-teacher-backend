@@ -127,6 +127,7 @@ exports.fetchPostTopicData = function (request, callback) {
         }
     });
 }
+
 exports.fetchTopicIDDisplayTitleData = function (request, callback) {
 
     console.log("fetchTopicData : ", request);
@@ -325,6 +326,17 @@ exports.fetchTopicByID = function (request, callback) {
         }
     });
 }
+exports.fetchTopicByID2 = async (request) => {
+    const params = {
+        TableName: TABLE_NAMES.upschool_topic_table,
+
+                KeyConditionExpression: "topic_id = :topic_id",
+                ExpressionAttributeValues: {
+                    ":topic_id": request.data.topic_id
+                }
+    };
+    return await baseRepositoryNew.DATABASE_TABLE2.query(params); 
+};
 
 exports.fetchBulkTopicsIDName = function (request, callback) {
 

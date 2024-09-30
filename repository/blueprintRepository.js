@@ -126,3 +126,17 @@ exports.fetchBluePrintData = function (request, callback) {
         }
     });
 }
+exports.fetchBluePrintData2 = async (request) => {
+    const fromatedRequest = await helper.getDataByFilterKey(request);
+    let params = {
+        TableName: TABLE_NAMES.upschool_blueprint_table,
+        IndexName: indexName.Indexes.common_id_index,
+        KeyConditionExpression: "common_id = :common_id",
+        FilterExpression: fromatedRequest.FilterExpression,
+        ExpressionAttributeValues: fromatedRequest.ExpressionAttributeValues,
+        ProjectionExpression: "blueprint_id, blueprint_name",
+
+    };
+    const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    return data.Items;
+}

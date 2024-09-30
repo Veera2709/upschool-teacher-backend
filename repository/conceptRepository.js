@@ -57,6 +57,22 @@ exports.fetchConceptData = function (request, callback) {
         }
     });
 }
+exports.fetchConceptData2 = async (request) => {
+    const fromatedRequest = await helper.getDataByFilterKey(request);
+    const params = {
+      TableName: TABLE_NAMES.upschool_concept_blocks_table,
+      IndexName: indexName.Indexes.common_id_index,
+      KeyConditionExpression: "common_id = :common_id",
+      FilterExpression: fromatedRequest.FilterExpression,
+      ExpressionAttributeValues: fromatedRequest.ExpressionAttributeValues,
+    };
+    try {
+      return await baseRepositoryNew.DATABASE_TABLE2.query(params);    
+    } catch (error) {
+      console.error(`Error fetching quiz results:`, error);
+      throw error;
+    }
+  };
 exports.fetchConceptIDDisplayName = function (request, callback) {
 
     dynamoDbCon.getDB(function (DBErr, dynamoDBCall) {

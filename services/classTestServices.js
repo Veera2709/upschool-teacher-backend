@@ -52,14 +52,14 @@ exports.getClassTestbyId = async (request) => {
 
 }
 
-exports.startEvaluationProcess = async (request, callback) => {
+exports.startEvaluationProcess = async (request) => {
+    try{
     request.data.class_test_status = "Active";
     const classTestRes = await classTestRepository.getClassTestIdAndName2(request)
-    if (classTestRes.Items.length > 0) {
+   
         let classTest = classTestRes.Items[0];
         const studentMetaRes = await testResultRepository.fetchStudentresultMetadata2(request)
         console.log("STUDENT METADATA : ", studentMetaRes);
-        if (studentMetaRes.Items.length > 0) {
             request.data.question_paper_id = classTest.question_paper_id;
             const questionPaperRes = await testQuestionPaperRepository.fetchTestQuestionPaperByID2(request)
             console.log("QUESTION PAPER : ", questionPaperRes.Items);
@@ -77,83 +77,68 @@ exports.startEvaluationProcess = async (request, callback) => {
             const questionDataRes = await commonRepository.fetchBulkDataWithProjection2({ items: quizIds, condition: "AND" })
             console.log("QUESTION DATA : ", questionDataRes.Items);
 
-            exports.assigningMarks(studentMetaRes.Items, questionPaperRes.Items[0], questionDataRes.Items, (markAssignErr, markAssignRes) => {
-                if (markAssignErr) {
-                    console.log(markAssignErr);
-                    callback(markAssignErr, markAssignRes)
-                }
-                else {
+           const markAssignRes  = await exports.assigningMarks(studentMetaRes.Items, questionPaperRes.Items[0], questionDataRes.Items)
+               
                     console.log(markAssignRes);
 
                     /** BATCH UPDATE **/
                     let resultTable = TABLE_NAMES.upschool_test_result;
-                    commonRepository.bulkBatchWrite(markAssignRes, resultTable, (batchErr, batchRes) => {
-                        if (batchErr) {
-                            callback(batchErr, batchRes);
-                        }
-                        else {
-                            callback(batchErr, 200);
-                        }
-                    })
+                    commonRepository.bulkBatchWrite(markAssignRes, resultTable)
+                        return { status: 200 };
+                    } catch (error) {
+                        console.error(error);
+                        throw error;
+                    }                 
 
-                }
-            })
-        }
-        else {
-            console.log(constant.messages.NO_ANSWER_SHEET_FOUND);
-            callback(400, constant.messages.NO_ANSWER_SHEET_FOUND);
-        }
-    }
-    else {
-        console.log(constant.messages.NO_DATA);
-        callback(400, constant.messages.NO_DATA);
-    }
+            
+        
+        
+    
+   
 
 }
 
-exports.assigningMarks = async (studResultData, questionPaper, quesAns, callback) => {
-    console.log("assigningMarksquesAns", quesAns);
-    /** GET FINAL DATA FORMAT **/
-    await helper.getMarksDetailsFormat(questionPaper.questions).then(async (markDetails) => {
+exports.assigningMarks = async (studResultData, questionPaper, quesAns) => {
+    try {
+        console.log("assigningMarksquesAns", quesAns);
+
+        // Get the final data format
+        const markDetails = await helper.getMarksDetailsFormat(questionPaper.questions);
         console.log("STUDENT RESULT STRUCTURE : ", markDetails);
-        /** GET CONCAT ANSWERS **/
-        await helper.concatAnswers(studResultData).then((overallAns) => {
-            studResultData = overallAns;
-            console.log("CONCAT STUDENT ANSWERS : ", studResultData);
 
-            async function studentLoop(i) {
-                if (i < studResultData.length) {
-                    if (studResultData[i].overall_answer.length > 0) {
-                        await exports.comparingAnswer(studResultData[i].overall_answer, markDetails, questionPaper, quesAns).then(async (finalMarks) => {
-                            console.log("FINAL MARKS : " + studResultData[i].student_id, finalMarks);
-                            studResultData[i].marks_details = finalMarks;
-                            studResultData[i].evaluated = "Yes";
-                            studResultData[i].updated_ts = helper.getCurrentTimestamp();
-                        })
-                    }
-                    else {
-                        console.log("EMPTY OVERALL ANSWER");
-                        studResultData[i].marks_details = markDetails;
-                        studResultData[i].evaluated = "Yes";
-                        studResultData[i].updated_ts = helper.getCurrentTimestamp();
-                    }
-                    i++;
-                    studentLoop(i);
-                }
-                else {
-                    console.log("DONE!");
-                    console.log(studResultData);
-                    callback(0, studResultData);
-                    // send studResultData in callback
-                }
+        // Get concatenated answers
+        const overallAns = await helper.concatAnswers(studResultData);
+        studResultData = overallAns;
+        console.log("CONCAT STUDENT ANSWERS : ", studResultData);
+
+        // Loop through each student's result data
+        for (let i = 0; i < studResultData.length; i++) {
+            if (studResultData[i].overall_answer.length > 0) {
+                const finalMarks = await exports.comparingAnswer(studResultData[i].overall_answer, markDetails, questionPaper, quesAns);
+                console.log("FINAL MARKS : " + studResultData[i].student_id, finalMarks);
+                studResultData[i].marks_details = finalMarks;
+            } else {
+                console.log("EMPTY OVERALL ANSWER");
+                studResultData[i].marks_details = markDetails;
             }
-            studentLoop(0)
-        })
-        /** END GET CONCAT ANSWER **/
-    })
 
-    /** GET FINAL DATA FORMAT **/
-}
+            // Set evaluated status and timestamp for each student
+            studResultData[i].evaluated = "Yes";
+            studResultData[i].updated_ts = helper.getCurrentTimestamp();
+        }
+
+        console.log("DONE!");
+        console.log(studResultData);
+        
+        // Return the modified student result data
+        return studResultData;
+
+    } catch (error) {
+        console.error("Error in assigning marks:", error);
+        throw error;
+    }
+};
+
 
 exports.comparingAnswer = async (studAns, markDetails, questionPaper, quesAns) => {
     return new Promise(async (resolve, reject) => {

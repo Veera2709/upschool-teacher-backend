@@ -58,238 +58,130 @@ exports.teacherSubjectandActivityCheck = function (request, callback) {
   }
   );
 };
-exports.archiveAndActivateTopicInChapter = function (request, callback) {
-  let preOrPost = request.data.learningType === constant.prePostConstans.preLearningVal ? constant.prePostConstans.preLearning : request.data.learningType === constant.prePostConstans.postLearningVal ? constant.prePostConstans.postLearning : "N.A.";
-  if (preOrPost != "N.A.") {
-    teachingActivityRepository.fetchTeachingActivity(request, async function (teachActivity_err, teachActivity_response) {
-      if (teachActivity_err) {
-        console.log(teachActivity_err);
-        callback(teachActivity_err, teachActivity_response);
+exports.archiveAndActivateTopicInChapter = async (request) => {
+  const preOrPost = request.data.learningType === constant.prePostConstans.preLearningVal ? constant.prePostConstans.preLearning : request.data.learningType === constant.prePostConstans.postLearningVal ? constant.prePostConstans.postLearning : "N.A.";
+  if (preOrPost === "N.A.") {
+    throw helper.formatErrorResponse(constant.messages.INVALID_DATA, 400);
+  }
+
+  try {
+    const teachActivityResponse = await teachingActivityRepository.fetchTeachingActivity2(request);
+    let allChapter = teachActivityResponse.Items.length > 0 ? teachActivityResponse.Items[0].chapter_data : [];
+
+    let chapterIndex = allChapter.findIndex(Chap => Chap.chapter_id === request.data.chapter_id);
+
+    if (chapterIndex >= 0) {
+      if (request.data.isArchived === "Yes") {
+        allChapter[chapterIndex][preOrPost].archivedTopics.push(request.data.topic_id);
       } else {
-        console.log("TEACHER ACTIVITY : ", teachActivity_response);
-
-        if (teachActivity_response.Items.length > 0) {
-          /** UPDATE ACTIVITY **/
-          console.log("PRE OR POST : ", preOrPost);
-
-          let AllChapter = teachActivity_response.Items[0].chapter_data;
-          let archIndex;
-          let chapterIndex = await AllChapter.findIndex(Chap => Chap.chapter_id === request.data.chapter_id);
-          console.log("CHAPTER INDEX : ", chapterIndex);
-          console.log("ALL CHAPTER : ", AllChapter);
-
-          if (chapterIndex >= 0) {
-            if (request.data.isArchived === "Yes") {
-              AllChapter[chapterIndex][preOrPost].archivedTopics.push(request.data.topic_id);
-            }
-            else {
-              archIndex = await AllChapter[chapterIndex][preOrPost].archivedTopics.findIndex(arTop => arTop === request.data.topic_id);
-              if (archIndex >= 0) {
-                AllChapter[chapterIndex][preOrPost].archivedTopics.splice(archIndex, 1);
-              }
-            }
-
-            AllChapter[chapterIndex][preOrPost].archivedTopics = helper.removeDuplicates(AllChapter[chapterIndex][preOrPost].archivedTopics);
-          }
-          else {
-            if (request.data.learningType === constant.prePostConstans.preLearningVal) {
-              AllChapter.push({
-                chapter_id: request.data.chapter_id,
-                chapter_locked: "Yes",
-                pre_learning: {
-                  unlocked_digicard: {},
-                  archivedTopics: [request.data.topic_id]
-                },
-                post_learning: {
-                  unlocked_digicard: [],
-                  archivedTopics: []
-                },
-              })
-            }
-            else {
-              AllChapter.push({
-                chapter_id: request.data.chapter_id,
-                chapter_locked: "Yes",
-                pre_learning: {
-                  unlocked_digicard: {},
-                  archivedTopics: []
-                },
-                post_learning: {
-                  unlocked_digicard: [],
-                  archivedTopics: [request.data.topic_id]
-                },
-              })
-            }
-          }
-
-          console.log("END ALL CHAPTER : ", AllChapter);
-
-          /** UPDATE AUTOMATED CHAPTER LOCKED **/
-          request.data.activity_id = teachActivity_response.Items[0].activity_id;
-          request.data.chapter_data = AllChapter;
-          teachingActivityRepository.updateTeachingActivity(request, async function (updateActivity_err, updateActivity_response) {
-            if (updateActivity_err) {
-              console.log(updateActivity_err);
-              callback(updateActivity_err, updateActivity_response);
-            } else {
-              console.log("Topic updated in teacher activity!");
-              callback(0, 200);
-            }
-          })
-          /** END UPDATE AUTOMATED CHAPTER LOCKED **/
-        }
-        else {
-          /** ADD NEW ACTIVITY **/
-          if (request.data.learningType === constant.prePostConstans.preLearningVal) {
-            request.data.chapter_data = [{
-              chapter_id: request.data.chapter_id,
-              chapter_locked: "Yes",
-              pre_learning: {
-                unlocked_digicard: {},
-                archivedTopics: [request.data.topic_id]
-              },
-              post_learning: {
-                unlocked_digicard: [],
-                archivedTopics: []
-              },
-            }]
-          }
-          else {
-            request.data.chapter_data = [{
-              chapter_id: request.data.chapter_id,
-              chapter_locked: "Yes",
-              pre_learning: {
-                unlocked_digicard: {},
-                archivedTopics: []
-              },
-              post_learning: {
-                unlocked_digicard: [],
-                archivedTopics: [request.data.topic_id]
-              },
-            }]
-          }
-
-          request.data.digicard_activities = [];
-
-          teachingActivityRepository.addTeachingActivity(request, async function (addActivity_err, addActivity_response) {
-            if (addActivity_err) {
-              console.log(addActivity_err);
-              callback(addActivity_err, addActivity_response);
-            } else {
-              console.log("Added new teacher activity!");
-              callback(0, 200);
-            }
-          })
-          /** ADD NEW ACTIVITY **/
+        let archIndex = allChapter[chapterIndex][preOrPost].archivedTopics.findIndex(arTop => arTop === request.data.topic_id);
+        if (archIndex >= 0) {
+          allChapter[chapterIndex][preOrPost].archivedTopics.splice(archIndex, 1);
         }
       }
-    })
-  }
-  else {
-    console.log(constant.messages.INVALID_DATA, request.data.learningType);
-    callback(400, constant.messages.INVALID_DATA);
-  }
-}
-exports.getTeacherPreLearningPermissions = function (request, callback) {
-  teacherRepository.fetchTeacherByID(request, async function (teacherData_err, teacherData_response) {
-    if (teacherData_err) {
-      console.log(teacherData_err);
-      callback(teacherData_err, teacherData_response);
+      allChapter[chapterIndex][preOrPost].archivedTopics = helper.removeDuplicates(allChapter[chapterIndex][preOrPost].archivedTopics);
     } else {
-      request.data.school_id = teacherData_response.Items[0].school_id;
-      schoolRepository.getSchoolDetailsById(request, (schoolDataErr, schoolDataRes) => {
-        if (schoolDataErr) {
-          console.log(schoolDataErr);
-          callback(schoolDataErr, schoolDataRes);
+      const newChapterData = {
+        chapter_id: request.data.chapter_id,
+        chapter_locked: "Yes",
+        pre_learning: {
+          unlocked_digicard: {},
+          archivedTopics: request.data.learningType === constant.prePostConstans.preLearningVal ? [request.data.topic_id] : []
+        },
+        post_learning: {
+          unlocked_digicard: [],
+          archivedTopics: request.data.learningType === constant.prePostConstans.postLearningVal ? [request.data.topic_id] : []
         }
-        else {
-          if (schoolDataRes.Items[0].pre_quiz_config) {
-            let preQuizConfig = schoolDataRes.Items[0].pre_quiz_config;
-            teachingActivityRepository.fetchTeachingActivity(request, async function (teachActivity_err, teachActivity_response) {
-              if (teachActivity_err) {
-                console.log(teachActivity_err);
-                callback(teachActivity_err, teachActivity_response);
-              } else {
-                console.log("TEACHER ACTIVITY : ", teachActivity_response);
-
-                /** CHECK DIGICARDS UNLOCK **/
-                let chapterActivity = teachActivity_response.Items.length > 0 ? teachActivity_response.Items[0].chapter_data.filter(ce => ce.chapter_id === request.data.chapter_id) : [];
-                let unlockDigicards = chapterActivity.length > 0 ? chapterActivity[0].pre_learning.unlocked_digicard : {};
-                let unlockTopicDigicard = unlockDigicards.topics ? unlockDigicards.topics : [];
-                /** CHECK DIGICARDS UNLOCK **/
-
-                // let quizExist = chapterActivity.length > 0 ? chapterActivity[0].pre_learning.quizzes : [];
-
-                /** CHECK QUIZ EXIST **/
-                request.data.learningType = constant.prePostConstans.preLearningVal;
-                quizRepository.fetchQuizData(request, async function (quizData_err, quizData_res) {
-                  if (quizData_err) {
-                    console.log(quizData_err);
-                    callback(quizData_err, quizData_res);
-                  }
-                  else {
-                    console.log("QUIZ DATA : ", quizData_res);
-                    if (quizData_res.Items.length > 0) {
-                      console.log(constant.messages.PRE_QUIZ_ALREADY_GENERATED);
-                      callback(400, constant.messages.PRE_QUIZ_ALREADY_GENERATED);
-                    }
-                    else {
-                      if (preQuizConfig.unlock_digicard_mandatory === "Yes" && unlockTopicDigicard.length <= 0) {
-                        console.log(constant.messages.DIGICARD_UNLOCK_MANDATORY);
-                        callback(400, constant.messages.DIGICARD_UNLOCK_MANDATORY);
-                      }
-                      else {
-                        /** SET FINAL RESPONSE **/
-                        let response = {
-                          preLearning: {
-                            quizModes: [],
-                            quizType: [],
-                            quizVarient: [],
-                          }
-                        }
-
-                        let preQuizMode = [];
-                        let preQuizType = [];
-                        let preQuizVarient = [];
-
-                        preQuizType.push(preQuizConfig.automated_type === "Enabled" ? constant.prePostConstans.automatedType : "N.A.");
-                        preQuizType.push(preQuizConfig.express_type === "Enabled" ? constant.prePostConstans.expressType : "N.A.");
-                        preQuizType.push(preQuizConfig.manual_type === "Enabled" ? constant.prePostConstans.manualType : "N.A.");
-
-                        preQuizMode.push(preQuizConfig.offline_mode === "Enabled" ? constant.prePostConstans.offlineMode : "N.A.");
-                        preQuizMode.push(preQuizConfig.online_mode === "Enabled" ? constant.prePostConstans.onlineMode : "N.A.");
-
-                        preQuizVarient.push(preQuizConfig.randomized_order_varient === "Enabled" ? constant.prePostConstans.randomOrder : "N.A.");
-                        preQuizVarient.push(preQuizConfig.randomized_questions_varient === "Enabled" ? constant.prePostConstans.randomQuestion : "N.A.");
-
-                        response.preLearning.quizModes = preQuizMode.filter(qMode => qMode !== "N.A.");
-                        response.preLearning.quizType = preQuizType.filter(qType => qType !== "N.A.");
-                        response.preLearning.quizVarient = preQuizVarient.filter(qVar => qVar !== "N.A.");
-
-                        response.preLearning.concept_mandatory = preQuizConfig.concept_mandatory;
-                        response.preLearning.min_qn_at_topic_level = preQuizConfig.min_qn_at_topic_level;
-                        response.preLearning.min_qn_at_chapter_level = preQuizConfig.min_qn_at_chapter_level;
-
-                        console.log("PERMISSIONS : ", JSON.stringify(response));
-                        callback(0, response);
-                        /** END SET FINAL RESPONSE **/
-                      }
-                    }
-                  }
-                })
-                /** END CHECK QUIZ EXIST **/
-              }
-            })
-          }
-          else {
-            console.log(constant.messages.SCHOOL_DOESNT_HAVE_PREQUIZ_CONFIG);
-            callback(400, constant.messages.SCHOOL_DOESNT_HAVE_PREQUIZ_CONFIG);
-          }
-        }
-      })
+      };
+      allChapter.push(newChapterData);
     }
-  })
-}
+
+    request.data.activity_id = teachActivityResponse.Items.length > 0 ? teachActivityResponse.Items[0].activity_id : undefined;
+    request.data.chapter_data = allChapter;
+
+    if (teachActivityResponse.Items.length > 0) {
+      await teachingActivityRepository.updateTeachingActivity2(request);
+    } else {
+      request.data.digicard_activities = [];
+      await teachingActivityRepository.addTeachingActivity2(request);
+    }
+
+    return { status: 200 };
+
+  } catch (error) {
+    console.error(error);
+    throw new Error(`Error processing topic archive/activation: ${error.message}`);
+  }
+};
+
+exports.getTeacherPreLearningPermissions = async (request) => {
+  try {
+      const teacherDataResponse = await teacherRepository.fetchTeacherByID2(request);
+      request.data.school_id = teacherDataResponse.Items[0].school_id;
+
+      const schoolDataRes = await schoolRepository.getSchoolDetailsById2(request);
+      if (!schoolDataRes.Items[0].pre_quiz_config) {
+          throw new Error(constant.messages.SCHOOL_DOESNT_HAVE_PREQUIZ_CONFIG);
+      }
+
+      const preQuizConfig = schoolDataRes.Items[0].pre_quiz_config;
+      const teachActivityResponse = await teachingActivityRepository.fetchTeachingActivity2(request);
+      const chapterActivity = teachActivityResponse.Items.length > 0 
+          ? teachActivityResponse.Items[0].chapter_data.filter(ce => ce.chapter_id === request.data.chapter_id) 
+          : [];
+      const unlockDigicards = chapterActivity.length > 0 ? chapterActivity[0].pre_learning.unlocked_digicard : {};
+      const unlockTopicDigicard = unlockDigicards.topics || [];
+
+      request.data.learningType = constant.prePostConstans.preLearningVal;
+      const quizDataRes = await quizRepository.fetchQuizData2(request);
+      if (quizDataRes.Items.length > 0) {
+          throw new Error(constant.messages.PRE_QUIZ_ALREADY_GENERATED);
+      }
+
+      if (preQuizConfig.unlock_digicard_mandatory === "Yes" && unlockTopicDigicard.length <= 0) {
+          throw new Error(constant.messages.DIGICARD_UNLOCK_MANDATORY);
+      }
+
+      const response = {
+          preLearning: {
+              quizModes: [],
+              quizType: [],
+              quizVarient: [],
+              concept_mandatory: preQuizConfig.concept_mandatory,
+              min_qn_at_topic_level: preQuizConfig.min_qn_at_topic_level,
+              min_qn_at_chapter_level: preQuizConfig.min_qn_at_chapter_level,
+          }
+      };
+
+      const preQuizType = [
+          preQuizConfig.automated_type === "Enabled" ? constant.prePostConstans.automatedType : "N.A.",
+          preQuizConfig.express_type === "Enabled" ? constant.prePostConstans.expressType : "N.A.",
+          preQuizConfig.manual_type === "Enabled" ? constant.prePostConstans.manualType : "N.A."
+      ].filter(type => type !== "N.A.");
+
+      const preQuizMode = [
+          preQuizConfig.offline_mode === "Enabled" ? constant.prePostConstans.offlineMode : "N.A.",
+          preQuizConfig.online_mode === "Enabled" ? constant.prePostConstans.onlineMode : "N.A."
+      ].filter(mode => mode !== "N.A.");
+
+      const preQuizVarient = [
+          preQuizConfig.randomized_order_varient === "Enabled" ? constant.prePostConstans.randomOrder : "N.A.",
+          preQuizConfig.randomized_questions_varient === "Enabled" ? constant.prePostConstans.randomQuestion : "N.A."
+      ].filter(varient => varient !== "N.A.");
+
+      response.preLearning.quizModes = preQuizMode;
+      response.preLearning.quizType = preQuizType;
+      response.preLearning.quizVarient = preQuizVarient;
+
+      console.log("PERMISSIONS : ", JSON.stringify(response));
+      return response;
+
+  } catch (error) {
+      console.error(error);
+      throw error; // or handle the error as per your application's error handling strategy
+  }
+};
+
 exports.generateQuizForPreLearning = (request, callback) => {
   /** CHECK PRE QUIZ EXIST **/
   quizRepository.fetchQuizData(request, async function (quizData_err, quizData_res) {
@@ -1527,67 +1419,41 @@ exports.generateQuizForPostLearning = (request, callback) => {
     }
   })
 }
-exports.addteacherDigicardExtension = function (request, callback) {
-  /** FETCH EXTENSION **/
-  digicardExtension.getExtensionDetails(request, async function (digiExtension_err, digiExtension_response) {
-    if (digiExtension_err) {
-      console.log(digiExtension_err);
-      callback(digiExtension_err, digiExtension_response);
-    } else {
-      console.log("DIGI EXTENSION : ", digiExtension_response);
+exports.addteacherDigicardExtension = async (request) => {
+  try {
+    const digiExtensionResponse = await digicardExtension.getExtensionDetails2(request);
+    let digiExtension = JSON.parse(JSON.stringify(request.data.extensions));
+    let finalResponse = [];
+    
+    for (let i = 0; i < digiExtension.length; i++) {
+      let extFile = digiExtension[i].ext_file;
 
-      let digiExtension = JSON.parse(JSON.stringify(request.data.extensions));
-      let finalResponse = [];
-      let extFilesS3 = "";
+      if (!(JSON.stringify(extFile).includes("digicard_extension/")) && extFile && extFile !== "N.A.") {
+        let extFilesS3 = await helper.PutObjectS3SigneUdrl(extFile, "digicard_extension");
+        console.log({ extFilesS3 });
 
-      async function getS3UrlForExt(i) {
-        if (i < digiExtension.length) {
-          extFilesS3 = "";
-          if ((!(JSON.stringify(digiExtension[i].ext_file).includes("digicard_extension/"))) && digiExtension[i].ext_file != "" && digiExtension[i].ext_file != "N.A.") {
-            extFilesS3 = await helper.PutObjectS3SigneUdrl(digiExtension[i].ext_file, "digicard_extension");
-            console.log({ extFilesS3 });
-            request.data.extensions[i].ext_file = extFilesS3.Key;
-            finalResponse.push({ file_name: digiExtension[i].ext_file, s3Url: extFilesS3.uploadURL });
-          }
-
-          i++;
-          getS3UrlForExt(i);
-        }
-        else {
-          if (digiExtension_response.Items.length > 0) {
-            request.data.extension_id = digiExtension_response.Items[0].extension_id;
-            /** UPDATE EXTENSION **/
-            digicardExtension.updateDigiExtension(request, function (editExtension_err, editExtension_response) {
-              if (editExtension_err) {
-                console.log(editExtension_err);
-                callback(editExtension_err, editExtension_response);
-              } else {
-                console.log("Extension Updated Successfully");
-                callback(0, finalResponse);
-              }
-            })
-            /** END UPDATE EXTENSION **/
-          }
-          else {
-            /** ADD EXTENSION **/
-            digicardExtension.addDigiExtension(request, function (addExtension_err, addExtension_response) {
-              if (addExtension_err) {
-                console.log(addExtension_err);
-                callback(addExtension_err, addExtension_response);
-              } else {
-                console.log("Extension added Successfully");
-                callback(0, finalResponse);
-              }
-            })
-            /** END ADD EXTENSION **/
-          }
-        }
+        request.data.extensions[i].ext_file = extFilesS3.Key;
+        finalResponse.push({ file_name: extFile, s3Url: extFilesS3.uploadURL });
       }
-      getS3UrlForExt(0)
     }
-  })
-  /** END FETCH EXTENSION **/
-}
+
+    if (digiExtensionResponse.Items.length > 0) {
+      request.data.extension_id = digiExtensionResponse.Items[0].extension_id;
+      await digicardExtension.updateDigiExtension2(request);
+      console.log("Extension Updated Successfully");
+    } else {
+      await digicardExtension.addDigiExtension2(request);
+      console.log("Extension Added Successfully");
+    }
+
+    return finalResponse;
+
+  } catch (error) {
+    console.error("Error handling digicard extension:", error);
+    throw new Error(`Failed to handle digicard extension: ${error.message}`);
+  }
+};
+
 exports.getTeacherPostLearningPermissions = function (request, callback) {
 
   if (request === undefined || request.data === undefined || request.data.client_class_id === undefined || request.data.client_class_id === "" || request.data.section_id === undefined || request.data.section_id === "" || request.data.subject_id === undefined || request.data.subject_id === "" || request.data.chapter_id === undefined || request.data.chapter_id === "" || request.data.school_id === undefined || request.data.school_id === "" || request.data.topics === undefined || request.data.topics === "") {
@@ -1845,286 +1711,158 @@ exports.generateResponse = (postQuizConfig, callback) => {
   /** END SET FINAL RESPONSE **/
 
 }
-exports.changeDigiCardOrder = function (request, callback) {
-
-  if (request === undefined || request.data === undefined || request.data.client_class_id === undefined || request.data.client_class_id === "" || request.data.section_id === undefined || request.data.section_id === "" || request.data.subject_id === undefined || request.data.subject_id === "" || request.data.chapter_id === undefined || request.data.chapter_id === "") {
-    callback(400, constant.messages.INVALID_REQUEST_FORMAT)
-  } else {
-
-    teachingActivityRepository.fetchTeachingActivity(request, async function (teachActivity_err, teachActivity_response) {
-      if (teachActivity_err) {
-        console.log(teachActivity_err);
-        callback(teachActivity_err, teachActivity_response);
-      } else {
-        console.log("TEACHER ACTIVITY : ", teachActivity_response);
-
-        exports.createDigicardActivityData(request, async (digicard_activity_err, digicard_activity_data) => {
-          if (digicard_activity_err) {
-            callback(digicard_activity_err, digicard_activity_data);
-          } else {
-            console.log("digicard_activity_data : ", digicard_activity_data);
-
-            if (teachActivity_response.Items.length > 0) {
-              // Take Digicard Data and Update it : 
-              let allDigicardActivity = teachActivity_response.Items[0].digicard_activities;
-
-              allDigicardActivity = allDigicardActivity === undefined ? [] : allDigicardActivity;
-
-              let digicardActivity = await allDigicardActivity.filter(ce => ce.chapter_id === request.data.chapter_id);
-              console.log("digicardActivity : ", digicardActivity);
-
-              if (digicardActivity.length > 0) {
-                // Update Activity : 
-                // JSON.parse(JSON.stringify()) is to avoid pass by reference : 
-                let PrePOstActivity = request.data.learningType === "Pre" ? JSON.parse(JSON.stringify(digicardActivity[0].pre_learning)) : JSON.parse(JSON.stringify(digicardActivity[0].post_learning));
-
-                // Check if request topic is there in stored pre or post learning array and, replace it : 
-                PrePOstActivity = PrePOstActivity === undefined ? [] : PrePOstActivity;
-
-                let reordered_data = {};
-                reordered_data.topic_id = request.data.topic_id,
-                  reordered_data.digicardOrder = request.data.digicardOrder,
-                  reordered_data.archivedDigicard = []
-
-                if (PrePOstActivity.length > 0) {
-                  // Update Topic Digicard Data, if its already sorted once OR push new Topic Digicard Data to pre_learning array : 
-                  if (PrePOstActivity.filter((e) => e.topic_id === request.data.topic_id).length > 0) {
-
-                    PrePOstActivity.forEach((e, i) => {
-                      if (e.topic_id === request.data.topic_id) {
-                        reordered_data.archivedDigicard = e.archivedDigicard;
-                        PrePOstActivity[i] = reordered_data;
-                      }
-                      // e.topic_id === request.data.topic_id && ( 
-                      //   reordered_data.archivedDigicard = e.archivedDigicard, 
-                      //   PrePOstActivity[i] = reordered_data ) 
-                    });
-                  } else {
-                    PrePOstActivity.push(reordered_data);
-                  }
-                } else {
-                  // Add new Topic Digicard Data : 
-                  PrePOstActivity.push(reordered_data);
-                }
-
-                request.data.learningType === "Pre" ? digicardActivity[0].pre_learning = PrePOstActivity : digicardActivity[0].post_learning = PrePOstActivity;
-
-                // Update activity to allChapterData : 
-                allDigicardActivity.forEach((e, i) => e.chapter_id === request.data.chapter_id && (allDigicardActivity[i] = digicardActivity[0]));
-                request.data.digicard_activities = allDigicardActivity;
-                // request.data.teacher_id = request.data.teacher_id; 
-                request.data.activity_id = teachActivity_response.Items[0].activity_id;
-
-                // Update DigiCard Data with a Update Query : 
-                teachingActivityRepository.updateTeachingDigiCardActivity(request, function (update_digicard_activity_err, update_digicard_activity_response) {
-                  if (update_digicard_activity_err) {
-                    console.log(update_digicard_activity_err);
-                    callback(update_digicard_activity_err, update_digicard_activity_response);
-                  } else {
-                    callback(200, constant.messages.DIGICARD_ORDER_CHANGED);
-                  }
-                })
-
-              } else {
-                // Create Activity : 
-
-                allDigicardActivity.push(digicard_activity_data)
-                request.data.digicard_activities = allDigicardActivity;
-                //   request.data.teacher_id = request.data.teacher_id; 
-                request.data.activity_id = teachActivity_response.Items[0].activity_id;
-
-                teachingActivityRepository.updateTeachingDigiCardActivity(request, function (update_digicard_activity_err, update_digicard_activity_response) {
-                  if (update_digicard_activity_err) {
-                    console.log(update_digicard_activity_err);
-                    callback(update_digicard_activity_err, update_digicard_activity_response);
-                  } else {
-                    callback(200, constant.messages.DIGICARD_ORDER_CHANGED);
-                  }
-                })
-              }
-
-            } else {
-              // Create a New Record in Activity Table : 
-              request.data.chapter_data = [];
-              request.data.digicard_activities = [digicard_activity_data];
-
-              teachingActivityRepository.addTeachingActivity(request, async function (addTeachActivity_err, addTeachActivity_response) {
-                if (addTeachActivity_err) {
-                  console.log(addTeachActivity_err);
-                  callback(addTeachActivity_err, addTeachActivity_response);
-                } else {
-                  callback(200, constant.messages.DIGICARD_ORDER_CHANGED)
-                }
-              })
-            }
-          }
-        })
-      }
-    })
+exports.changeDigiCardOrder = async function (request) {
+  if (!request || !request.data || !request.data.client_class_id || !request.data.section_id || !request.data.subject_id || !request.data.chapter_id) {
+    throw new Error(constant.messages.INVALID_REQUEST_FORMAT);
   }
-}
-exports.createDigicardActivityData = (request, callback) => {
 
-  let individual_digicard_activity = {};
-  individual_digicard_activity.chapter_id = request.data.chapter_id;
-  individual_digicard_activity.pre_learning = [];
-  individual_digicard_activity.post_learning = [];
+  try {
+    const teachActivity_response = await teachingActivityRepository.fetchTeachingActivity2(request);
+    console.log("TEACHER ACTIVITY:", teachActivity_response);
+
+    const digicard_activity_data = await exports.createDigicardActivityData2(request);
+    console.log("digicard_activity_data:", digicard_activity_data);
+
+    const allDigicardActivity = teachActivity_response.Items[0]?.digicard_activities || [];
+    const digicardActivity = allDigicardActivity.filter(ce => ce.chapter_id === request.data.chapter_id);
+    console.log("digicardActivity:", digicardActivity);
+
+    let PrePOstActivity = digicardActivity.length > 0 ? (request.data.learningType === "Pre" ? [...digicardActivity[0].pre_learning] : [...digicardActivity[0].post_learning]) : [];
+    let reordered_data = {
+      topic_id: request.data.topic_id,
+      digicardOrder: request.data.digicardOrder,
+      archivedDigicard: []
+    };
+
+    if (PrePOstActivity.length > 0) {
+      const existingTopicIndex = PrePOstActivity.findIndex(e => e.topic_id === request.data.topic_id);
+      if (existingTopicIndex > -1) {
+        reordered_data.archivedDigicard = PrePOstActivity[existingTopicIndex].archivedDigicard;
+        PrePOstActivity[existingTopicIndex] = reordered_data;
+      } else {
+        PrePOstActivity.push(reordered_data);
+      }
+    } else {
+      PrePOstActivity.push(reordered_data);
+    }
+
+    if (digicardActivity.length > 0) {
+      request.data.learningType === "Pre" ? digicardActivity[0].pre_learning = PrePOstActivity : digicardActivity[0].post_learning = PrePOstActivity;
+      allDigicardActivity.forEach((e, i) => e.chapter_id === request.data.chapter_id && (allDigicardActivity[i] = digicardActivity[0]));
+      request.data.digicard_activities = allDigicardActivity;
+    } else {
+      allDigicardActivity.push(digicard_activity_data);
+      request.data.digicard_activities = allDigicardActivity;
+    }
+
+    request.data.activity_id = teachActivity_response.Items[0].activity_id;
+
+    await teachingActivityRepository.updateTeachingDigiCardActivity2(request);
+    return constant.messages.DIGICARD_ORDER_CHANGED;
+
+  } catch (error) {
+    console.error(error);
+    throw new Error(error.message || constant.messages.ERROR);
+  }
+};
+
+exports.createDigicardActivityData2 = async (request) => {
+  if (!request || !request.data || !request.data.chapter_id || !request.data.topic_id) {
+    throw new Error(constant.messages.INVALID_REQUEST_FORMAT);
+  }
+
+  let individual_digicard_activity = {
+    chapter_id: request.data.chapter_id,
+    pre_learning: [],
+    post_learning: []
+  };
+
+  const learningData = {
+    topic_id: request.data.topic_id,
+    digicardOrder: request.data.key === "toggle" ? [] : request.data.digicardOrder,
+    archivedDigicard: request.data.key === "toggle" ? request.data.digi_card_id : []
+  };
 
   if (request.data.learningType === "Pre") {
-
-    individual_digicard_activity.pre_learning[0] = {};
-    individual_digicard_activity.pre_learning[0].topic_id = request.data.topic_id;
-    request.data.key === "toggle" ? (individual_digicard_activity.pre_learning[0].digicardOrder = []) : (individual_digicard_activity.pre_learning[0].digicardOrder = request.data.digicardOrder);
-    request.data.key === "toggle" ? (individual_digicard_activity.pre_learning[0].archivedDigicard = request.data.digi_card_id) : (individual_digicard_activity.pre_learning[0].archivedDigicard = []);
-
-    callback(0, individual_digicard_activity)
-
+    individual_digicard_activity.pre_learning.push(learningData);
   } else if (request.data.learningType === "Post") {
-
-    individual_digicard_activity.post_learning[0] = {};
-    individual_digicard_activity.post_learning[0].topic_id = request.data.topic_id
-    request.data.key === "toggle" ? (individual_digicard_activity.post_learning[0].digicardOrder = []) : (individual_digicard_activity.post_learning[0].digicardOrder = request.data.digicardOrder);
-    request.data.key === "toggle" ? (individual_digicard_activity.post_learning[0].archivedDigicard = request.data.digi_card_id) : (individual_digicard_activity.post_learning[0].archivedDigicard = []);
-
-    callback(0, individual_digicard_activity)
-
+    individual_digicard_activity.post_learning.push(learningData);
   } else {
-    callback(400, constant.messages.INVALID_REQUEST_FORMAT);
+    throw new Error(constant.messages.INVALID_REQUEST_FORMAT);
   }
-}
-exports.activeAndArchiveDigicardsInTopic = function (request, callback) {
 
-  if (request === undefined || request.data === undefined || request.data.client_class_id === undefined || request.data.client_class_id === "" || request.data.section_id === undefined || request.data.section_id === "" || request.data.subject_id === undefined || request.data.subject_id === "" || request.data.chapter_id === undefined || request.data.chapter_id === "" || request.data.action === undefined || request.data.action === "") {
-    callback(400, constant.messages.INVALID_REQUEST_FORMAT)
-  } else {
-    if (request.data.action === "active" || request.data.action === "delete") {
-      teachingActivityRepository.fetchTeachingActivity(request, async function (teachActivity_err, teachActivity_response) {
-        if (teachActivity_err) {
-          console.log(teachActivity_err);
-          callback(teachActivity_err, teachActivity_response);
-        } else {
-          console.log("TEACHER ACTIVITY : ", teachActivity_response);
-          request.data.key = "toggle";
-
-          exports.createDigicardActivityData(request, async (digicard_activity_err, digicard_activity_data) => {
-            if (digicard_activity_err) {
-              callback(digicard_activity_err, digicard_activity_data);
-            } else {
-              console.log("digicard_activity_data : ", digicard_activity_data);
-
-              if (teachActivity_response.Items.length > 0) {
-                // Take Digicard Data and Update it : 
-                let allDigicardActivity = teachActivity_response.Items[0].digicard_activities;
-
-                allDigicardActivity = allDigicardActivity === undefined ? [] : allDigicardActivity;
-
-                let digicardActivity = await allDigicardActivity.filter(ce => ce.chapter_id === request.data.chapter_id);
-                console.log("digicardActivity : ", digicardActivity);
-
-                if (digicardActivity.length > 0) {
-                  // Update Activity : 
-                  // JSON.parse(JSON.stringify()) is to avoid pass by reference : 
-                  let PrePOstActivity = request.data.learningType === "Pre" ? JSON.parse(JSON.stringify(digicardActivity[0].pre_learning)) : JSON.parse(JSON.stringify(digicardActivity[0].post_learning));
-
-                  // Check if request topic is there in stored pre or post learning array and, replace it : 
-                  PrePOstActivity = PrePOstActivity === undefined ? [] : PrePOstActivity;
-
-                  let archived_data = {};
-                  archived_data.topic_id = request.data.topic_id;
-                  archived_data.digicardOrder = [];
-                  archived_data.archivedDigicard = [];
-
-                  if (PrePOstActivity.length > 0) {
-                    // Update Topic Digicard Data, if its already sorted once OR push new Topic Digicard Data to pre_learning array : 
-
-                    if (PrePOstActivity.filter((e) => e.topic_id === request.data.topic_id).length > 0) {
-
-                      PrePOstActivity.forEach((e, i) => {
-                        if (e.topic_id === request.data.topic_id) {
-                          archived_data.digicardOrder = e.digicardOrder;
-
-                          if (request.data.action === "delete") {
-                            PrePOstActivity[i].archivedDigicard.push(...request.data.digi_card_id)
+  return individual_digicard_activity;
+};
 
 
-                          } else {
-                            // Splicing request digicards from exisiting ones : 
-                            let digiCardList = new Set(request.data.digi_card_id);
-                            PrePOstActivity[i].archivedDigicard = PrePOstActivity[i].archivedDigicard.filter((e) => { return !digiCardList.has(e) });
-                          }
-                          archived_data.archivedDigicard = PrePOstActivity[i].archivedDigicard;
+exports.activeAndArchiveDigicardsInTopic = async function (request) {
+  if (!request?.data?.client_class_id || !request?.data?.section_id || !request?.data?.subject_id || !request?.data?.chapter_id || !request?.data?.action) {
+    throw helper.formatErrorResponse(400, constant.messages.INVALID_REQUEST_FORMAT);
+  }
 
-                          PrePOstActivity[i] = archived_data;
-                        }
-                      });
-                    } else {
-                      archived_data.archivedDigicard.push(...request.data.digi_card_id)
-                      PrePOstActivity.push(archived_data);
-                    }
-                  } else {
-                    // Add new Topic Digicard Data : 
-                    archived_data.archivedDigicard.push(...request.data.digi_card_id)
-                    PrePOstActivity.push(archived_data);
-                  }
+  if (request.data.action !== "active" && request.data.action !== "delete") {
+    throw helper.formatErrorResponse(400, constant.messages.INVALID_REQUEST_FORMAT);
+  }
 
-                  request.data.learningType === "Pre" ? digicardActivity[0].pre_learning = PrePOstActivity : digicardActivity[0].post_learning = PrePOstActivity;
+  try {
+    const teachActivityResponse = await teachingActivityRepository.fetchTeachingActivity2(request);
+    request.data.key = "toggle";
 
-                  // Update activity to allChapterData : 
-                  allDigicardActivity.forEach((e, i) => e.chapter_id === request.data.chapter_id && (allDigicardActivity[i] = digicardActivity[0]));
-                  request.data.digicard_activities = allDigicardActivity;
-                  //   request.data.teacher_id = request.data.teacher_id; 
-                  request.data.activity_id = teachActivity_response.Items[0].activity_id;
+    const digicardActivityData = await exports.createDigicardActivityData2(request);
+    let allDigicardActivity = teachActivityResponse.Items.length > 0 ? teachActivityResponse.Items[0].digicard_activities || [] : [];
+    let digicardActivity = allDigicardActivity.filter(ce => ce.chapter_id === request.data.chapter_id);
 
-                  // Update DigiCard Data with a Update Query : 
-                  teachingActivityRepository.updateTeachingDigiCardActivity(request, function (update_digicard_activity_err, update_digicard_activity_response) {
-                    if (update_digicard_activity_err) {
-                      console.log(update_digicard_activity_err);
-                      callback(update_digicard_activity_err, update_digicard_activity_response);
-                    } else {
-                      callback(200, request.data.action === "delete" ? constant.messages.DIGICARD_DELETED_IN_TOPIC : constant.messages.DIGICARD_ACTIVATED_IN_TOPIC);
-                    }
-                  })
-                } else {
-                  // Create Activity : 
+    let archivedData = { topic_id: request.data.topic_id, digicardOrder: [], archivedDigicard: [] };
+    let prePostActivity = request.data.learningType === "Pre" ? digicardActivity[0]?.pre_learning || [] : digicardActivity[0]?.post_learning || [];
 
-                  allDigicardActivity.push(digicard_activity_data)
-                  request.data.digicard_activities = allDigicardActivity;
-                  //   request.data.teacher_id = request.data.teacher_id; 
-                  request.data.activity_id = teachActivity_response.Items[0].activity_id;
-
-                  teachingActivityRepository.updateTeachingDigiCardActivity(request, function (update_digicard_activity_err, update_digicard_activity_response) {
-                    if (update_digicard_activity_err) {
-                      console.log(update_digicard_activity_err);
-                      callback(update_digicard_activity_err, update_digicard_activity_response);
-                    } else {
-                      callback(200, request.data.action === "delete" ? constant.messages.DIGICARD_DELETED_IN_TOPIC : constant.messages.DIGICARD_ACTIVATED_IN_TOPIC);
-                    }
-                  })
-                }
-
-              } else {
-                // Create a New Record in Activity Table : 
-                request.data.chapter_data = [];
-                request.data.digicard_activities = [digicard_activity_data];
-
-                teachingActivityRepository.addTeachingActivity(request, async function (addTeachActivity_err, addTeachActivity_response) {
-                  if (addTeachActivity_err) {
-                    console.log(addTeachActivity_err);
-                    callback(addTeachActivity_err, addTeachActivity_response);
-                  } else {
-                    callback(200, request.data.action === "delete" ? constant.messages.DIGICARD_DELETED_IN_TOPIC : constant.messages.DIGICARD_ACTIVATED_IN_TOPIC);
-                  }
-                })
-              }
-            }
-          })
+    if (prePostActivity.some(e => e.topic_id === request.data.topic_id)) {
+      prePostActivity = prePostActivity.map((e) => {
+        if (e.topic_id === request.data.topic_id) {
+          archivedData.digicardOrder = e.digicardOrder;
+          if (request.data.action === "delete") {
+            e.archivedDigicard.push(...request.data.digi_card_id);
+          } else {
+            const digiCardList = new Set(request.data.digi_card_id);
+            e.archivedDigicard = e.archivedDigicard.filter(d => !digiCardList.has(d));
+          }
+          archivedData.archivedDigicard = e.archivedDigicard;
+          return archivedData;
         }
-      })
+        return e;
+      });
     } else {
-      callback(400, constant.messages.INVALID_REQUEST_FORMAT)
+      archivedData.archivedDigicard.push(...request.data.digi_card_id);
+      prePostActivity.push(archivedData);
     }
+
+    if (request.data.learningType === "Pre") {
+      digicardActivity[0].pre_learning = prePostActivity;
+    } else {
+      digicardActivity[0].post_learning = prePostActivity;
+    }
+
+    if (digicardActivity.length > 0) {
+      allDigicardActivity = allDigicardActivity.map(e => e.chapter_id === request.data.chapter_id ? digicardActivity[0] : e);
+      request.data.digicard_activities = allDigicardActivity;
+      request.data.activity_id = teachActivityResponse.Items[0].activity_id;
+
+      await teachingActivityRepository.updateTeachingDigiCardActivity2(request);
+    } else {
+      allDigicardActivity.push(digicardActivityData);
+      request.data.digicard_activities = allDigicardActivity;
+      request.data.activity_id = teachActivityResponse.Items[0].activity_id;
+
+      await teachingActivityRepository.updateTeachingDigiCardActivity2(request);
+    }
+
+    return request.data.action === "delete" ? constant.messages.DIGICARD_DELETED_IN_TOPIC : constant.messages.DIGICARD_ACTIVATED_IN_TOPIC;
+
+  } catch (error) {
+    console.error(error);
+    throw helper.formatErrorResponse(error.statusCode || 500, error.message || "Internal Server Error");
   }
-}
+};
+
 exports.getDigiCardstoReorder = function (request, callback) {
 
   if (request === undefined || request.data === undefined || request.data.client_class_id === undefined || request.data.client_class_id === "" || request.data.section_id === undefined || request.data.section_id === "" || request.data.subject_id === undefined || request.data.subject_id === "" || request.data.chapter_id === undefined || request.data.chapter_id === "") {
@@ -2426,7 +2164,7 @@ exports.sendMailtoTeacher = (request, callback) => {
       let dataEmail = await sendMail.process(mailPayload)
       if (dataEmail.httpStatusCode == 200) {
         console.log("SNS PUBLISH SUCCESS");
-          callback(200, constant.messages.QUIZ_GENERATED);
+        callback(200, constant.messages.QUIZ_GENERATED);
       }
       else {
         console.log(dataEmail)
