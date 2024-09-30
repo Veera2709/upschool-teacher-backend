@@ -42,7 +42,5 @@ module.exports = {
     subjectServices,
     teacherServices,
     testQuestionPaperServices,
-    topicServices,
-    unitServices,
-    userServices
+    topicServices   
 }

@@ -41,7 +41,6 @@ module.exports = {
     subjectController,
     teacherController,
     testQuestionPaperController,
-    topicController,
-    unitController,
-    userController
+    topicController
+    
 }
