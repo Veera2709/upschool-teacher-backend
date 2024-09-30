@@ -2,16 +2,19 @@ const {testQuestionPaperServices} = require("../services");
 const constants = require("../constants/constant");
 const { formatResponse } = require("../helper/helper");
 
-exports.fetchTestQuestionPapersBasedonStatus = async (req, res, next) => {
-    try {
-        const request = req.body;
-        const reportData = await testQuestionPaperServices.fetchTestQuestionPapersBasedonStatus(request);
-        return formatResponse(res, reportData);
-    } catch (error) {
-        next(error)
-    }
-};
+exports.fetchTestQuestionPapersBasedonStatus = (req, res, next) => {
+    console.log("fetchTestQuestionPapersBasedonStatus : ");
+    let request = req.body;    
 
+    testQuestionPaperServices.fetchTestQuestionPapersBasedonStatus(request, function (test_question_paper_err, test_question_paper_response) {
+        if (test_question_paper_err) { 
+            res.status(test_question_paper_err).json(test_question_paper_response);
+        } else {
+            console.log("Test Papers Fetched Successfully"); 
+            res.json(test_question_paper_response);
+        }
+    });
+};
 exports.addTestQuestionPaper = (req, res, next) => {
     console.log("addTestQuestionPaper : ");
     let request = req.body;    
