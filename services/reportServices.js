@@ -861,7 +861,7 @@ exports.comprehensivePerformanceChapterWise = async (request) => {
           const modifiedMarks = parseFloat(qa.modified_marks) || 0;
 
           studentPerformance[chapterId].totalQuestions += 1;
-          studentPerformance[chapterId].totalMarks += marksData.marks;
+          studentPerformance[chapterId].totalMarks += marksData?.marks;
           studentPerformance[chapterId].obtainedMarks += modifiedMarks ? modifiedMarks : obtainedMarks;
 
         });
@@ -972,7 +972,7 @@ exports.comprehensivePerformanceTopicWise = async (request) => {
               const modifiedMarks = parseFloat(qa.modified_marks) || 0;
 
               studentPerformance[topic_id].totalQuestions += 1;
-              studentPerformance[topic_id].totalMarks += marksData.marks;
+              studentPerformance[topic_id].totalMarks += marksData?.marks;
               studentPerformance[topic_id].obtainedMarks += modifiedMarks ? modifiedMarks : obtainedMarks;
 
             }
@@ -1078,7 +1078,7 @@ exports.comprehensivePerformanceConceptWise = async (request) => {
               const modifiedMarks = parseFloat(qa.modified_marks) || 0;
 
               studentPerformance[concept_id].totalQuestions += 1;
-              studentPerformance[concept_id].totalMarks += marksData.marks;
+              studentPerformance[concept_id].totalMarks += marksData?.marks;
               studentPerformance[concept_id].obtainedMarks += modifiedMarks ? modifiedMarks : obtainedMarks;
 
             }
