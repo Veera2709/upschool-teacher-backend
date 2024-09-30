@@ -48,28 +48,15 @@ exports.updateStudentQuizMarks = async (req, res, next) => {
     }
 };
 
-exports.viewQuizQuestionPaper = (req, res, next) => {
-    console.log("viewQuizQuestionPaper : ");
-    let request = req.body;
-
-    quizServices.viewQuizQuestionPaper(request, function (view_test_question_paper_err, view_test_question_paper_response) {
-        if (view_test_question_paper_err) {
-            res.status(view_test_question_paper_err).json(view_test_question_paper_response);
-        } else {
-            console.log("Fetched Questions Successfully");
-            res.json(view_test_question_paper_response);
-        }
-    })
-}
-// exports.viewQuizQuestionPaper = async (req, res, next) => {
-//     try {
-//         const request = req.body;
-//         const reportData = await quizServices.viewQuizQuestionPaper(request);
-//         return formatResponse(res, reportData);
-//     } catch (error) {
-//         next(error)
-//     }
-// };
+exports.viewQuizQuestionPaper = async (req, res, next) => {
+    try {
+        const request = req.body;
+        const reportData = await quizServices.viewQuizQuestionPaper(request);
+        return formatResponse(res, reportData);
+    } catch (error) {
+        next(error)
+    }
+};
 exports.fetchQuizTemplates = async (req, res, next) => {
     try {
         const request = req.body;

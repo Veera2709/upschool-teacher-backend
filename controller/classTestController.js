@@ -40,19 +40,15 @@ exports.fetchQuestionsBasedonQuestionPaper = async (req, res, next) => {
     }
 };
 
-exports.startEvaluation = (req, res, next) => {
-    console.log("Evaluation Start!");
-    let request = req.body;
-    classTestServices.startEvaluationProcess(request, function (evaluationErr, evaluationRes) {
-        if (evaluationErr) {
-            res.status(evaluationErr).json(evaluationRes);
-        } else {
-            console.log("Evaluation Completed!");
-            res.json(evaluationRes);
-        }
-    });
+exports.startEvaluation = async (req, res, next) => {
+    try {
+        const request = req.body;
+        const studentData = await classTestServices.startEvaluationProcess(request);
+        return formatResponse(res, studentData);
+    } catch (error) {
+        next(error)
+    }
 };
-
 
 exports.getStudentsBasedOnSection = async (req, res, next) => {
     try {

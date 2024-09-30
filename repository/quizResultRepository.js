@@ -47,9 +47,7 @@ exports.fetchQuizResultDataOfStudent2 = async (request) => {
             }
         };
 
-        // Assuming baseRepositoryNew.DATABASE_TABLE2.query is a wrapper around DynamoDB's query method
-        const result = await baseRepositoryNew.DATABASE_TABLE2.query(params);
-        return result;
+       return await baseRepositoryNew.DATABASE_TABLE2.query(params);
 };
 
 

@@ -4,6 +4,7 @@ const indexName = require('../constants/indexes');
 const { DATABASE_TABLE } = require('./baseRepository');
 const helper = require('../helper/helper');
 const constant = require('../constants/constant');
+const baseRepositoryNew = require('./baseRepositoryNew');
 
 exports.getAllPresets = function (request, callback) {
 
@@ -31,4 +32,21 @@ exports.getAllPresets = function (request, callback) {
 
         }
     });
+}
+exports.getAllPresets2 = async (request) => {
+    let params = {
+        TableName: TABLE_NAMES.upschool_presets_table,
+                IndexName: indexName.Indexes.common_id_index,
+                KeyConditionExpression: "common_id = :common_id",
+                FilterExpression: "preset_status = :preset_status",
+                ExpressionAttributeValues: {
+                    ":common_id": constant.constValues.common_id,
+                    ":preset_status": "Active",
+                }
+
+    };
+    console.log({params});
+    const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    console.log({data});
+    return data;
 }

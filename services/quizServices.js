@@ -87,7 +87,7 @@ exports.getQuizResult = async (request) => {
                 console.log("Loop ended!", result_response.Items[0].answer_metadata);
             }
         } setContentURL(0);
-    }    
+    }
     return result_response;
 }
 
@@ -134,104 +134,71 @@ exports.editStudentQuizMarks = async (request) => {
 
 
 
-exports.viewQuizQuestionPaper = (request, callback) => {
-
-    quizResultRepository.fetchQuizResultDataOfStudent(request, async function (fetch_quiz_result_data_err, fetch_quiz_result_data_res) {
-        if (fetch_quiz_result_data_err) {
-            console.log(fetch_quiz_result_data_err);
-            callback(fetch_quiz_result_data_err, fetch_quiz_result_data_res);
-        } else {
-            console.log(fetch_quiz_result_data_res.Items[0]);
-
-            const quizType = fetch_quiz_result_data_res.Items[0].quiz_set;
-            const quizSetName = await helper.fetchQuizSetName(quizType);
-
-            quizRepository.fetchQuizDataById(request, function (fetch_quiz_data_err, fetch_quiz_data_response) {
-                if (fetch_quiz_data_err) {
-                    console.log(fetch_quiz_data_err);
-                    callback(fetch_quiz_data_err, fetch_quiz_data_response);
-                }
-                else {
-                    console.log("Quiz OBJ", fetch_quiz_data_response);
-                    if (helper.isEmptyObject(fetch_quiz_data_response.Item)) {
-                        callback(constant.messages.COULDNOT_READ_QUIZ_ID, 0);
-                    }
-                    else {
-
-                        const questionsData = fetch_quiz_data_response.Item.quiz_question_details[quizSetName];
-                        const questionIDs = helper.removeDuplicates(questionsData);
-
-                        /** FETCH Questions DATA **/
-                        let fetchBulkCatReq = {
-                            IdArray: questionIDs,
-                            fetchIdName: "question_id",
-                            TableName: TABLE_NAMES.upschool_question_table,
-                            projectionExp: ["question_id", "question_content", "answers_of_question", "question_type", "marks", "display_answer"]
-                        }
-
-                        commonRepository.fetchBulkDataWithProjection(fetchBulkCatReq, async function (fetch_questions_err, fetch_questions_res) {
-                            if (fetch_questions_err) {
-                                console.log(fetch_questions_err);
-                                callback(fetch_questions_err, fetch_questions_res);
-                            } else {
-
-                                /** SET FINAL Question Paper View DATA **/
-                                exports.setQuestionPaperView(questionIDs, fetch_questions_res.Items, async (questionsErr, questionsRes) => {
-                                    if (questionsErr) {
-                                        console.log(questionsErr);
-                                        callback(questionsErr, questionsRes);
-                                    }
-                                    else {
-                                        console.log(questionsRes);
-                                        const callbackData = { Items: [] };
-                                        callbackData.Items = await questionsRes;
-                                        callback(questionsErr, callbackData);
-                                    }
-                                })
-                                /** END SET FINAL Question Paper View DATA **/
-                            }
-                        })
-                        /** END FETCH Questions DATA **/
-
-                    }
-                }
-            })
+exports.viewQuizQuestionPaper = async (request) => {
+    try {
+        // Fetch quiz result data of student
+        const fetchQuizResultData = await quizResultRepository.fetchQuizResultDataOfStudent2(request);
+        if (!fetchQuizResultData || fetchQuizResultData.Items.length === 0) {
+            throw new Error(constant.messages.NO_ANSWER_SHEET_FOUND);
         }
-    })
-}
 
-exports.setQuestionPaperView = (questionIDs, questionData, callback) => {    
-    let individualQuestion = [];
+        const quizType = fetchQuizResultData.Items[0].quiz_set;
+        const quizSetName = await helper.fetchQuizSetName(quizType);
 
-    async function setQuestionsData(i) {
-        if (i < questionIDs.length) {
-            const { index, matchedQuestion } = await questionData.reduce((acc, value, currentIndex) => {
-                if (value.question_id === questionIDs[i]) {
-                    acc.index = currentIndex;
-                    acc.matchedQuestion = value;
-                }
-                return acc;
-            }, {});
-            individualQuestion.push(matchedQuestion);
-            await helper.getAnswerContentFileUrl(individualQuestion[i].answers_of_question)
-                .then(url => {
-                    individualQuestion[i].answers_of_question = url;
-                    questionData[index] = individualQuestion[i];
-                    i++;
-                    setQuestionsData(i);
-                })
-                .catch(err => {
-                    individualQuestion[i].answers_of_question = "N.A.";
-                    questionData[index] = individualQuestion[i];
-                    i++;
-                    setQuestionsData(i);
-                });
-
-        } else {
-            callback(0, questionData);
+        // Fetch quiz data by ID
+        const fetchQuizDataResponse = await quizRepository.fetchQuizDataById2(request);
+        if (helper.isEmptyObject(fetchQuizDataResponse.Item)) {
+            throw new Error(constant.messages.COULDNOT_READ_QUIZ_ID);
         }
-    } setQuestionsData(0);
-}
+        console.log({ fetchQuizDataResponse });
+        // Extract question details
+        const questionsData = fetchQuizDataResponse.Item.quiz_question_details[quizSetName];
+        const questionIDs = helper.removeDuplicates(questionsData);
+        // Fetch questions data
+        const fetchBulkCatReq = {
+            IdArray: questionIDs,
+            fetchIdName: "question_id",
+            TableName: TABLE_NAMES.upschool_question_table,
+            projectionExp: ["question_id", "question_content", "answers_of_question", "question_type", "marks", "display_answer"]
+        };
+        const questionIds = fetchBulkCatReq.IdArray.map((val) => ({ question_id: val }));
+        const fetchQuestionsRes = await commonRepository.fetchBulkDataWithProjection2({ items: questionIds, condition: "OR", TableName: fetchBulkCatReq.TableName });
+
+        // Set final question paper view data
+        const questionsRes = await exports.setQuestionPaperView(questionIDs, fetchQuestionsRes.Items);
+
+        // Return the result
+        return { Items: questionsRes };
+
+    } catch (error) {
+        console.error(error);
+        throw helper.formatErrorResponse(error.message || constant.messages.DEFAULT_ERROR, 400);
+    }
+};
+
+
+exports.setQuestionPaperView = async (questionIDs, questionData) => {
+
+    const individualQuestions = await Promise.all(
+        questionIDs.map(async (questionID) => {
+            const matchedQuestion = questionData.find((q) => q.question_id === questionID);
+
+            if (!matchedQuestion) return null;
+
+            try {
+                const url = await helper.getAnswerContentFileUrl(matchedQuestion.answers_of_question);
+                matchedQuestion.answers_of_question = url;
+            } catch (err) {
+                matchedQuestion.answers_of_question = "N.A.";
+            }
+
+            return matchedQuestion;
+        })
+    );
+
+    return individualQuestions.filter(q => q !== null); // Remove null values (if any question IDs did not match)
+};
+``
 
 exports.fetchQuizTemplates = async (request) => {
     try {
@@ -398,11 +365,11 @@ exports.startQuizEvaluationProcess = async (request) => {
             quizTestRes.Item.question_track_details
         );
 
-        markAssignRes = addIndividualGroupPerformance(markAssignRes, questionDataRes, groupPassPercentage);       
+        markAssignRes = addIndividualGroupPerformance(markAssignRes, questionDataRes, groupPassPercentage);
 
         /** BATCH UPDATE **/
         await commonRepository.bulkBatchWrite(markAssignRes, TABLE_NAMES.upschool_quiz_result);
-        
+
         return { status: 200 };
     } catch (error) {
         console.error(error);

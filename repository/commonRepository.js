@@ -298,22 +298,16 @@ exports.fetchBulkDataWithProjection = function (request, callback) {
   });
 };
 exports.fetchBulkDataWithProjection2 = async (request) => {
-  console.log({ request });
   const fromatedRequest = await helper.getDataByFilterKey(request);
-  console.log("testrequest", request);
   const params = {
-    TableName: TABLE_NAMES.upschool_test_result,
+    TableName: TABLE_NAMES.upschool_question_table,
     IndexName: indexName.Indexes.common_id_index,
     KeyConditionExpression: "common_id = :common_id",
     FilterExpression: fromatedRequest.FilterExpression,
     ExpressionAttributeValues: fromatedRequest.ExpressionAttributeValues,
   };
-
-  console.log({ params });
-
   try {
-    const result = await baseRepositoryNew.DATABASE_TABLE2.query(params);
-    return result;
+    return await baseRepositoryNew.DATABASE_TABLE2.query(params);    
   } catch (error) {
     console.error(`Error fetching quiz results:`, error);
     throw error;

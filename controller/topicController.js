@@ -1,4 +1,4 @@
-const {topicServices} = require("../services");
+const topicServices = require("../services/topicServices");
 const { formatResponse } = require("../helper/helper");
 
 exports.topicUnlock = (req, res, next) => {
@@ -31,7 +31,7 @@ exports.fetchTopicsBasedonChapters = async (req, res, next) => {
     try {
         const request = req.body;
         const reportData = await topicServices.getTopicsBasedonChapters(request);
-       return formatResponse(res, reportData)
+        return formatResponse(res, reportData);
     } catch (error) {
         next(error)
     }
