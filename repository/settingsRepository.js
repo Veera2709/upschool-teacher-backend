@@ -372,6 +372,40 @@ exports.getQuestionSources = function (request, callback) {
         }
     });
 }
+// exports.getQuestionSources2 = async (request) => {
+//     let params = {
+//         TTableName: TABLE_NAMES.upschool_question_source,
+//                 IndexName: indexName.Indexes.common_id_index,
+//                 KeyConditionExpression: "common_id = :common_id",
+//                 FilterExpression: "source_type = :source_type AND source_status = :source_status", 
+//                 ExpressionAttributeValues: { 
+//                     ":source_type": request.data.source_type,
+//                     ":source_status": request.data.source_status,
+//                     ":common_id": constant.constValues.common_id, 
+//                 },
+//                 ProjectionExpression: "source_id, source_name",
+
+//     };
+//     const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+//     return data;
+// }
+exports.getQuestionSources2 = async (request) => {
+    const params = {
+        TableName: TABLE_NAMES.upschool_question_source,
+                IndexName: indexName.Indexes.common_id_index,
+                KeyConditionExpression: "common_id = :common_id",
+                FilterExpression: "source_type = :source_type AND source_status = :source_status", 
+                ExpressionAttributeValues: { 
+                    ":source_type": request.data.source_type,
+                    ":source_status": request.data.source_status,
+                    ":common_id": constant.constValues.common_id, 
+                },
+                ProjectionExpression: "source_id, source_name",
+    };
+    console.log({params});
+    const data =await baseRepositoryNew.DATABASE_TABLE2.query(params); 
+    return data;
+};
 
 exports.fetchSourceByLabel = function (request, callback) {
 

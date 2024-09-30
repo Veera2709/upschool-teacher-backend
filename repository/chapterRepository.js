@@ -32,6 +32,18 @@ exports.fetchChapterByID = function (request, callback) {
         }
     });
 }
+exports.fetchChapterByID2 = async (request) => {
+    let params = {
+        TableName: TABLE_NAMES.upschool_chapter_table,
+
+                KeyConditionExpression: "chapter_id = :chapter_id",
+                ExpressionAttributeValues: {
+                    ":chapter_id": request.data.chapter_id
+                }
+    };
+
+    return await baseRepositoryNew.DATABASE_TABLE2.query(params);
+}
 
 exports.fetchChapterData = function (request, callback) {
 

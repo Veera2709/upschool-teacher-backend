@@ -1,4 +1,4 @@
-const {conceptServices} = require("../services");
+const conceptServices = require("../services/conceptServices");
 
 
 exports.fetchConceptsBasedonTopics = (req, res, next) => {
