@@ -18,8 +18,7 @@ const subjectController = require('./subjectController')
 const teacherController = require('./teacherController')
 const testQuestionPaperController = require('./testQuestionPaperController')
 const topicController = require('./topicController')
-const unitController = require('./unitController')
-const userController = require('./userController')
+
 
 
 module.exports = {
