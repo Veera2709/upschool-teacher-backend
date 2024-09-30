@@ -19,8 +19,6 @@ const subjectServices = require('./subjectServices')
 const teacherServices = require('./teacherServices')
 const testQuestionPaperServices = require('./testQuestionPaperServices')
 const topicServices = require('./topicServices')
-// const unitServices = require('./unitServices')
-const userServices = require('./userServices')
 
 module.exports = {
     athenaService,
@@ -43,7 +41,5 @@ module.exports = {
     subjectServices,
     teacherServices,
     testQuestionPaperServices,
-    topicServices,
-    unitServices,
-    userServices
+    topicServices   
 }
