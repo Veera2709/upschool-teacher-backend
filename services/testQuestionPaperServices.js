@@ -3,58 +3,58 @@ const constant = require('../constants/constant');
 const helper = require('../helper/helper');
 const { TABLE_NAMES } = require('../constants/tables');
 
-// exports.fetchTestQuestionPapersBasedonStatus = (request, callback) => {
+exports.fetchTestQuestionPapersBasedonStatus = (request, callback) => {
 
-//   testQuestionPaperRepository.getTestQuestionPapersBasedonStatus(request, async function (test_question_paper_err, test_question_paper_res) {
-//     if (test_question_paper_err) {
-//       console.log(test_question_paper_err);
-//       callback(test_question_paper_err, test_question_paper_res);
-//     } else {
+  testQuestionPaperRepository.getTestQuestionPapersBasedonStatus(request, async function (test_question_paper_err, test_question_paper_res) {
+    if (test_question_paper_err) {
+      console.log(test_question_paper_err);
+      callback(test_question_paper_err, test_question_paper_res);
+    } else {
 
-//       if (test_question_paper_res.Items.length > 0) {
+      if (test_question_paper_res.Items.length > 0) {
 
-//         let blueprint_array = await test_question_paper_res.Items.map((e) => e.blueprint_id);
+        let blueprint_array = await test_question_paper_res.Items.map((e) => e.blueprint_id);
 
-//         blueprintRepository.fetchBluePrintData({ blueprint_array: blueprint_array }, async function (fetch_blue_print_err, fetch_blue_print_res) {
-//           if (fetch_blue_print_err) {
-//             console.log(fetch_blue_print_err);
-//             callback(fetch_blue_print_err, fetch_blue_print_res);
-//           } else {
+        blueprintRepository.fetchBluePrintData({ blueprint_array: blueprint_array }, async function (fetch_blue_print_err, fetch_blue_print_res) {
+          if (fetch_blue_print_err) {
+            console.log(fetch_blue_print_err);
+            callback(fetch_blue_print_err, fetch_blue_print_res);
+          } else {
 
-//             await test_question_paper_res.Items.forEach((test_paper, index) => {
-//               let bluePrint = fetch_blue_print_res.Items.filter((blue_print) => blue_print.blueprint_id === test_paper.blueprint_id)
-//               if (bluePrint.length > 0) {
-//                 test_question_paper_res.Items[index].blueprint_name = bluePrint[0].blueprint_name
-//                 delete test_question_paper_res.Items[index].blueprint_id;
-//               }
-//             })
-//             callback(200, test_question_paper_res.Items);
-//           }
-//         })
-//       } else {
-//         callback(200, test_question_paper_res.Items);
-//       }
-//     }
-//   })
-// }
-exports.fetchTestQuestionPapersBasedonStatus = async (request) => {
-  try {
-    const testQuestionPaperRes = await testQuestionPaperRepository.getTestQuestionPapersBasedonStatus2(request);    
-    const blueprintArray = testQuestionPaperRes.map((val) => ({ "blueprint_id": val.blueprint_id }));
-    const fetchBluePrintRes = await blueprintRepository.fetchBluePrintData2({ items: blueprintArray, condition: "OR" });
-    testQuestionPaperRes.forEach((testPaper) => {
-      const blueprint = fetchBluePrintRes.find((bp) => bp.blueprint_id === testPaper.blueprint_id);
-      if (blueprint) {
-        testPaper.blueprint_name = blueprint.blueprint_name;
-        delete testPaper.blueprint_id;
+            await test_question_paper_res.Items.forEach((test_paper, index) => {
+              let bluePrint = fetch_blue_print_res.Items.filter((blue_print) => blue_print.blueprint_id === test_paper.blueprint_id)
+              if (bluePrint.length > 0) {
+                test_question_paper_res.Items[index].blueprint_name = bluePrint[0].blueprint_name
+                delete test_question_paper_res.Items[index].blueprint_id;
+              }
+            })
+            callback(200, test_question_paper_res.Items);
+          }
+        })
+      } else {
+        callback(200, test_question_paper_res.Items);
       }
-    });
-    return testQuestionPaperRes;
-  } catch (error) {
-    console.error(error);
-    throw error; 
-  }
-};
+    }
+  })
+}
+// exports.fetchTestQuestionPapersBasedonStatus = async (request) => {
+//   try {
+//     const testQuestionPaperRes = await testQuestionPaperRepository.getTestQuestionPapersBasedonStatus2(request);    
+//     const blueprintArray = testQuestionPaperRes.map((val) => ({ "blueprint_id": val.blueprint_id }));
+//     const fetchBluePrintRes = await blueprintRepository.fetchBluePrintData2({ items: blueprintArray, condition: "OR" });
+//     testQuestionPaperRes.forEach((testPaper) => {
+//       const blueprint = fetchBluePrintRes.find((bp) => bp.blueprint_id === testPaper.blueprint_id);
+//       if (blueprint) {
+//         testPaper.blueprint_name = blueprint.blueprint_name;
+//         delete testPaper.blueprint_id;
+//       }
+//     });
+//     return testQuestionPaperRes;
+//   } catch (error) {
+//     console.error(error);
+//     throw error; 
+//   }
+// };
 
 
 exports.addTestQuestionPaper = (request, callback) => {
