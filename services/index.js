@@ -20,7 +20,6 @@ const teacherServices = require('./teacherServices')
 const testQuestionPaperServices = require('./testQuestionPaperServices')
 const topicServices = require('./topicServices')
 
-
 module.exports = {
     athenaService,
     baseService,
