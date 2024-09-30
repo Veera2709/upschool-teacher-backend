@@ -464,8 +464,8 @@ exports.viewClassReportQuestions = async (request) => {
     } else {
       const correct = allAnswers.reduce((count, answer) => {
         if (
-          (answer.modified_marks === 'N.A.' && answer.obtained_marks === question.marks) ||
-          (answer.modified_marks !== 'N.A.' && answer.modified_marks === question.marks)
+          (String(answer.modified_marks) === 'N.A.' && Number(answer.obtained_marks) === Number(question.marks)) ||
+          (String(answer.modified_marks) !== 'N.A.' && Number(answer.modified_marks) === Number(question.marks))
         ) {
           return count + 1;
         }
@@ -609,6 +609,7 @@ exports.viewClassReportFocusArea = async (request) => {
     //%cal for pass
     let passPercentage = request.config === "post_quiz_config" ? schoolDataRes.Items[0].post_quiz_config.class_percentage : schoolDataRes.Items[0].pre_quiz_config.class_percentage
     let studentsData = []
+    item.passPercentage = passPercentage
     groupedMarks.map((student) => {
       let marks = 0;
       console.log(student.studentid);
