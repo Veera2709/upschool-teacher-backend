@@ -1,11 +1,7 @@
 const dynamoDbCon = require('../awsConfig');
-const { TABLE_NAMES } = require('../constants/tables');
-const indexName = require('../constants/indexes');
 const { DATABASE_TABLE } = require('./baseRepository');
-const baseRepositoryNew = require('./baseRepositoryNew');
-const { successResponse } = require('./baseRepository');
-const helper = require('../helper/helper');
-const constant = require('../constants/constant');
+const { DATABASE_TABLE2 } = require('./baseRepositoryNew');
+const { constant, indexes: { Indexes }, tables: { TABLE_NAMES } } = require('../constants');
 
 
 exports.getStudentsData = function (request, callback) {
@@ -21,7 +17,7 @@ exports.getStudentsData = function (request, callback) {
 
             let read_params = {
                 TableName: TABLE_NAMES.upschool_student_info,
-                IndexName: indexName.Indexes.common_id_index,
+                IndexName: Indexes.common_id_index,
                 KeyConditionExpression: "common_id = :common_id",
                 FilterExpression: "user_status = :user_status AND section_id = :section_id",
                 ExpressionAttributeValues: {
@@ -39,7 +35,7 @@ exports.getStudentsData = function (request, callback) {
 // exports.getStudentsData2 = async (request) => {
 //     let params = {
 //         TableName: TABLE_NAMES.upschool_student_info,
-//         IndexName: indexName.Indexes.common_id_index,
+//         IndexName: Indexes.common_id_index,
 //         KeyConditionExpression: "common_id = :common_id",
 //         FilterExpression: "user_status = :user_status AND section_id = :section_id",
 //         ExpressionAttributeValues: {
@@ -55,7 +51,7 @@ exports.getStudentsData = function (request, callback) {
 exports.getStudentsData2 = async (request) => {
         const params = {
             TableName: TABLE_NAMES.upschool_student_info,
-            IndexName: indexName.Indexes.common_id_index,
+            IndexName: Indexes.common_id_index,
             KeyConditionExpression: "common_id = :common_id",
             FilterExpression: "user_status = :user_status AND section_id = :section_id",
             ExpressionAttributeValues: {
@@ -66,7 +62,7 @@ exports.getStudentsData2 = async (request) => {
         };
         console.log({params});
 
-        return await baseRepositoryNew.DATABASE_TABLE2.query(params); 
+        return await DATABASE_TABLE2.query(params); 
 };
 
 exports.fetchStudentDataByRollNoClassSection = function (request, callback) {
@@ -82,7 +78,7 @@ exports.fetchStudentDataByRollNoClassSection = function (request, callback) {
 
             let read_params = {
                 TableName: TABLE_NAMES.upschool_student_info,
-                IndexName: indexName.Indexes.common_id_index,
+                IndexName: Indexes.common_id_index,
                 KeyConditionExpression: "common_id = :common_id",
                 FilterExpression: "class_id = :class_id AND section_id = :section_id AND roll_no = :roll_no",
                 ExpressionAttributeValues: {
@@ -112,7 +108,7 @@ exports.getAllStudents = function (request, callback) {
 
             let read_params = {
                 TableName: TABLE_NAMES.upschool_student_info,
-                IndexName: indexName.Indexes.common_id_index,
+                IndexName: Indexes.common_id_index,
                 KeyConditionExpression: "common_id = :common_id",
                 FilterExpression: "user_status = :user_status AND student_id = :student_id",
                 ExpressionAttributeValues: {

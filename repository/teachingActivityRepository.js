@@ -1,10 +1,8 @@
 const dynamoDbCon = require('../awsConfig');
-const { TABLE_NAMES } = require('../constants/tables');
-const indexName = require('../constants/indexes');
 const { DATABASE_TABLE } = require('./baseRepository');
 const helper = require('../helper/helper');
-const constant = require('../constants/constant');
-const baseRepositoryNew = require('./baseRepositoryNew');
+const { DATABASE_TABLE2 } = require('./baseRepositoryNew');
+const { constant, indexes: { Indexes }, tables: { TABLE_NAMES } } = require('../constants');
 
 
 exports.fetchTeachingActivity = function (request, callback) {
@@ -20,7 +18,7 @@ exports.fetchTeachingActivity = function (request, callback) {
 
             let read_params = {
                 TableName: TABLE_NAMES.upschool_teaching_activity,
-                IndexName: indexName.Indexes.common_id_index,
+                IndexName: Indexes.common_id_index,
                 KeyConditionExpression: "common_id = :common_id",
                 FilterExpression: "client_class_id = :client_class_id AND section_id = :section_id AND subject_id = :subject_id AND activity_status = :activity_status",
                 ExpressionAttributeValues: {
@@ -39,7 +37,7 @@ exports.fetchTeachingActivity = function (request, callback) {
 exports.fetchTeachingActivity2 = async (request) => {
     let params = {
         TableName: TABLE_NAMES.upschool_teaching_activity,
-                IndexName: indexName.Indexes.common_id_index,
+                IndexName: Indexes.common_id_index,
                 KeyConditionExpression: "common_id = :common_id",
                 FilterExpression: "client_class_id = :client_class_id AND section_id = :section_id AND subject_id = :subject_id AND activity_status = :activity_status",
                 ExpressionAttributeValues: {
@@ -50,7 +48,7 @@ exports.fetchTeachingActivity2 = async (request) => {
                     ":activity_status": "Active"
                 }
     };
-    return await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    return await DATABASE_TABLE2.query(params);
 }
 
 exports.updateTeachingActivity = function (request, callback) {
@@ -93,7 +91,7 @@ exports.updateTeachingActivity2 = async (request) => {
                     ":updated_ts": helper.getCurrentTimestamp()
                 },
     };
- return await baseRepositoryNew.DATABASE_TABLE2.updateService(params);
+ return await DATABASE_TABLE2.updateService(params);
 }
 exports.updateTeachingDigiCardActivity = function (request, callback) {
 
@@ -136,7 +134,7 @@ exports.updateTeachingDigiCardActivity2 = async (request) => {
             ":updated_ts": helper.getCurrentTimestamp()
         },
     };
- return await baseRepositoryNew.DATABASE_TABLE2.updateService(params);
+ return await DATABASE_TABLE2.updateService(params);
 }
 exports.addTeachingActivity = function (request, callback) {
 
@@ -189,6 +187,6 @@ exports.addTeachingActivity2 = async (request) => {
                 }
 
     }
-    return (await baseRepositoryNew.DATABASE_TABLE2.putItem(params)).$metadata.httpStatusCode;
+    return (await DATABASE_TABLE2.putItem(params)).$metadata.httpStatusCode;
    
 }

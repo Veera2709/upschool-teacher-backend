@@ -1,11 +1,7 @@
 const dynamoDbCon = require("../awsConfig");
-const { TABLE_NAMES } = require("../constants/tables");
-const indexName = require("../constants/indexes");
 const { DATABASE_TABLE } = require("./baseRepository");
-const { successResponse } = require("./baseRepository");
-const helper = require("../helper/helper");
-const constant = require("../constants/constant");
-const baseRepositoryNew = require('./baseRepositoryNew');
+const { DATABASE_TABLE2 } = require('./baseRepositoryNew');
+const { constant, indexes: { Indexes }, tables: { TABLE_NAMES } } = require('../constants');
 
 
 exports.REFfetchBulkQuestionsWithPublishStatusAndProjection = function (request, callback) {
@@ -291,7 +287,7 @@ exports.fetchBulkQuestionsNameById2 = async (request) => {
                 ProjectionExpression: "answers_of_question, cognitive_skill, question_id, question_type, marks, difficulty_level, question_content"
             };
 
-            const result = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+            const result = await DATABASE_TABLE2.query(params);
             return result.Items;
         } else {
             // When there are multiple question IDs
@@ -308,7 +304,7 @@ exports.fetchBulkQuestionsNameById2 = async (request) => {
                 }
             };
 
-            const result = await baseRepositoryNew.DATABASE_TABLE2.getByObjects(params);
+            const result = await DATABASE_TABLE2.getByObjects(params);
             return result.Responses[TABLE_NAMES.upschool_question_table];
         }
 

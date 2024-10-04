@@ -1,10 +1,8 @@
 const dynamoDbCon = require('../awsConfig');
-const { TABLE_NAMES } = require('../constants/tables');
-const indexName = require('../constants/indexes');
 const { DATABASE_TABLE } = require('./baseRepository');
 const helper = require('../helper/helper');
-const constant = require('../constants/constant');
-const baseRepositoryNew = require('./baseRepositoryNew');
+const { DATABASE_TABLE2 } = require('./baseRepositoryNew');
+const { constant, indexes: { Indexes }, tables: { TABLE_NAMES } } = require('../constants');
 
 exports.fetchQuizResultDataOfStudent = function (request, callback) {
     dynamoDbCon.getDB(function (DBErr, dynamoDBCall) {
@@ -18,7 +16,7 @@ exports.fetchQuizResultDataOfStudent = function (request, callback) {
 
             let read_params = {
                 TableName: TABLE_NAMES.upschool_quiz_result,
-                IndexName: indexName.Indexes.common_id_index,
+                IndexName: Indexes.common_id_index,
                 KeyConditionExpression: "common_id = :common_id",
                 FilterExpression: "quiz_id = :quiz_id AND student_id = :student_id",
                 ExpressionAttributeValues: {
@@ -37,7 +35,7 @@ exports.fetchQuizResultDataOfStudent2 = async (request) => {
    
         const params = {
             TableName: TABLE_NAMES.upschool_quiz_result,
-            IndexName: indexName.Indexes.common_id_index,
+            IndexName: Indexes.common_id_index,
             KeyConditionExpression: "common_id = :common_id",
             FilterExpression: "quiz_id = :quiz_id AND student_id = :student_id",
             ExpressionAttributeValues: {
@@ -47,7 +45,7 @@ exports.fetchQuizResultDataOfStudent2 = async (request) => {
             }
         };
 
-       return await baseRepositoryNew.DATABASE_TABLE2.query(params);
+       return await DATABASE_TABLE2.query(params);
 };
 
 
@@ -157,7 +155,7 @@ exports.resetQuizEvaluationStatus2 = async (request) => {
         },
 
     }
-    const data = (await baseRepositoryNew.DATABASE_TABLE2.updateService(params)).$metadata.httpStatusCode;
+    const data = (await DATABASE_TABLE2.updateService(params)).$metadata.httpStatusCode;
     return data;
 }
 
@@ -173,7 +171,7 @@ exports.fetchStudentQuiRresultMetadata = function (request, callback) {
 
             let read_params = {
                 TableName: TABLE_NAMES.upschool_quiz_result,
-                IndexName: indexName.Indexes.common_id_index,
+                IndexName: Indexes.common_id_index,
                 KeyConditionExpression: "common_id = :common_id",
                 FilterExpression: "quiz_id = :quiz_id AND evaluated = :evaluated",
                 ExpressionAttributeValues: {
@@ -191,7 +189,7 @@ exports.fetchStudentQuiRresultMetadata = function (request, callback) {
 exports.fetchStudentQuiRresultMetadata2 = async (request) => {
     let params = {
         TableName: TABLE_NAMES.upschool_quiz_result,
-                IndexName: indexName.Indexes.common_id_index,
+                IndexName: Indexes.common_id_index,
                 KeyConditionExpression: "common_id = :common_id",
                 FilterExpression: "quiz_id = :quiz_id AND evaluated = :evaluated",
                 ExpressionAttributeValues: {
@@ -201,13 +199,13 @@ exports.fetchStudentQuiRresultMetadata2 = async (request) => {
                 }
     };
 
-    return await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    return await DATABASE_TABLE2.query(params);
 }
 
 exports.fetchQuizResultByQuizId = async (request) => {
     let params = {
         TableName: TABLE_NAMES.upschool_quiz_result,
-        IndexName: indexName.Indexes.common_id_index,
+        IndexName: Indexes.common_id_index,
         KeyConditionExpression: "common_id = :common_id",
         FilterExpression: "quiz_id = :quiz_id",
         ExpressionAttributeValues: {
@@ -216,13 +214,13 @@ exports.fetchQuizResultByQuizId = async (request) => {
         }
     };
 
-    return await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    return await DATABASE_TABLE2.query(params);
 }
 
 exports.fetchQuizResultDataOfStudentNew = async (request) => {
     let params = {
         TableName: TABLE_NAMES.upschool_quiz_result,
-        IndexName: indexName.Indexes.common_id_index,
+        IndexName: Indexes.common_id_index,
         KeyConditionExpression: "common_id = :common_id",
         FilterExpression: "quiz_id = :quiz_id AND student_id = :student_id",
         ExpressionAttributeValues: {
@@ -232,7 +230,7 @@ exports.fetchQuizResultDataOfStudentNew = async (request) => {
         }
     };
 
-    return await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    return await DATABASE_TABLE2.query(params);
 }
 
 exports.fetchBulkQuizResultsByID = function (request, callback) {
@@ -252,7 +250,7 @@ exports.fetchBulkQuizResultsByID = function (request, callback) {
             if (unit_Quiz_id.length === 1) {
                 let read_params = {
                     TableName: TABLE_NAMES.upschool_quiz_result,
-                    IndexName: indexName.Indexes.common_id_index,
+                    IndexName: Indexes.common_id_index,
                     KeyConditionExpression: "common_id = :common_id",
                     FilterExpression: "quiz_id = :quiz_id",
                     ExpressionAttributeValues: {
@@ -293,7 +291,7 @@ exports.fetchBulkQuizResultsByID3 = async (request) => {
     console.log("testrequest",request);
     const params = {
         TableName: TABLE_NAMES.upschool_quiz_result,
-        IndexName: indexName.Indexes.common_id_index,
+        IndexName: Indexes.common_id_index,
         KeyConditionExpression: "common_id = :common_id",
         FilterExpression: fromatedRequest.FilterExpression,
         ExpressionAttributeValues: fromatedRequest.ExpressionAttributeValues,
@@ -302,7 +300,7 @@ exports.fetchBulkQuizResultsByID3 = async (request) => {
     console.log({params});   
 
     try {
-        const result = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+        const result = await DATABASE_TABLE2.query(params);
         console.log({result});
         
         return result.Items;
@@ -325,12 +323,12 @@ exports.fetchBulkQuizResultsByID2 = async (request) => {
 
     const params = {
         TableName: TABLE_NAMES.upschool_quiz_result,
-        IndexName: indexName.Indexes.common_id_index,
+        IndexName: Indexes.common_id_index,
         KeyConditionExpression: "common_id = :common_id",
         FilterExpression: filterExpression,
         ExpressionAttributeValues: expressionAttributeValues,
     };
 
-        const result = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+        const result = await DATABASE_TABLE2.query(params);
         return result.Items;
 };

@@ -1,10 +1,8 @@
 const dynamoDbCon = require('../awsConfig');
-const { TABLE_NAMES } = require('../constants/tables');
-const indexName = require('../constants/indexes');
 const { DATABASE_TABLE } = require('./baseRepository');
-const baseRepositoryNew = require('./baseRepositoryNew');
 const helper = require('../helper/helper');
-const constant = require('../constants/constant');
+const { DATABASE_TABLE2 } = require('./baseRepositoryNew');
+const { constant, indexes: { Indexes }, tables: { TABLE_NAMES } } = require('../constants');
 
 exports.fetchConceptData = function (request, callback) {
 
@@ -61,13 +59,13 @@ exports.fetchConceptData2 = async (request) => {
     const fromatedRequest = await helper.getDataByFilterKey(request);
     const params = {
       TableName: TABLE_NAMES.upschool_concept_blocks_table,
-      IndexName: indexName.Indexes.common_id_index,
+      IndexName: Indexes.common_id_index,
       KeyConditionExpression: "common_id = :common_id",
       FilterExpression: fromatedRequest.FilterExpression,
       ExpressionAttributeValues: fromatedRequest.ExpressionAttributeValues,
     };
     try {
-      return await baseRepositoryNew.DATABASE_TABLE2.query(params);    
+      return await DATABASE_TABLE2.query(params);    
     } catch (error) {
       console.error(`Error fetching quiz results:`, error);
       throw error;
@@ -195,7 +193,7 @@ exports.fetchBulkConceptsIDName2 = async (request) => {
             ProjectionExpression: "concept_id, concept_title, display_name",
         };
 
-        const result = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+        const result = await DATABASE_TABLE2.query(params);
         return result.Items;
     } else {
         // BatchGet for multiple concept IDs
@@ -212,7 +210,7 @@ exports.fetchBulkConceptsIDName2 = async (request) => {
             }
         };
 
-        const result = await baseRepositoryNew.DATABASE_TABLE2.getByObjects(params);
+        const result = await DATABASE_TABLE2.getByObjects(params);
         return result.Responses[TABLE_NAMES.upschool_concept_blocks_table];
     }
 };
