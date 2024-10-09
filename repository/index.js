@@ -6,11 +6,9 @@ const classRepository = require('./classRepository');
 const classTestRepository = require('./classTestRepository');
 const commonRepository = require('./commonRepository');
 const conceptRepository = require('./conceptRepository');
-const dashboardRepository = require('./dashboardRepository');
 const digicardExtension = require('./digicardExtension');
 const digicardRepository = require('./digicardRepository');
 const groupRepository = require('./groupRepository');
-const parentRepository = require('./parentRepository');
 const presetRepository = require('./presetRepository');
 const questionRepository = require('./questionRepository');
 const quizRepository = require('./quizRepository');
@@ -42,11 +40,9 @@ module.exports = {
     classTestRepository,
     commonRepository,
     conceptRepository,
-    dashboardRepository,
     digicardExtension,
     digicardRepository,
     groupRepository,
-    parentRepository,
     presetRepository,
     questionRepository,
     quizRepository,

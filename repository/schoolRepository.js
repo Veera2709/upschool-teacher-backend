@@ -1,10 +1,7 @@
 const dynamoDbCon = require('../awsConfig');
-const { TABLE_NAMES } = require('../constants/tables');
-const indexName = require('../constants/indexes');
 const { DATABASE_TABLE } = require('./baseRepository');
-const helper = require('../helper/helper');
-const constant = require('../constants/constant');
-const baseRepositoryNew = require('./baseRepositoryNew');
+const { DATABASE_TABLE2 } = require('./baseRepositoryNew');
+const { constant, indexes: { Indexes }, tables: { TABLE_NAMES } } = require('../constants');
 
 
 exports.getSchoolDetailsById = function (request, callback) {
@@ -39,5 +36,5 @@ exports.getSchoolDetailsById2 = async (request) => {
         }
     };
 
-    return await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    return await DATABASE_TABLE2.query(params);
 }

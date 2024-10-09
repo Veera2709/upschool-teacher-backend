@@ -1,9 +1,7 @@
 const dynamoDbCon = require('../awsConfig');
-const { TABLE_NAMES } = require('../constants/tables');
-const indexName = require('../constants/indexes');
 const { DATABASE_TABLE } = require('./baseRepository');
 const helper = require('../helper/helper');
-const constant = require('../constants/constant');
+const { constant, indexes: { Indexes }, tables: { TABLE_NAMES } } = require('../constants');
 
 exports.fetchScannerSessionData = function (request, callback) {
     dynamoDbCon.getDB(function (DBErr, dynamoDBCall) {
@@ -17,7 +15,7 @@ exports.fetchScannerSessionData = function (request, callback) {
 
             let read_params = {
                 TableName: TABLE_NAMES.upschool_scanner_session_info,
-                IndexName: indexName.Indexes.common_id_index,
+                IndexName: Indexes.common_id_index,
                 KeyConditionExpression: "common_id = :common_id",
                 FilterExpression: "teacher_id = :teacher_id AND test_id = :test_id",
                 ExpressionAttributeValues: {

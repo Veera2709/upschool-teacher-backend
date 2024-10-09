@@ -1,10 +1,7 @@
 const dynamoDbCon = require('../awsConfig');
-const { TABLE_NAMES } = require('../constants/tables');
-const indexName = require('../constants/indexes');
 const { DATABASE_TABLE } = require('./baseRepository');
-const helper = require('../helper/helper');
-const constant = require('../constants/constant');
-const baseRepositoryNew = require('./baseRepositoryNew');
+const { DATABASE_TABLE2 } = require('./baseRepositoryNew');
+const { constant, indexes: { Indexes }, tables: { TABLE_NAMES } } = require('../constants');
 
 exports.getAllPresets = function (request, callback) {
 
@@ -19,7 +16,7 @@ exports.getAllPresets = function (request, callback) {
 
             let read_params = {
                 TableName: TABLE_NAMES.upschool_presets_table,
-                IndexName: indexName.Indexes.common_id_index,
+                IndexName: Indexes.common_id_index,
                 KeyConditionExpression: "common_id = :common_id",
                 FilterExpression: "preset_status = :preset_status",
                 ExpressionAttributeValues: {
@@ -36,7 +33,7 @@ exports.getAllPresets = function (request, callback) {
 exports.getAllPresets2 = async (request) => {
     let params = {
         TableName: TABLE_NAMES.upschool_presets_table,
-                IndexName: indexName.Indexes.common_id_index,
+                IndexName: Indexes.common_id_index,
                 KeyConditionExpression: "common_id = :common_id",
                 FilterExpression: "preset_status = :preset_status",
                 ExpressionAttributeValues: {
@@ -46,7 +43,7 @@ exports.getAllPresets2 = async (request) => {
 
     };
     console.log({params});
-    const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    const data = await DATABASE_TABLE2.query(params);
     console.log({data});
     return data;
 }

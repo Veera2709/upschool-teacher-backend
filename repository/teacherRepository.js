@@ -1,11 +1,8 @@
 const dynamoDbCon = require('../awsConfig');
-const { TABLE_NAMES } = require('../constants/tables');
-const indexName = require('../constants/indexes');
 const { DATABASE_TABLE } = require('./baseRepository');
-const { successResponse } = require('./baseRepository');
 const helper = require('../helper/helper');
-const constant = require('../constants/constant');
-const baseRepositoryNew = require('./baseRepositoryNew');
+const { DATABASE_TABLE2 } = require('./baseRepositoryNew');
+const { constant, indexes: { Indexes }, tables: { TABLE_NAMES } } = require('../constants');
 
 
 exports.fetchTeacherClientClassData = function (request, callback) {
@@ -65,13 +62,13 @@ exports.fetchTeacherClientClassData2 = async (request) => {
     const fromatedRequest = await helper.getDataByFilterKey(request);
     const params = {
         TableName: TABLE_NAMES.upschool_client_class_table,
-        IndexName: indexName.Indexes.common_id_index,
+        IndexName: Indexes.common_id_index,
         KeyConditionExpression: "common_id = :common_id",
         FilterExpression: fromatedRequest.FilterExpression,
         ExpressionAttributeValues: fromatedRequest.ExpressionAttributeValues,
         ProjectionExpression: "client_class_id, client_class_name"
     };
-    const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    const data = await DATABASE_TABLE2.query(params);
     return data;
 
 };
@@ -132,14 +129,14 @@ exports.fetchTeacherSectionData2 = async (request) => {
     const fromatedRequest = await helper.getDataByFilterKey(request);
     const params = {
         TableName: TABLE_NAMES.upschool_section_table,
-        IndexName: indexName.Indexes.common_id_index,
+        IndexName: Indexes.common_id_index,
         KeyConditionExpression: "common_id = :common_id",
         FilterExpression: fromatedRequest.FilterExpression,
         ExpressionAttributeValues: fromatedRequest.ExpressionAttributeValues,
         ProjectionExpression: "section_id, section_name"
     };
     console.log({params});
-    const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    const data = await DATABASE_TABLE2.query(params);
     return data;
 
 };
@@ -199,13 +196,13 @@ exports.fetchTeacherSubjectData2 = async (request) => {
     const fromatedRequest = await helper.getDataByFilterKey(request);
     const params = {
         TableName: TABLE_NAMES.upschool_subject_table,
-        IndexName: indexName.Indexes.common_id_index,
+        IndexName: Indexes.common_id_index,
         KeyConditionExpression: "common_id = :common_id",
         FilterExpression: fromatedRequest.FilterExpression,
         ExpressionAttributeValues: fromatedRequest.ExpressionAttributeValues,
         ProjectionExpression: "subject_id, subject_title"
     };
-    const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    const data = await DATABASE_TABLE2.query(params);
     return data;
 
 };
@@ -242,7 +239,7 @@ exports.fetchTeacherByID2 = async (request) => {
         }
     };
 
-    return await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    return await DATABASE_TABLE2.query(params);
 }
 exports.updateTeacherInfo = function (request, callback) {
 
@@ -285,7 +282,7 @@ exports.fetchTeacherActivityDetails = function (request, callback) {
 
             let read_params = {
                 TableName: TABLE_NAMES.upschool_teaching_activity,
-                IndexName: indexName.Indexes.common_id_index,
+                IndexName: Indexes.common_id_index,
                 KeyConditionExpression: "common_id = :common_id",
                 FilterExpression: "client_class_id = :client_class_id AND section_id = :section_id AND subject_id = :subject_id AND activity_status = :activity_status",
                 ExpressionAttributeValues: {
@@ -304,7 +301,7 @@ exports.fetchTeacherActivityDetails = function (request, callback) {
 exports.fetchTeacherActivityDetails2 = async (request) => {
     let params = {
         TableName: TABLE_NAMES.upschool_teaching_activity,
-        IndexName: indexName.Indexes.common_id_index,
+        IndexName: Indexes.common_id_index,
         KeyConditionExpression: "common_id = :common_id",
         FilterExpression: "client_class_id = :client_class_id AND section_id = :section_id AND subject_id = :subject_id AND activity_status = :activity_status",
         ExpressionAttributeValues: {
@@ -316,5 +313,5 @@ exports.fetchTeacherActivityDetails2 = async (request) => {
         }
     };
 
-    return await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    return await DATABASE_TABLE2.query(params);
 }
