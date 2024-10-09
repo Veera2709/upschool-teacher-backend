@@ -1,11 +1,8 @@
 const dynamoDbCon = require("../awsConfig");
-const { TABLE_NAMES } = require("../constants/tables");
-const indexName = require("../constants/indexes");
 const { DATABASE_TABLE } = require("./baseRepository");
-const { successResponse } = require("./baseRepository");
 const helper = require("../helper/helper");
-const constant = require("../constants/constant");
-const baseRepositoryNew = require('./baseRepositoryNew');
+const { DATABASE_TABLE2 } = require('./baseRepositoryNew');
+const { constant, indexes: { Indexes }, tables: { TABLE_NAMES } } = require('../constants');
 
 
 exports.fetchBulkData = function (request, callback) {
@@ -120,7 +117,7 @@ exports.fetchBulkDataUsingIndex = function (request, callback) {
 
         let read_params = {
           TableName: TableName,
-          IndexName: indexName.Indexes.common_id_index,
+          IndexName: Indexes.common_id_index,
           KeyConditionExpression: "common_id = :common_id",
           FilterExpression: "" + fetchIdName + " = :" + fetchIdName + "",
           ExpressionAttributeValues: expAttributeVal,
@@ -146,7 +143,7 @@ exports.fetchBulkDataUsingIndex = function (request, callback) {
 
         let read_params = {
           TableName: TableName,
-          IndexName: indexName.Indexes.common_id_index,
+          IndexName: Indexes.common_id_index,
           KeyConditionExpression: "common_id = :common_id",
           FilterExpression: FilterExpressionDynamic,
           ExpressionAttributeValues: ExpressionAttributeValuesDynamic,
@@ -185,7 +182,7 @@ exports.getBulkDataUsingIndexWithActiveStatus = function (request, callback) {
 
         let read_params = {
           TableName: TableName,
-          IndexName: indexName.Indexes.common_id_index,
+          IndexName: Indexes.common_id_index,
           KeyConditionExpression: "common_id = :common_id",
           FilterExpression: "" + fetchIdName + " = :" + fetchIdName + "",
           ExpressionAttributeValues: expAttributeVal,
@@ -218,7 +215,7 @@ exports.getBulkDataUsingIndexWithActiveStatus = function (request, callback) {
 
         let read_params = {
           TableName: TableName,
-          IndexName: indexName.Indexes.common_id_index,
+          IndexName: Indexes.common_id_index,
           KeyConditionExpression: "common_id = :common_id",
           FilterExpression: FilterExpressionDynamic,
           ExpressionAttributeValues: ExpressionAttributeValuesDynamic,
@@ -301,13 +298,13 @@ exports.fetchBulkDataWithProjection2 = async (request) => {
   const fromatedRequest = await helper.getDataByFilterKey(request);
   const params = {
     TableName: TABLE_NAMES.upschool_question_table,
-    IndexName: indexName.Indexes.common_id_index,
+    IndexName: Indexes.common_id_index,
     KeyConditionExpression: "common_id = :common_id",
     FilterExpression: fromatedRequest.FilterExpression,
     ExpressionAttributeValues: fromatedRequest.ExpressionAttributeValues,
   };
   try {
-    return await baseRepositoryNew.DATABASE_TABLE2.query(params);    
+    return await DATABASE_TABLE2.query(params);    
   } catch (error) {
     console.error(`Error fetching quiz results:`, error);
     throw error;
@@ -365,7 +362,7 @@ exports.performBatchWrite = async (batch, userTable) => {
   };
 
   try {
-    await baseRepositoryNew.DATABASE_TABLE2.createMany(req).promise();
+    await DATABASE_TABLE2.createMany(req).promise();
 
     console.log("Doing batch wirte...");
   } catch (error) {

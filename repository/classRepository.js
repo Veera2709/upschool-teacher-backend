@@ -1,10 +1,8 @@
 const dynamoDbCon = require('../awsConfig');
-const { TABLE_NAMES } = require('../constants/tables');
-const indexName = require('../constants/indexes');
 const { DATABASE_TABLE } = require('./baseRepository');
 const helper = require('../helper/helper');
-const constant = require('../constants/constant');
-const baseRepositoryNew = require('./baseRepositoryNew');
+const { DATABASE_TABLE2 } = require('./baseRepositoryNew');
+const { constant, indexes: { Indexes }, tables: { TABLE_NAMES } } = require('../constants');
 
 
 exports.getClientClassIdAndName = function (request, callback) {
@@ -57,7 +55,7 @@ exports.getIndividualClientClassById = function (request, callback) {
 exports.getResult2 = async (request) => {
     const params = {
         TableName: TABLE_NAMES.upschool_test_result,
-        IndexName: indexName.Indexes.common_id_index,
+        IndexName: Indexes.common_id_index,
         KeyConditionExpression: "common_id = :common_id",
         FilterExpression: "class_test_id = :class_test_id AND student_id = :student_id",
         ExpressionAttributeValues: {
@@ -68,7 +66,7 @@ exports.getResult2 = async (request) => {
         ProjectionExpression: "answer_metadata, marks_details, result_id, evaluated"
     };
 
-    const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    const data = await DATABASE_TABLE2.query(params);
     return data;
 };
 exports.modifyStudentMarks = function (request, callback) {
@@ -111,6 +109,6 @@ exports.modifyStudentMarks2 = async (request) => {
         },
 
     }
-    const data = await baseRepositoryNew.DATABASE_TABLE2.updateService(params);
+    const data = await DATABASE_TABLE2.updateService(params);
     return data;
 }

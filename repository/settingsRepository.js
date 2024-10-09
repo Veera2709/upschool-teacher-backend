@@ -1,10 +1,8 @@
 const dynamoDbCon = require('../awsConfig');
-const { TABLE_NAMES } = require('../constants/tables');
-const indexName = require('../constants/indexes');
 const { DATABASE_TABLE } = require('./baseRepository');
 const helper = require('../helper/helper');
-const constant = require('../constants/constant');
-const baseRepositoryNew = require('./baseRepositoryNew');
+const { DATABASE_TABLE2 } = require('./baseRepositoryNew');
+const { constant, indexes: { Indexes }, tables: { TABLE_NAMES } } = require('../constants');
 
 exports.getContentCategories = function (request, callback) {
 
@@ -19,7 +17,7 @@ exports.getContentCategories = function (request, callback) {
             
             let read_params = {
                 TableName: TABLE_NAMES.upschool_content_category,
-                IndexName: indexName.Indexes.common_id_index,
+                IndexName: Indexes.common_id_index,
                 KeyConditionExpression: "common_id = :common_id",
                 FilterExpression: "category_type = :category_type AND category_status = :category_status", 
                 ExpressionAttributeValues: { 
@@ -48,7 +46,7 @@ exports.fetchCategoryByName = function (request, callback) {
 
             let read_params = {
                 TableName: TABLE_NAMES.upschool_content_category,
-                IndexName: indexName.Indexes.common_id_index,
+                IndexName: Indexes.common_id_index,
                 KeyConditionExpression: "common_id = :common_id",
                 FilterExpression: "lc_category_name = :lc_category_name AND category_type = :category_type",
                 ExpressionAttributeValues: {
@@ -186,7 +184,7 @@ exports.getContentDisclaimers = function (request, callback) {
             
             let read_params = {
                 TableName: TABLE_NAMES.upschool_content_disclaimer,
-                IndexName: indexName.Indexes.common_id_index,
+                IndexName: Indexes.common_id_index,
                 KeyConditionExpression: "common_id = :common_id",
                 FilterExpression: "disclaimer_type = :disclaimer_type AND disclaimer_status = :disclaimer_status", 
                 ExpressionAttributeValues: { 
@@ -216,7 +214,7 @@ exports.fetchDisclaimerByLabel = function (request, callback) {
 
             let read_params = {
                 TableName: TABLE_NAMES.upschool_content_disclaimer,
-                IndexName: indexName.Indexes.common_id_index,
+                IndexName: Indexes.common_id_index,
                 KeyConditionExpression: "common_id = :common_id",
                 FilterExpression: "lc_disclaimer_label = :lc_disclaimer_label AND disclaimer_type = :disclaimer_type",
                 ExpressionAttributeValues: {
@@ -356,7 +354,7 @@ exports.getQuestionSources = function (request, callback) {
             
             let read_params = {
                 TableName: TABLE_NAMES.upschool_question_source,
-                IndexName: indexName.Indexes.common_id_index,
+                IndexName: Indexes.common_id_index,
                 KeyConditionExpression: "common_id = :common_id",
                 FilterExpression: "source_type = :source_type AND source_status = :source_status", 
                 ExpressionAttributeValues: { 
@@ -375,7 +373,7 @@ exports.getQuestionSources = function (request, callback) {
 // exports.getQuestionSources2 = async (request) => {
 //     let params = {
 //         TTableName: TABLE_NAMES.upschool_question_source,
-//                 IndexName: indexName.Indexes.common_id_index,
+//                 IndexName: Indexes.common_id_index,
 //                 KeyConditionExpression: "common_id = :common_id",
 //                 FilterExpression: "source_type = :source_type AND source_status = :source_status", 
 //                 ExpressionAttributeValues: { 
@@ -386,13 +384,13 @@ exports.getQuestionSources = function (request, callback) {
 //                 ProjectionExpression: "source_id, source_name",
 
 //     };
-//     const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+//     const data = await DATABASE_TABLE2.query(params);
 //     return data;
 // }
 exports.getQuestionSources2 = async (request) => {
     const params = {
         TableName: TABLE_NAMES.upschool_question_source,
-                IndexName: indexName.Indexes.common_id_index,
+                IndexName: Indexes.common_id_index,
                 KeyConditionExpression: "common_id = :common_id",
                 FilterExpression: "source_type = :source_type AND source_status = :source_status", 
                 ExpressionAttributeValues: { 
@@ -403,7 +401,7 @@ exports.getQuestionSources2 = async (request) => {
                 ProjectionExpression: "source_id, source_name",
     };
     console.log({params});
-    const data =await baseRepositoryNew.DATABASE_TABLE2.query(params); 
+    const data =await DATABASE_TABLE2.query(params); 
     return data;
 };
 
@@ -420,7 +418,7 @@ exports.fetchSourceByLabel = function (request, callback) {
 
             let source_params = {
                 TableName: TABLE_NAMES.upschool_question_source,
-                IndexName: indexName.Indexes.common_id_index,
+                IndexName: Indexes.common_id_index,
                 KeyConditionExpression: "common_id = :common_id",
                 FilterExpression: "lc_source_name = :lc_source_name AND source_type = :source_type",
                 ExpressionAttributeValues: {
@@ -558,7 +556,7 @@ exports.getCognitiveSkills = function (request, callback) {
             
             let read_params = {
                 TableName: TABLE_NAMES.upschool_cognitive_skill,
-                IndexName: indexName.Indexes.common_id_index,
+                IndexName: Indexes.common_id_index,
                 KeyConditionExpression: "common_id = :common_id",
                 FilterExpression: "cognitive_type = :cognitive_type AND cognitive_status = :cognitive_status", 
                 ExpressionAttributeValues: { 
@@ -588,7 +586,7 @@ exports.fetchCognitiveSkillByLabel = function (request, callback) {
 
             let source_params = {
                 TableName: TABLE_NAMES.upschool_cognitive_skill,
-                IndexName: indexName.Indexes.common_id_index,
+                IndexName: Indexes.common_id_index,
                 KeyConditionExpression: "common_id = :common_id",
                 FilterExpression: "lc_cognitive_name = :lc_cognitive_name AND cognitive_type = :cognitive_type",
                 ExpressionAttributeValues: {
@@ -778,7 +776,7 @@ exports.fetchBulkCognitiveSkillNameById2 = async (request) => {
             }
         };
 
-        const result = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+        const result = await DATABASE_TABLE2.query(params);
         return result.Items;
     } else {
         // When there are multiple cognitive IDs
@@ -794,7 +792,7 @@ exports.fetchBulkCognitiveSkillNameById2 = async (request) => {
             }
         };
 
-        const result = await baseRepositoryNew.DATABASE_TABLE2.getByObjects(params);
+        const result = await DATABASE_TABLE2.getByObjects(params);
         return result.Responses[TABLE_NAMES.upschool_cognitive_skill];
     }
 };

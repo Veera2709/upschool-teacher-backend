@@ -1,10 +1,8 @@
 const dynamoDbCon = require('../awsConfig');
-const { TABLE_NAMES } = require('../constants/tables');
-const indexName = require('../constants/indexes');
 const { DATABASE_TABLE } = require('./baseRepository');
 const helper = require('../helper/helper');
-const constant = require('../constants/constant');
-const baseRepositoryNew = require('./baseRepositoryNew');
+const { DATABASE_TABLE2 } = require('./baseRepositoryNew');
+const { constant, indexes: { Indexes }, tables: { TABLE_NAMES } } = require('../constants');
 
 
 exports.fetchActiveBluePrints = function (request, callback) {
@@ -20,7 +18,7 @@ exports.fetchActiveBluePrints = function (request, callback) {
 
             let read_params = {
                 TableName: TABLE_NAMES.upschool_blueprint_table,
-                IndexName: indexName.Indexes.common_id_index,
+                IndexName: Indexes.common_id_index,
                 KeyConditionExpression: "common_id = :common_id",
                 FilterExpression: "blueprint_status = :blueprint_status",
                 ExpressionAttributeValues: {
@@ -36,7 +34,7 @@ exports.fetchActiveBluePrints = function (request, callback) {
 exports.fetchActiveBluePrints2 = async (request) => {
     let params = {
         TableName: TABLE_NAMES.upschool_blueprint_table,
-                IndexName: indexName.Indexes.common_id_index,
+                IndexName: Indexes.common_id_index,
                 KeyConditionExpression: "common_id = :common_id",
                 FilterExpression: "blueprint_status = :blueprint_status AND blueprint_type = :blueprint_type",
                 ExpressionAttributeValues: {
@@ -47,7 +45,7 @@ exports.fetchActiveBluePrints2 = async (request) => {
                 ProjectionExpression: "blueprint_id, blueprint_name, description, test_duration, display_name",
 
     };
-    const data= await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    const data= await DATABASE_TABLE2.query(params);
     return data.Items;
 }
 exports.fetchBlueprintById = function (request, callback) {
@@ -130,13 +128,13 @@ exports.fetchBluePrintData2 = async (request) => {
     const fromatedRequest = await helper.getDataByFilterKey(request);
     let params = {
         TableName: TABLE_NAMES.upschool_blueprint_table,
-        IndexName: indexName.Indexes.common_id_index,
+        IndexName: Indexes.common_id_index,
         KeyConditionExpression: "common_id = :common_id",
         FilterExpression: fromatedRequest.FilterExpression,
         ExpressionAttributeValues: fromatedRequest.ExpressionAttributeValues,
         ProjectionExpression: "blueprint_id, blueprint_name",
 
     };
-    const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    const data = await DATABASE_TABLE2.query(params);
     return data.Items;
 }

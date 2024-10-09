@@ -437,8 +437,6 @@ exports.viewClassReportQuestions = async (request) => {
       resolve(res);
     });
   });
-  console.log("sheetal",questions.Items);
-  
   questions.Items.map((question, i) => {
     question.questionNo = (i + 1)
     question.set = questionSet.find((q) => q.id == question.id).sets

@@ -1,11 +1,8 @@
 const dynamoDbCon = require('../awsConfig');
-const { TABLE_NAMES } = require('../constants/tables');
-const indexName = require('../constants/indexes');
 const { DATABASE_TABLE } = require('./baseRepository');
-const { successResponse } = require('./baseRepository');
 const helper = require('../helper/helper');
-const constant = require('../constants/constant');
-const baseRepositoryNew = require('./baseRepositoryNew');
+const { DATABASE_TABLE2 } = require('./baseRepositoryNew');
+const { constant, indexes: { Indexes }, tables: { TABLE_NAMES } } = require('../constants');
 
 exports.fetchDigiCardData = function (request, callback) {
 
@@ -127,7 +124,7 @@ exports.fetchDigiCardDisplayTitleID2 = async (request) => {
 
     const params = {
         TableName: TABLE_NAMES.upschool_digi_card_table,
-        IndexName: indexName.Indexes.common_id_index,
+        IndexName: Indexes.common_id_index,
         KeyConditionExpression: "common_id = :common_id",
         FilterExpression: `${fromatedRequest.FilterExpression} AND digicard_status = :digicard_status`,
         ExpressionAttributeValues: {
@@ -138,7 +135,7 @@ exports.fetchDigiCardDisplayTitleID2 = async (request) => {
     };
 
 
-    return await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    return await DATABASE_TABLE2.query(params);
 
 };
 
@@ -241,6 +238,6 @@ exports.fetchDigiCardByID2 = async (request) => {
 
     };
     console.log({ params });
-    const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    const data = await DATABASE_TABLE2.query(params);
     return data;
 }

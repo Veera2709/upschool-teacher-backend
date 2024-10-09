@@ -1,11 +1,8 @@
 const dynamoDbCon = require('../awsConfig');
-const { TABLE_NAMES } = require('../constants/tables');
-const indexName = require('../constants/indexes');
 const { DATABASE_TABLE } = require('./baseRepository');
 const helper = require('../helper/helper');
-const constant = require('../constants/constant');
-const baseRepositoryNew = require('./baseRepositoryNew');
-
+const { DATABASE_TABLE2 } = require('./baseRepositoryNew');
+const { constant, indexes: { Indexes }, tables: { TABLE_NAMES } } = require('../constants');
 
 exports.fetchTestDataOfStudent = function (request, callback) {
     dynamoDbCon.getDB(function (DBErr, dynamoDBCall) {
@@ -19,7 +16,7 @@ exports.fetchTestDataOfStudent = function (request, callback) {
 
             let read_params = {
                 TableName: TABLE_NAMES.upschool_test_result,
-                IndexName: indexName.Indexes.common_id_index,
+                IndexName: Indexes.common_id_index,
                 KeyConditionExpression: "common_id = :common_id",
                 FilterExpression: "class_test_id = :class_test_id AND student_id = :student_id",
                 ExpressionAttributeValues: {
@@ -107,7 +104,7 @@ exports.fetchStudentresultMetadata = function (request, callback) {
 
             let read_params = {
                 TableName: TABLE_NAMES.upschool_test_result,
-                IndexName: indexName.Indexes.common_id_index,
+                IndexName: Indexes.common_id_index,
                 KeyConditionExpression: "common_id = :common_id",
                 FilterExpression: "class_test_id = :class_test_id AND evaluated = :evaluated",
                 ExpressionAttributeValues: {
@@ -124,7 +121,7 @@ exports.fetchStudentresultMetadata = function (request, callback) {
 exports.fetchStudentresultMetadata2 = async (request) => {
     let params = {
         TableName: TABLE_NAMES.upschool_test_result,
-                IndexName: indexName.Indexes.common_id_index,
+                IndexName: Indexes.common_id_index,
                 KeyConditionExpression: "common_id = :common_id",
                 FilterExpression: "class_test_id = :class_test_id AND evaluated = :evaluated",
                 ExpressionAttributeValues: {
@@ -135,7 +132,7 @@ exports.fetchStudentresultMetadata2 = async (request) => {
         
 
     };
-    const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    const data = await DATABASE_TABLE2.query(params);
     return data;
 }
 
@@ -182,6 +179,6 @@ exports.changeTestEvaluationStatus2 = async (request) => {
                 },
 
     }
-    const data = (await baseRepositoryNew.DATABASE_TABLE2.updateService(params)).$metadata.httpStatusCode;
+    const data = (await DATABASE_TABLE2.updateService(params)).$metadata.httpStatusCode;
     return data;
 }
