@@ -437,6 +437,7 @@ exports.viewClassReportQuestions = async (request) => {
       resolve(res);
     });
   });
+  let marksInTotal = 0;
   questions.Items.map((question, i) => {
     question.questionNo = (i + 1)
     question.set = questionSet.find((q) => q.id == question.id).sets
@@ -454,7 +455,7 @@ exports.viewClassReportQuestions = async (request) => {
       })
       question.answers_of_question[i].mostCommonPercentage = count > 0 ? (count / totalStudents) * 100 : 0
     })
-
+    
     //% of correct answers
     const correctAnswer = question.answers_of_question.find(answer => answer.answer_display === "Yes")
     question.correctAnswer = correctAnswer ? correctAnswer.answer_content : "N.A"
@@ -466,6 +467,9 @@ exports.viewClassReportQuestions = async (request) => {
           (String(answer.modified_marks) === 'N.A.' && Number(answer.obtained_marks) === Number(question.marks)) ||
           (String(answer.modified_marks) !== 'N.A.' && Number(answer.modified_marks) === Number(question.marks))
         ) {
+          console.log("mark", Number(answer.modified_marks) ,Number(answer.obtainedMarks))
+          marksInTotal = String(answer.modified_marks) !== 'N.A.' ? marksInTotal + Number(answer.modified_marks) : marksInTotal + Number(answer.obtainedMarks)
+          console.log("mark cal",marksInTotal)
           return count + 1;
         }
         return count;
@@ -513,7 +517,10 @@ exports.viewClassReportQuestions = async (request) => {
     averagePercentage: levelTotals[level].total / levelTotals[level].count,
     noOfQuestions: levelTotals[level].count
   }));
-  return { questions: questions.Items, cognitiveSkillAverageData: cognitiveResult, difficultyLevelAverageData: difficultyResult }
+  const pieValue = (marksInTotal / totalStudents) * 100
+  console.log(pieValue,marksInTotal,totalStudents);
+  
+  return { questions: questions.Items, cognitiveSkillAverageData: cognitiveResult, difficultyLevelAverageData: difficultyResult ,pie : pieValue}
 }
 
 exports.viewClassReportFocusArea = async (request) => {
@@ -529,7 +536,6 @@ exports.viewClassReportFocusArea = async (request) => {
       studentId: item.student_id // Accessing student_id
     }
   });
-  console.log(quizResultMarksData)
   const totalStudents = quizResultMarksData.length;
   const questionSetA = [...new Set(Object.values(quizData.Item.question_track_details.qp_set_a).flat())];//only set a for focus area
   const conceptAndQuestions = questionSetA.reduce((acc, item) => {
@@ -619,31 +625,31 @@ exports.viewClassReportFocusArea = async (request) => {
     let passPercentage = request.config === "post_quiz_config" ? schoolDataRes.Items[0].post_quiz_config.class_percentage : schoolDataRes.Items[0].pre_quiz_config.class_percentage
     let studentsData = []
     item.passPercentage = passPercentage
-    console.log({groupedMarks});
-    
+    console.log({ groupedMarks });
+
     groupedMarks.map((student) => {
       let marks = 0;
       console.log(student.details);
-      student.details.map((q)=>{
+      student.details.map((q) => {
         item.questions.map((question) => {
           if (q.questionId === question) {
-            console.log("detailedmarkes",q.marks);
+            console.log("detailedmarkes", q.marks);
             marks = marks + Number(q.marks)
           }
         })
       })
-      
-      let finalMarks = (marks / totalMarksForAllQuestions )*100
-      console.log({marks},item.questions.length,{finalMarks});
+
+      let finalMarks = (marks / totalMarksForAllQuestions) * 100
+      console.log({ marks }, item.questions.length, { finalMarks });
 
       let passed = (finalMarks >= passPercentage) ? true : false
       studentsData.push({ student: student.studentid, passed: passed })
     })
     // const studentIds = studentsData.filter((student)=>student.passed == false)
     // const failedStudents = studentIds.length && await studentRepository.getStudentsByIdName2({ student_id: studentIds });
-    console.log({studentsData});
+    console.log({ studentsData });
     const countPassed = studentsData.filter(student => student.passed).length;
-    item.passed = countPassed / totalStudents //[%] value
+    item.passed =( countPassed / totalStudents)*100 //[%] value
     item.count = countPassed //pass % numerator
     item.totalStudents = totalStudents //pass % denominator
     if (item.passed >= passPercentage) {
@@ -655,7 +661,7 @@ exports.viewClassReportFocusArea = async (request) => {
 
   })
   // console.log({ conceptAndQuestions });
-  return { conceptAndQuestions: conceptAndQuestions, conceptsToFocus: conceptsToFocus ,quizData:quizData}
+  return { conceptAndQuestions: conceptAndQuestions, conceptsToFocus: conceptsToFocus, quizData: quizData }
   // return groupedMarks
 }
 
