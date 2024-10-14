@@ -80,6 +80,16 @@ exports.viewClassReportFocusArea =async (req, res, next) => {
     }
 };
 
+exports.viewChapterwisePerformanceTracking =async (req, res, next) => {
+    try {
+    let request = req.body;
+    const reportData =  await reportServices.viewChapterwisePerformanceTracking(request);
+    return formatResponse(res, reportData);
+    } catch (error) {
+    next(error)
+    }
+};
+
 exports.preLearningBlueprintDetails = async (req, res, next) => {
     try {
     let request = req.body;

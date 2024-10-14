@@ -455,7 +455,7 @@ exports.viewClassReportQuestions = async (request) => {
       })
       question.answers_of_question[i].mostCommonPercentage = count > 0 ? (count / totalStudents) * 100 : 0
     })
-    
+
     //% of correct answers
     const correctAnswer = question.answers_of_question.find(answer => answer.answer_display === "Yes")
     question.correctAnswer = correctAnswer ? correctAnswer.answer_content : "N.A"
@@ -467,9 +467,9 @@ exports.viewClassReportQuestions = async (request) => {
           (String(answer.modified_marks) === 'N.A.' && Number(answer.obtained_marks) === Number(question.marks)) ||
           (String(answer.modified_marks) !== 'N.A.' && Number(answer.modified_marks) === Number(question.marks))
         ) {
-          console.log("mark", Number(answer.modified_marks) ,Number(answer.obtainedMarks))
+          console.log("mark", Number(answer.modified_marks), Number(answer.obtainedMarks))
           marksInTotal = String(answer.modified_marks) !== 'N.A.' ? marksInTotal + Number(answer.modified_marks) : marksInTotal + Number(answer.obtainedMarks)
-          console.log("mark cal",marksInTotal)
+          console.log("mark cal", marksInTotal)
           return count + 1;
         }
         return count;
@@ -518,9 +518,9 @@ exports.viewClassReportQuestions = async (request) => {
     noOfQuestions: levelTotals[level].count
   }));
   const pieValue = (marksInTotal / totalStudents) * 100
-  console.log(pieValue,marksInTotal,totalStudents);
-  
-  return { questions: questions.Items, cognitiveSkillAverageData: cognitiveResult, difficultyLevelAverageData: difficultyResult ,pie : pieValue}
+  console.log(pieValue, marksInTotal, totalStudents);
+
+  return { questions: questions.Items, cognitiveSkillAverageData: cognitiveResult, difficultyLevelAverageData: difficultyResult, pie: pieValue }
 }
 
 exports.viewClassReportFocusArea = async (request) => {
@@ -649,7 +649,7 @@ exports.viewClassReportFocusArea = async (request) => {
     // const failedStudents = studentIds.length && await studentRepository.getStudentsByIdName2({ student_id: studentIds });
     console.log({ studentsData });
     const countPassed = studentsData.filter(student => student.passed).length;
-    item.passed =( countPassed / totalStudents)*100 //[%] value
+    item.passed = (countPassed / totalStudents) * 100 //[%] value
     item.count = countPassed //pass % numerator
     item.totalStudents = totalStudents //pass % denominator
     if (item.passed >= passPercentage) {
@@ -663,6 +663,46 @@ exports.viewClassReportFocusArea = async (request) => {
   // console.log({ conceptAndQuestions });
   return { conceptAndQuestions: conceptAndQuestions, conceptsToFocus: conceptsToFocus, quizData: quizData }
   // return groupedMarks
+}
+
+exports.viewChapterwisePerformanceTracking = async (request) => {
+
+  const subject_res = await subjectRepository.getSubjetById2(request);
+  let subject_unit_id = subject_res.Items[0].subject_unit_id;
+  const unit_res = await unitRepository.fetchUnitData2({ subject_unit_id });
+  const unit_chapter_id = [...new Set(unit_res.flatMap(e => e.unit_chapter_id))];
+  const chapter_res = await chapterRepository.fetchBulkChaptersIDName2({ unit_chapter_id });
+  const chapter_ids = chapter_res.map(chapter => chapter.chapter_id)
+  console.log({ chapter_ids });
+
+  const quizDataRes = await quizRepository.fetchAllQuizBasedonChapter2(request, chapter_ids);
+  const quizids = quizDataRes.Items.map(q => q.quiz_id)
+  const quizResultDataRes = quizids.length && await quizResultRepository.fetchBulkQuizResultsByID2({ unit_Quiz_id: quizids })
+  const totalStudentsforAllChapters = quizResultDataRes.length
+  const totalStudentsforeachChapter = chapter_ids.map(chapter => {
+    let studentCount = 0;
+    let marksTotal = 0;
+    let Avgpercentage = 0;
+    quizDataRes.Items.map(quiz => {
+      if (chapter === quiz.chapter_id) {
+        quizResultDataRes.map(result => {
+          if (quiz.quiz_id === result.quiz_id) {
+            studentCount++;
+            //marks in each chapter
+            result.marks_details[0].qa_details.map(marks => {
+              String(marks.modified_marks) === 'N.A.' ? marksTotal = marksTotal + Number(marks.obtained_marks) : marksTotal = marksTotal + Number(marks.modified_marks)
+
+            })
+          }
+        })
+      }
+    })
+    Avgpercentage = (marksTotal/studentCount)*100
+    return { chapterId: chapter, studentCount: studentCount ,marksTotal:marksTotal,averagePercentage: Avgpercentage.toFixed(2)}
+  })
+  console.log({ totalStudentsforeachChapter });
+
+  return { chapter_res, quizDataRes, quizResultDataRes }
 }
 
 exports.preLearningBlueprintDetails = async (request) => {
