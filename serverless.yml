@@ -395,4 +395,8 @@ functions:
       - http:
           path: /v1/comprehensivePerformanceConceptWise
           method: POST
+          cors: true
+      - http:
+          path: /v1/viewChapterwisePerformanceTracking
+          method: POST
           cors: true  
