@@ -439,7 +439,9 @@ exports.viewClassReportQuestions = async (request) => {
     });
   });
   let marksInTotal = 0;
+  let possiblemarks = 0;
   questions.Items.map((question, i) => {
+    possiblemarks = possiblemarks + question.marks
     question.questionNo = (i + 1)
     question.set = questionSet.find((q) => q.id == question.id).sets
     const allAnswers = quizResultMarksData.flat().filter(ans => ans.question_id === question.question_id)
@@ -518,8 +520,8 @@ exports.viewClassReportQuestions = async (request) => {
     averagePercentage: levelTotals[level].total / levelTotals[level].count,
     noOfQuestions: levelTotals[level].count
   }));
-  const pieValue = (marksInTotal / totalStudents) * 100
-  console.log(pieValue, marksInTotal, totalStudents);
+  const pieValue = (marksInTotal / (possiblemarks*totalStudents)) * 100
+  console.log(pieValue, marksInTotal,possiblemarks, totalStudents);
 
   return { questions: questions.Items, cognitiveSkillAverageData: cognitiveResult, difficultyLevelAverageData: difficultyResult, pie: pieValue }
 }
