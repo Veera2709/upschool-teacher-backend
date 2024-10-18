@@ -60,8 +60,6 @@ const checkDuplicateTopics = async (resTopics, checkTopics) => {
 
 exports.fetchQuizBasedonStatus = async (request) => await quizRepository.getQuizBasedonStatus2(request)
 
-
-
 exports.getQuizResult = async (request) => {
     const result_response = await quizRepository.getQuizResult2(request)
 
@@ -198,7 +196,7 @@ exports.setQuestionPaperView = async (questionIDs, questionData) => {
 
     return individualQuestions.filter(q => q !== null); // Remove null values (if any question IDs did not match)
 };
-``
+
 
 exports.fetchQuizTemplates = async (request) => {
     try {

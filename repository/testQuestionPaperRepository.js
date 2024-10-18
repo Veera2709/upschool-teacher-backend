@@ -35,7 +35,7 @@ exports.getTestQuestionPapersBasedonStatus = function (request, callback) {
                 KeyConditionExpression: "common_id = :common_id",
                 FilterExpression: filterExpression,
                 ExpressionAttributeValues: expressionAttributeValues,
-                ProjectionExpression: ["question_paper_id", "question_paper_name", "blueprint_id"]
+                ProjectionExpression: ["question_paper_id", "question_paper_name", "blueprint_id", "blueprint_type"]
             };
 
             DATABASE_TABLE.queryRecord(docClient, read_params, callback);
