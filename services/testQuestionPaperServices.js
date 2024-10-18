@@ -1,7 +1,5 @@
-const blueprintRepository = require("../repository/blueprintRepository");
-const testQuestionPaperRepository = require("../repository/testQuestionPaperRepository");
+const {blueprintRepository,testQuestionPaperRepository,commonRepository} = require("../repository")
 const constant = require('../constants/constant');
-const commonRepository = require("../repository/commonRepository");
 const helper = require('../helper/helper');
 const { TABLE_NAMES } = require('../constants/tables');
 
@@ -39,6 +37,25 @@ exports.fetchTestQuestionPapersBasedonStatus = (request, callback) => {
     }
   })
 }
+// exports.fetchTestQuestionPapersBasedonStatus = async (request) => {
+//   try {
+//     const testQuestionPaperRes = await testQuestionPaperRepository.getTestQuestionPapersBasedonStatus2(request);    
+//     const blueprintArray = testQuestionPaperRes.map((val) => ({ "blueprint_id": val.blueprint_id }));
+//     const fetchBluePrintRes = await blueprintRepository.fetchBluePrintData2({ items: blueprintArray, condition: "OR" });
+//     testQuestionPaperRes.forEach((testPaper) => {
+//       const blueprint = fetchBluePrintRes.find((bp) => bp.blueprint_id === testPaper.blueprint_id);
+//       if (blueprint) {
+//         testPaper.blueprint_name = blueprint.blueprint_name;
+//         delete testPaper.blueprint_id;
+//       }
+//     });
+//     return testQuestionPaperRes;
+//   } catch (error) {
+//     console.error(error);
+//     throw error; 
+//   }
+// };
+
 
 exports.addTestQuestionPaper = (request, callback) => {
 

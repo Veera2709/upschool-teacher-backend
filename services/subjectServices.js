@@ -1,12 +1,7 @@
-const subjectRepository = require("../repository/subjectRepository");  
-const unitRepository = require("../repository/unitRepository"); 
-const teacherRepository = require("../repository/teacherRepository");
-const chapterRepository = require("../repository/chapterRepository");  
+const {subjectRepository,unitRepository,teacherRepository,chapterRepository,commonRepository} = require("../repository")  
 const constant = require('../constants/constant');
 const helper = require('../helper/helper');
 const { TABLE_NAMES } = require('../constants/tables');
-const commonRepository = require("../repository/commonRepository");
-const commonServices = require("../services/commonServices");
 
 exports.getUnitsandChaptersBasedonSubjects = function (request, callback) {
 

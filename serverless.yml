@@ -1,7 +1,7 @@
 service: upschool-teacher
 provider:
   name: aws
-  runtime: nodejs14.x
+  runtime: nodejs20.x
   lambdaHashingVersion: '20201221'
   region: ap-south-1
   stage: ${opt:stage}
@@ -29,6 +29,11 @@ provider:
             - dynamodb:UpdateItem
             - dynamodb:DeleteItem
             - dynamodb:CreateTable
+          Resource:
+            - "*"
+        - Effect: Allow
+          Action:
+            - s3:"*"
           Resource:
             - "*"
 functions:
@@ -359,4 +364,47 @@ functions:
           path: /v1/postLearningSummaryDetails
           method: POST
           cors: true 
-
+      - http:
+          path: /v1/viewAnalysisIndividualReport
+          method: POST
+          cors: true         
+      - http:
+          path: /v1/preLearningBlueprintDetails
+          method: POST
+          cors: true   
+      - http:
+          path: /v1/getIndividualQuizReport
+          method: POST
+          cors: true   
+      - http:
+          path: /v1/comprehensivePerformanceChapterWise
+          method: POST
+          cors: true 
+      - http:
+          path: /v1/comprehensivePerformanceTopicWise
+          method: POST
+          cors: true  
+      - http:
+          path: /v1/viewClassReportQuestions
+          method: POST
+          cors: true 
+      - http:
+          path: /v1/viewClassReportFocusArea
+          method: POST
+          cors: true 
+      - http:
+          path: /v1/comprehensivePerformanceConceptWise
+          method: POST
+          cors: true  
+      - http:
+          path: /v1/viewChapterwisePerformanceTracking
+          method: POST
+          cors: true  
+      - http:
+          path: /v1/getActionsAndRecommendations
+          method: POST
+          cors: true   
+      - http:
+          path: /v1/getActionsAndRecommendationDetail
+          method: POST
+          cors: true   

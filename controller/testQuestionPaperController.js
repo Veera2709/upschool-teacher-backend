@@ -1,5 +1,6 @@
-const testQuestionPaperServices = require("../services/testQuestionPaperServices");
+const {testQuestionPaperServices} = require("../services");
 const constants = require("../constants/constant");
+const { formatResponse } = require("../helper/helper");
 
 exports.fetchTestQuestionPapersBasedonStatus = (req, res, next) => {
     console.log("fetchTestQuestionPapersBasedonStatus : ");
@@ -14,7 +15,6 @@ exports.fetchTestQuestionPapersBasedonStatus = (req, res, next) => {
         }
     });
 };
-
 exports.addTestQuestionPaper = (req, res, next) => {
     console.log("addTestQuestionPaper : ");
     let request = req.body;    

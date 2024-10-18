@@ -1,9 +1,8 @@
 const dynamoDbCon = require('../awsConfig');
-const { TABLE_NAMES } = require('../constants/tables');
-const indexName = require('../constants/indexes');
 const { DATABASE_TABLE } = require('./baseRepository');
 const helper = require('../helper/helper');
-const constant = require('../constants/constant');
+const { DATABASE_TABLE2 } = require('./baseRepositoryNew');
+const { constant, indexes: { Indexes }, tables: { TABLE_NAMES } } = require('../constants');
 
 exports.getTestQuestionPapersBasedonStatus = function (request, callback) {
 
@@ -16,26 +15,52 @@ exports.getTestQuestionPapersBasedonStatus = function (request, callback) {
 
             let docClient = dynamoDBCall;
 
+            let filterExpression = "client_class_id = :client_class_id AND section_id = :section_id AND subject_id = :subject_id AND question_paper_status = :question_paper_status";
+            let expressionAttributeValues = {
+                ":common_id": constant.constValues.common_id,
+                ":client_class_id": request.data.client_class_id,
+                ":section_id": request.data.section_id,
+                ":subject_id": request.data.subject_id,
+                ":question_paper_status": request.data.question_paper_status
+            };
+
+            if (request.data.blueprint_type) {
+                filterExpression += " AND blueprint_type = :blueprint_type";
+                expressionAttributeValues[":blueprint_type"] = request.data.blueprint_type;
+            }
+
             let read_params = {
                 TableName: TABLE_NAMES.upschool_test_question_paper,
-                IndexName: indexName.Indexes.common_id_index,
+                IndexName: Indexes.common_id_index,
                 KeyConditionExpression: "common_id = :common_id",
-                FilterExpression: "client_class_id = :client_class_id AND section_id = :section_id AND subject_id = :subject_id AND question_paper_status = :question_paper_status",
-                ExpressionAttributeValues: {
-                    ":common_id": constant.constValues.common_id,
-                    ":client_class_id": request.data.client_class_id,
-                    ":section_id": request.data.section_id,
-                    ":subject_id": request.data.subject_id,
-                    ":question_paper_status": request.data.question_paper_status
-                },
-                ProjectionExpression: ["question_paper_id", "question_paper_name", "blueprint_id"]
-
-            }
+                FilterExpression: filterExpression,
+                ExpressionAttributeValues: expressionAttributeValues,
+                ProjectionExpression: ["question_paper_id", "question_paper_name", "blueprint_id", "blueprint_type"]
+            };
 
             DATABASE_TABLE.queryRecord(docClient, read_params, callback);
         }
     });
-}
+};
+
+exports.getTestQuestionPapersBasedonStatus2 = async (request) => {
+    const params = {
+        TableName: TABLE_NAMES.upschool_test_question_paper,
+        IndexName: Indexes.common_id_index,
+        KeyConditionExpression: "common_id = :common_id",
+        FilterExpression: "client_class_id = :client_class_id AND section_id = :section_id AND subject_id = :subject_id AND question_paper_status = :question_paper_status",
+        ExpressionAttributeValues: {
+            ":common_id": constant.constValues.common_id,
+            ":client_class_id": request.data.client_class_id,
+            ":section_id": request.data.section_id,
+            ":subject_id": request.data.subject_id,
+            ":question_paper_status": request.data.question_paper_status
+        },
+        ProjectionExpression: "question_paper_id, question_paper_name, blueprint_id"
+    };
+    const data = await DATABASE_TABLE2.query(params);
+    return data.Items;
+};
 
 exports.fetchTestQuestionPaperbyName = function (request, callback) {
 
@@ -50,7 +75,7 @@ exports.fetchTestQuestionPaperbyName = function (request, callback) {
             let read_params = {
                 TableName: TABLE_NAMES.upschool_test_question_paper,
 
-                IndexName: indexName.Indexes.common_id_index,
+                IndexName: Indexes.common_id_index,
                 KeyConditionExpression: "common_id = :common_id",
                 FilterExpression: "lc_question_paper_name = :lc_question_paper_name",
                 ExpressionAttributeValues: {
@@ -92,6 +117,7 @@ exports.insertTestQuestionPaper = function (request, callback) {
                     "common_id": constant.constValues.common_id,
                     "created_ts": helper.getCurrentTimestamp(),
                     "updated_ts": helper.getCurrentTimestamp(),
+                    "blueprint_type" : request.data.blueprint_type,
                 },
             }
             DATABASE_TABLE.putRecord(docClient, insert_question_paper_params, callback);
@@ -119,6 +145,19 @@ exports.fetchTestQuestionPaperByID = function (request, callback) {
             DATABASE_TABLE.queryRecord(docClient, read_params, callback);
         }
     });
+}
+exports.fetchTestQuestionPaperByID2 = async (request) => {
+    let params = {
+        TableName: TABLE_NAMES.upschool_test_question_paper,
+        KeyConditionExpression: "question_paper_id = :question_paper_id",
+        ExpressionAttributeValues: {
+            ":question_paper_id": request.data.question_paper_id
+        }
+
+    };
+    console.log(params);
+    const data = await DATABASE_TABLE2.query(params);
+    return data;
 }
 
 exports.getTestQuestionPaperById = function (request, callback) {
@@ -158,7 +197,7 @@ exports.getClassTestsBasedonIds = function (request, callback) {
 
             let read_params = {
                 TableName: TABLE_NAMES.upschool_class_test_table,
-                IndexName: indexName.Indexes.common_id_index,
+                IndexName: Indexes.common_id_index,
                 KeyConditionExpression: "common_id = :common_id",
                 FilterExpression: "class_test_status = :class_test_status AND question_paper_id = :question_paper_id",
                 ExpressionAttributeValues: {
