@@ -1,11 +1,8 @@
 const dynamoDbCon = require('../awsConfig');
-const { TABLE_NAMES } = require('../constants/tables');
-const indexName = require('../constants/indexes');
 const { DATABASE_TABLE } = require('./baseRepository');
-const { successResponse } = require('./baseRepository');
-const baseRepositoryNew = require('./baseRepositoryNew');
 const helper = require('../helper/helper');
-const constant = require('../constants/constant');
+const { DATABASE_TABLE2 } = require('./baseRepositoryNew');
+const { constant, indexes: { Indexes }, tables: { TABLE_NAMES } } = require('../constants');
 
 
 exports.fetchChapterByID = function (request, callback) {
@@ -42,7 +39,7 @@ exports.fetchChapterByID2 = async (request) => {
                 }
     };
 
-    return await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    return await DATABASE_TABLE2.query(params);
 }
 
 exports.fetchChapterData = function (request, callback) {
@@ -107,7 +104,7 @@ exports.fetchChapterData2 = async (request) => {
                     },
                     ProjectionExpression: "chapter_id, chapter_title, chapter_status, chapter_updated_ts",
         };
-        const unit_data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+        const unit_data = await DATABASE_TABLE2.query(params);
         return unit_data.Items;
     } else {
         const params = {
@@ -116,7 +113,7 @@ exports.fetchChapterData2 = async (request) => {
                     ExpressionAttributeValues: ExpressionAttributeValuesDynamic,
                     ProjectionExpression: "chapter_id, chapter_title, chapter_status, chapter_updated_ts",
         };
-        const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+        const data = await DATABASE_TABLE2.query(params);
         console.log({data});
         return data;
     }
@@ -190,7 +187,7 @@ exports.fetchBulkChaptersIDName2 = async (request) => {
             ProjectionExpression: "chapter_id, chapter_title, display_name, prelearning_topic_id, postlearning_topic_id",
         };
 
-        const chapterData = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+        const chapterData = await DATABASE_TABLE2.query(params);
         return chapterData.Items;
     } else {
         // Use BatchGetCommand for multiple chapter IDs
@@ -204,7 +201,7 @@ exports.fetchBulkChaptersIDName2 = async (request) => {
             },
         };
 
-        const data = await baseRepositoryNew.DATABASE_TABLE2.getByObjects(params);
+        const data = await DATABASE_TABLE2.getByObjects(params);
         return data.Responses[TABLE_NAMES.upschool_chapter_table]; // Return the fetched chapters
     }
 };
@@ -264,14 +261,14 @@ exports.fetchChaptersIDandChapterTopicID2 = async (request) => {
     const fromatedRequest = await helper.getDataByFilterKey(request);
     const params = {
         TableName: TABLE_NAMES.upschool_chapter_table,
-        IndexName: indexName.Indexes.common_id_index,
+        IndexName: Indexes.common_id_index,
         KeyConditionExpression: "common_id = :common_id",
         FilterExpression: fromatedRequest.FilterExpression,
         ExpressionAttributeValues: fromatedRequest.ExpressionAttributeValues,
         ProjectionExpression: "chapter_id, prelearning_topic_id, postlearning_topic_id"
     };
     console.log({params});
-    const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    const data = await DATABASE_TABLE2.query(params);
     console.log({data});
     return data;
 

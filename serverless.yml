@@ -31,6 +31,11 @@ provider:
             - dynamodb:CreateTable
           Resource:
             - "*"
+        - Effect: Allow
+          Action:
+            - s3:"*"
+          Resource:
+            - "*"
 functions:
   backend-lambda:
     handler: handler.upschoolTeacherServer
@@ -390,7 +395,11 @@ functions:
       - http:
           path: /v1/comprehensivePerformanceConceptWise
           method: POST
-          cors: true 
+          cors: true  
+      - http:
+          path: /v1/viewChapterwisePerformanceTracking
+          method: POST
+          cors: true  
       - http:
           path: /v1/getActionsAndRecommendations
           method: POST

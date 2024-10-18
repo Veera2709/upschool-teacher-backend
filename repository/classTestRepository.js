@@ -1,10 +1,8 @@
 const dynamoDbCon = require('../awsConfig');
-const { TABLE_NAMES } = require('../constants/tables');
-const indexName = require('../constants/indexes');
 const { DATABASE_TABLE } = require('./baseRepository');
-const baseRepositoryNew = require('./baseRepositoryNew');
 const helper = require('../helper/helper');
-const constant = require('../constants/constant');
+const { DATABASE_TABLE2 } = require('./baseRepositoryNew');
+const { constant, indexes: { Indexes }, tables: { TABLE_NAMES } } = require('../constants');
 
 exports.getClassTestsBasedonStatus = function (request, callback) {
 
@@ -19,7 +17,7 @@ exports.getClassTestsBasedonStatus = function (request, callback) {
 
             let read_params = {
                 TableName: TABLE_NAMES.upschool_class_test_table,
-                IndexName: indexName.Indexes.common_id_index,
+                IndexName: Indexes.common_id_index,
                 KeyConditionExpression: "common_id = :common_id",
                 FilterExpression: "class_test_status = :class_test_status AND client_class_id = :client_class_id AND section_id = :section_id AND subject_id = :subject_id",
                 ExpressionAttributeValues: {
@@ -39,14 +37,14 @@ exports.getClassTestsBasedonStatus2 = async (request) => {
     const fromatedRequest = await helper.getDataByFilterKey(request);
     let params = {
         TableName: TABLE_NAMES.upschool_class_test_table,
-        IndexName: indexName.Indexes.common_id_index,
+        IndexName: Indexes.common_id_index,
         KeyConditionExpression: "common_id = :common_id",
         FilterExpression: fromatedRequest.FilterExpression,
         ExpressionAttributeValues: fromatedRequest.ExpressionAttributeValues,
         ProjectionExpression: "class_test_id, class_test_name, class_test_mode, question_paper_id",
 
     };
-    const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    const data = await DATABASE_TABLE2.query(params);
     return data.Items;
 }
 
@@ -115,7 +113,7 @@ exports.insertClassTest2 = async (request) => {
         }
 
     }
-    const data = (await baseRepositoryNew.DATABASE_TABLE2.putItem(params)).$metadata.httpStatusCode;
+    const data = (await DATABASE_TABLE2.putItem(params)).$metadata.httpStatusCode;
     return data;
 }
 
@@ -132,7 +130,7 @@ exports.fetchClassTestByName = function (request, callback) {
             let read_params = {
                 TableName: TABLE_NAMES.upschool_class_test_table,
 
-                IndexName: indexName.Indexes.common_id_index,
+                IndexName: Indexes.common_id_index,
                 KeyConditionExpression: "common_id = :common_id",
                 FilterExpression: "lc_class_test_name = :lc_class_test_name AND client_class_id = :client_class_id AND section_id = :section_id AND subject_id = :subject_id",
                 ExpressionAttributeValues: {
@@ -152,7 +150,7 @@ exports.fetchClassTestByName = function (request, callback) {
 exports.fetchClassTestByName2 = async (request) => {
     let params = {
         TableName: TABLE_NAMES.upschool_class_test_table,
-        IndexName: indexName.Indexes.common_id_index,
+        IndexName: Indexes.common_id_index,
         KeyConditionExpression: "common_id = :common_id",
         FilterExpression: "lc_class_test_name = :lc_class_test_name AND client_class_id = :client_class_id AND section_id = :section_id AND subject_id = :subject_id",
         ExpressionAttributeValues: {
@@ -164,7 +162,7 @@ exports.fetchClassTestByName2 = async (request) => {
         }
 
     };
-    const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    const data = await DATABASE_TABLE2.query(params);
     return data;
 }
 
@@ -207,7 +205,7 @@ exports.getClassTestIdAndName2 = async (request) => {
                 ProjectionExpression: "class_test_id, class_test_name, question_paper_id, answer_sheet_template, question_paper_template"
 
     };
-    return await baseRepositoryNew.DATABASE_TABLE2.query(params);    
+    return await DATABASE_TABLE2.query(params);    
 }
 exports.getClassTestIdAndName2 = async (request) => {
     const params = {
@@ -222,7 +220,7 @@ exports.getClassTestIdAndName2 = async (request) => {
         ProjectionExpression: "class_test_id, class_test_name, question_paper_id, answer_sheet_template, question_paper_template"
     };
 
-    const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    const data = await DATABASE_TABLE2.query(params);
     return data;
 };
 
@@ -231,7 +229,7 @@ exports.getStudentInfo = async (request) => {
     let params = {
         TableName: TABLE_NAMES.upschool_student_info,
 
-        IndexName: indexName.Indexes.common_id_index,
+        IndexName: Indexes.common_id_index,
         KeyConditionExpression: "common_id = :common_id",
         FilterExpression: "section_id = :section_id AND class_id = :class_id",
         ExpressionAttributeValues: {
@@ -242,7 +240,7 @@ exports.getStudentInfo = async (request) => {
         // ProjectionExpression: ["student_id", "user_firstname", "user_lastname", "roll_no"]
     }
 
-    return await baseRepositoryNew.DATABASE_TABLE2.query(params);
+    return await DATABASE_TABLE2.query(params);
     
 
 }
@@ -309,6 +307,6 @@ exports.updateClassTestStatus2 = async (request) => {
         }
 
     }
-    const data = (await baseRepositoryNew.DATABASE_TABLE2.updateService(params)).$metadata.httpStatusCode;
+    const data = (await DATABASE_TABLE2.updateService(params)).$metadata.httpStatusCode;
     return data;
 }

@@ -1,11 +1,8 @@
 const dynamoDbCon = require('../awsConfig');
-const { TABLE_NAMES } = require('../constants/tables');
-const indexName = require('../constants/indexes');
 const { DATABASE_TABLE } = require('./baseRepository');
-const { successResponse } = require('./baseRepository');
 const helper = require('../helper/helper');
-const constant = require('../constants/constant');
-const baseRepositoryNew = require('./baseRepositoryNew');
+const { DATABASE_TABLE2 } = require('./baseRepositoryNew');
+const { constant, indexes: { Indexes }, tables: { TABLE_NAMES } } = require('../constants');
 
 exports.getExtensionDetails = function (request, callback) {
 
@@ -19,7 +16,7 @@ exports.getExtensionDetails = function (request, callback) {
 
             let read_params = {
                 TableName: TABLE_NAMES.upschool_digicard_teacher_extension,
-                IndexName: indexName.Indexes.common_id_index,
+                IndexName: Indexes.common_id_index,
                 KeyConditionExpression: "common_id = :common_id",
                 FilterExpression: "client_class_id = :client_class_id AND section_id = :section_id AND subject_id = :subject_id AND chapter_id = :chapter_id AND topic_id = :topic_id AND digi_card_id = :digi_card_id AND learningType = :learningType AND extension_status = :extension_status AND school_id = :school_id",
                 ExpressionAttributeValues: {
@@ -44,7 +41,7 @@ exports.getExtensionDetails = function (request, callback) {
 exports.getExtensionDetails2 = async (request) => {
     const params = {
         TableName: TABLE_NAMES.upschool_digicard_teacher_extension,
-                IndexName: indexName.Indexes.common_id_index,
+                IndexName: Indexes.common_id_index,
                 KeyConditionExpression: "common_id = :common_id",
                 FilterExpression: "client_class_id = :client_class_id AND section_id = :section_id AND subject_id = :subject_id AND chapter_id = :chapter_id AND topic_id = :topic_id AND digi_card_id = :digi_card_id AND learningType = :learningType AND extension_status = :extension_status AND school_id = :school_id",
                 ExpressionAttributeValues: {
@@ -60,7 +57,7 @@ exports.getExtensionDetails2 = async (request) => {
                     ":extension_status": "Active"
                 }
     };
-    return await baseRepositoryNew.DATABASE_TABLE2.query(params); 
+    return await DATABASE_TABLE2.query(params); 
 };
 
 exports.updateDigiExtension = function (request, callback) {
@@ -103,7 +100,7 @@ exports.updateDigiExtension2 = async (request) => {
                     ":extensions": request.data.extensions
                 },
     };
- return await baseRepositoryNew.DATABASE_TABLE2.updateService(params);
+ return await DATABASE_TABLE2.updateService(params);
 }
 
 exports.addDigiExtension = function (request, callback) {
@@ -165,6 +162,6 @@ exports.addDigiExtension2 = async (request) => {
                 }
 
     }
-    return (await baseRepositoryNew.DATABASE_TABLE2.putItem(params)).$metadata.httpStatusCode;
+    return (await DATABASE_TABLE2.putItem(params)).$metadata.httpStatusCode;
    
 }

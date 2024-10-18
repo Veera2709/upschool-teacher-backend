@@ -545,17 +545,15 @@ exports.viewClassReportQuestions = async (request) => {
 
   //to get question_content and cognitive skillid
   const questions = await new Promise((resolve, reject) => {
-    questionRepository.fetchBulkQuestionsNameById(
-      { question_id: questionIds },
-      (err, res) => {
-        if (err) {
-          console.log(err);
-          return reject(err);
-        }
-        resolve(res);
+    questionRepository.fetchBulkQuestionsNameById({ question_id: questionIds }, (err, res) => {
+      if (err) {
+        console.log(err);
+        return reject(err);
       }
-    );
+      resolve(res);
+    });
   });
+  console.log("QUESTIONS",questions.Items)
   //concept,topic from conceptid,topicid and cognitiveskillid changed to its name and correctansweer
   const cognitive_id = questions.Items.map((que) => que.cognitive_skill);
   const conceptNames =
@@ -567,18 +565,14 @@ exports.viewClassReportQuestions = async (request) => {
     topicIds.length &&
     (await topicRepository.fetchBulkTopicsIDName2({ unit_Topic_id: topicIds }));
   const cognitiveSkillNames = await new Promise((resolve, reject) => {
-    settingsRepository.fetchBulkCognitiveSkillNameById(
-      { cognitive_id: cognitive_id },
-      (err, res) => {
-        if (err) {
-          return reject(err);
-        }
-        resolve(res);
+    settingsRepository.fetchBulkCognitiveSkillNameById({ cognitive_id: cognitive_id }, (err, res) => {
+      if (err) {
+        return reject(err);
       }
-    );
+      resolve(res);
+    });
   });
-  console.log("sheetal", questions.Items);
-
+  let marksInTotal = 0;
   questions.Items.map((question, i) => {
     question.questionNo = i + 1;
     question.set = questionSet.find((q) => q.id == question.id).sets;
@@ -619,6 +613,9 @@ exports.viewClassReportQuestions = async (request) => {
           (String(answer.modified_marks) !== "N.A." &&
             Number(answer.modified_marks) === Number(question.marks))
         ) {
+          console.log("mark", Number(answer.modified_marks), Number(answer.obtainedMarks))
+          marksInTotal = String(answer.modified_marks) !== 'N.A.' ? marksInTotal + Number(answer.modified_marks) : marksInTotal + Number(answer.obtainedMarks)
+          console.log("mark cal", marksInTotal)
           return count + 1;
         }
         return count;
@@ -668,12 +665,11 @@ exports.viewClassReportQuestions = async (request) => {
     averagePercentage: levelTotals[level].total / levelTotals[level].count,
     noOfQuestions: levelTotals[level].count,
   }));
-  return {
-    questions: questions.Items,
-    cognitiveSkillAverageData: cognitiveResult,
-    difficultyLevelAverageData: difficultyResult,
-  };
-};
+  const pieValue = (marksInTotal / totalStudents) * 100
+  console.log(pieValue, marksInTotal, totalStudents);
+
+  return { questions: questions.Items, cognitiveSkillAverageData: cognitiveResult, difficultyLevelAverageData: difficultyResult, pie: pieValue }
+}
 
 exports.viewClassReportFocusArea = async (request) => {
   const [quizData, quizResult, schoolDataRes] = await Promise.all([
@@ -688,7 +684,6 @@ exports.viewClassReportFocusArea = async (request) => {
       studentId: item.student_id, // Accessing student_id
     };
   });
-  console.log(quizResultMarksData);
   const totalStudents = quizResultMarksData.length;
   const questionSetA = [
     ...new Set(
@@ -797,12 +792,9 @@ exports.viewClassReportFocusArea = async (request) => {
     ).display_name;
 
     //%cal for pass
-    let passPercentage =
-      request.config === "post_quiz_config"
-        ? schoolDataRes.Items[0].post_quiz_config.class_percentage
-        : schoolDataRes.Items[0].pre_quiz_config.class_percentage;
-    let studentsData = [];
-    item.passPercentage = passPercentage;
+    let passPercentage = request.config === "post_quiz_config" ? schoolDataRes.Items[0].post_quiz_config.class_percentage : schoolDataRes.Items[0].pre_quiz_config.class_percentage
+    let studentsData = []
+    item.passPercentage = passPercentage
     console.log({ groupedMarks });
 
     groupedMarks.map((student) => {
@@ -812,12 +804,12 @@ exports.viewClassReportFocusArea = async (request) => {
         item.questions.map((question) => {
           if (q.questionId === question) {
             console.log("detailedmarkes", q.marks);
-            marks = marks + Number(q.marks);
+            marks = marks + Number(q.marks)
           }
-        });
-      });
+        })
+      })
 
-      let finalMarks = (marks / totalMarksForAllQuestions) * 100;
+      let finalMarks = (marks / totalMarksForAllQuestions) * 100
       console.log({ marks }, item.questions.length, { finalMarks });
 
       let passed = finalMarks >= passPercentage ? true : false;
@@ -826,10 +818,10 @@ exports.viewClassReportFocusArea = async (request) => {
     // const studentIds = studentsData.filter((student)=>student.passed == false)
     // const failedStudents = studentIds.length && await studentRepository.getStudentsByIdName2({ student_id: studentIds });
     console.log({ studentsData });
-    const countPassed = studentsData.filter((student) => student.passed).length;
-    item.passed = countPassed / totalStudents; //[%] value
-    item.count = countPassed; //pass % numerator
-    item.totalStudents = totalStudents; //pass % denominator
+    const countPassed = studentsData.filter(student => student.passed).length;
+    item.passed = (countPassed / totalStudents) * 100 //[%] value
+    item.count = countPassed //pass % numerator
+    item.totalStudents = totalStudents //pass % denominator
     if (item.passed >= passPercentage) {
       item.successMatrix = "yes";
     } else {
@@ -838,13 +830,84 @@ exports.viewClassReportFocusArea = async (request) => {
     }
   });
   // console.log({ conceptAndQuestions });
-  return {
-    conceptAndQuestions: conceptAndQuestions,
-    conceptsToFocus: conceptsToFocus,
-    quizData: quizData,
-  };
+  return { conceptAndQuestions: conceptAndQuestions, conceptsToFocus: conceptsToFocus, quizData: quizData }
   // return groupedMarks
-};
+}
+
+exports.viewChapterwisePerformanceTracking = async (request) => {
+
+  const subject_res = await subjectRepository.getSubjetById2(request);
+  let subject_unit_id = subject_res.Items[0].subject_unit_id;
+  const unit_res = await unitRepository.fetchUnitData2({ subject_unit_id });
+  const unit_chapter_id = [...new Set(unit_res.flatMap(e => e.unit_chapter_id))];
+  const chapter_res = await chapterRepository.fetchBulkChaptersIDName2({ unit_chapter_id });
+  const chapter_ids = chapter_res.map(chapter => chapter.chapter_id)
+  console.log({ chapter_ids });
+
+  const quizDataRes = await quizRepository.fetchAllQuizBasedonChapter2(request, chapter_ids);
+  const quizids = quizDataRes.Items.map(q => q.quiz_id)
+  const questionMarksforeachQuiz = await Promise.all(quizDataRes.Items.map(async (quizData) => {
+    let overallMarks = 0;
+    
+    // Get all unique question IDs from question_track_details
+    const uniqueArray = [...new Set(Object.values(quizData.question_track_details).flat())];
+    const questionIds = uniqueArray.map(item => item.question_id);
+
+    // Fetch question content and cognitive skill IDs
+    const questions = await new Promise((resolve, reject) => {
+        questionRepository.fetchBulkQuestionsNameById({ question_id: questionIds }, (err, res) => {
+            if (err) {
+                console.log(err);
+                return reject(err);
+            }
+            resolve(res);
+        });
+    });
+
+    // Calculate overall marks
+    overallMarks = questions.Items.reduce((total, question) => total + question.marks, 0);
+
+    return { quizId: quizData.quiz_id, overallMarks };
+}));
+  const quizResultDataRes = quizids.length && await quizResultRepository.fetchBulkQuizResultsByID2({ unit_Quiz_id: quizids })
+  const totalStudentsforAllChapters = quizResultDataRes.length
+  const totalStudentsforeachChapter = chapter_ids.map(chapter => {
+    let studentCount = 0;
+    let marksTotal = 0;
+    let Avgpercentage = 0;
+    let possiblemarks = 0;
+    quizDataRes.Items.map(quiz => {
+      if (chapter === quiz.chapter_id) {
+        quizResultDataRes.map(result => {
+          if (quiz.quiz_id === result.quiz_id) {
+            studentCount++;
+            //marks in each chapter
+            result.marks_details[0].qa_details.map(marks => {
+              String(marks.modified_marks) === 'N.A.' ? marksTotal = marksTotal + Number(marks.obtained_marks) : marksTotal = marksTotal + Number(marks.modified_marks)
+
+            })
+          }
+        })
+        questionMarksforeachQuiz.map(marksForEachQuiz=>{
+          if(quiz.quiz_id===marksForEachQuiz.quizId) possiblemarks = marksForEachQuiz.overallMarks;
+        })
+      }
+    })
+    
+    const marksinTotal = possiblemarks*studentCount
+    Avgpercentage = (marksTotal/marksinTotal)*100
+    return { chapterId: chapter, averagePercentage: Avgpercentage.toFixed(2)}
+  })
+  chapter_res.map(chapter=>{
+    totalStudentsforeachChapter.map(student=>{
+      if (chapter.chapter_id === student.chapterId) {
+        chapter.averagePercentage = student.averagePercentage
+      }
+    })
+  })
+
+  return { chapter_res }
+}
 
 exports.preLearningBlueprintDetails = async (request) => {
   const quizData = await quizRepository.fetchQuizDataById2(request);
@@ -1373,180 +1436,6 @@ exports.comprehensivePerformanceConceptWise = async (request) => {
 
   return performance;
 };
-
-// exports.getactionsAndRecommendations = async (request) => {
-//   // Fetch all quiz data for the given subject
-//   const quizDataRes = await quizRepository.fetchAllQuizBasedonSubject2(request);
-
-//   // Fetch school details for passing percentage configuration
-//   const schoolDataRes = await schoolRepository.getSchoolDetailsById2(request);
-
-//   // Extract all question details from all quizzes
-//   const allQuizQuestionSetA = quizDataRes.Items.flatMap((quiz) =>
-//     Object.values(quiz.question_track_details.qp_set_a).flat()
-//   );
-
-//   // Aggregate the concepts and questions across all quizzes
-//   const conceptAndQuestions = allQuizQuestionSetA.reduce((acc, item) => {
-//     const existingConcept = acc.find(
-//       (concept) => concept.concept === item.concept_id
-//     );
-//     if (existingConcept) {
-//       existingConcept.questions.push(item.question_id);
-//     } else {
-//       acc.push({
-//         concept: item.concept_id,
-//         questions: [item.question_id],
-//       });
-//     }
-//     return acc;
-//   }, []);
-
-//   // Extract unique concept IDs and question IDs
-//   const conceptIdsSetA = [...new Set(allQuizQuestionSetA.map((item) => item.concept_id))];
-//   const questionIdsSetA = [...new Set(allQuizQuestionSetA.map((item) => item.question_id))];
-
-//   // Fetch all questions by their IDs
-//   const questions = await new Promise((resolve, reject) => {
-//     questionRepository.fetchBulkQuestionsNameById(
-//       { question_id: questionIdsSetA },
-//       (err, res) => {
-//         if (err) {
-//           console.log(err);
-//           return reject(err);
-//         }
-//         resolve(res);
-//       }
-//     );
-//   });
-
-//   // Calculate the total marks possible for all the questions
-//   const totalMarksForAllQuestions = questions.Items.reduce(
-//     (total, question) => total + question.marks,
-//     0
-//   );
-
-//   // Fetch all quiz results for all quizzes in this subject
-//   // const quizResultsRes = await quizResultRepository.fetchQuizResultsBySubjectId(request);
-//   const quizIds = quizDataRes.Items.map((val) => val.quiz_id);
-
-//   const quizResultsRes =
-//     quizIds.length &&
-//     (await quizResultRepository.fetchBulkQuizResultsByID2({
-//       unit_Quiz_id: quizIds,
-//     }));
-
-//     // console.log("====",quizResultsRes);
-
-//   // Aggregate marks of each student across all quizzes
-//   const quizResultMarksData = quizResultsRes.map((item) => {
-//     return {
-//       marks: item.marks_details[0].qa_details, // Accessing qa_details
-//       studentId: item.student_id, // Accessing student_id
-//     };
-//   });
-
-//   // Get the total number of students
-//   const totalStudents = quizResultMarksData.length;
-
-//   // Collect marks of each student based on question ID
-//   const marksOfEachStudent = [];
-//   quizResultMarksData.map((qdata) => {
-//     qdata.marks.map((marks) => {
-//       questionIdsSetA.map((question) => {
-//         if (question === marks.question_id) {
-//           let marksValue;
-//           if (marks.modified_marks === "N.A.") {
-//             marksValue = marks.obtained_marks === "N.A." ? "0" : marks.obtained_marks;
-//           } else {
-//             marksValue = marks.modified_marks;
-//           }
-
-//           marksOfEachStudent.push({
-//             studentid: qdata.studentId,
-//             marks: marksValue,
-//             questionId: question,
-//           });
-//         }
-//       });
-//     });
-//   });
-
-//   // Group marks by student ID
-//   const groupedMarks = marksOfEachStudent.reduce((acc, item) => {
-//     const existingStudent = acc.find(
-//       (student) => student.studentid === item.studentid
-//     );
-
-//     if (existingStudent) {
-//       existingStudent.details.push({
-//         marks: item.marks,
-//         questionId: item.questionId,
-//       });
-//     } else {
-//       acc.push({
-//         studentid: item.studentid,
-//         details: [
-//           {
-//             marks: item.marks,
-//             questionId: item.questionId,
-//           },
-//         ],
-//       });
-//     }
-
-//     return acc;
-//   }, []);
-
-//   console.log("++++++++ 3  ++++++");
-
-//   // Fetch concept names
-//   const conceptNames = await conceptRepository.fetchBulkConceptsIDName2({
-//     unit_Concept_id: conceptIdsSetA,
-//   });
-
-//   // Pass percentage for the subject
-//   const passPercentage =
-//     request.config === "post_quiz_config"
-//       ? schoolDataRes.Items[0].post_quiz_config.class_percentage
-//       : schoolDataRes.Items[0].pre_quiz_config.class_percentage;
-
-//   // Identify concepts where students underperformed
-//   let conceptsToFocus = [];
-//   conceptAndQuestions.map((item) => {
-//     let studentsData = [];
-//     item.name = conceptNames.find((c) => c.concept_id == item.concept).display_name;
-
-//     groupedMarks.map((student) => {
-//       let marks = 0;
-//       student.details.map((q) => {
-//         item.questions.map((question) => {
-//           if (q.questionId === question) {
-//             marks += Number(q.marks);
-//           }
-//         });
-//       });
-
-//       let finalMarks = (marks / totalMarksForAllQuestions) * 100;
-//       let passed = finalMarks >= passPercentage ? true : false;
-//       studentsData.push({ student: student.studentid, passed: passed });
-//     });
-
-//     const countPassed = studentsData.filter((student) => student.passed).length;
-//     const passedPercentage = (countPassed / totalStudents) * 100;
-
-//     // Add to focus list if pass percentage is lower than required
-//     if (passedPercentage < passPercentage) {
-//       conceptsToFocus.push(item.name);
-//     }
-//   });
-
-//   // Return only the concepts where students underperformed
-//   return {
-//     conceptsToFocus: conceptsToFocus,
-//   };
-// };
-
 
 exports.getActionsAndRecommendations = async (request) => {
 
