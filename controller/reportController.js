@@ -139,3 +139,23 @@ exports.comprehensivePerformanceConceptWise = async (req, res, next) => {
         next(error)
     }
 };
+
+exports.getActionsAndRecommendations = async (req, res, next) => {
+    try {
+        const request = req.body;
+        const reportData = await reportServices.getActionsAndRecommendations(request);
+        return formatResponse(res, reportData);
+    } catch (error) {
+        next(error)
+    }
+};
+
+exports.getActionsAndRecommendationDetail = async (req, res, next) => {
+    try {
+        const request = req.body;
+        const reportData = await reportServices.getActionsAndRecommendationDetail(request);
+        return formatResponse(res, reportData);
+    } catch (error) {
+        next(error)
+    }
+};
