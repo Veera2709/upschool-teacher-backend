@@ -573,15 +573,13 @@ exports.viewClassReportQuestions = async (request) => {
     });
   });
   let marksInTotal = 0;
+  let possiblemarks = 0;
   questions.Items.map((question, i) => {
-    question.questionNo = i + 1;
-    question.set = questionSet.find((q) => q.id == question.id).sets;
-    const allAnswers = quizResultMarksData
-      .flat()
-      .filter((ans) => ans.question_id === question.question_id);
-    question.cognitive_skill = cognitiveSkillNames.Items.find(
-      (e) => e.cognitive_id
-    ).cognitive_name;
+    possiblemarks = possiblemarks + question.marks
+    question.questionNo = (i + 1)
+    question.set = questionSet.find((q) => q.id == question.id).sets
+    const allAnswers = quizResultMarksData.flat().filter(ans => ans.question_id === question.question_id)
+    question.cognitive_skill = cognitiveSkillNames.Items.find(e => e.cognitive_id).cognitive_name;
     //% of most common answer for objective (descriptive we wont show anything)
     question.answers_of_question.map((answer, i) => {
       let count = 0;
@@ -665,8 +663,8 @@ exports.viewClassReportQuestions = async (request) => {
     averagePercentage: levelTotals[level].total / levelTotals[level].count,
     noOfQuestions: levelTotals[level].count,
   }));
-  const pieValue = (marksInTotal / totalStudents) * 100
-  console.log(pieValue, marksInTotal, totalStudents);
+  const pieValue = (marksInTotal / (possiblemarks*totalStudents)) * 100
+  console.log(pieValue, marksInTotal,possiblemarks, totalStudents);
 
   return { questions: questions.Items, cognitiveSkillAverageData: cognitiveResult, difficultyLevelAverageData: difficultyResult, pie: pieValue }
 }
@@ -1457,18 +1455,16 @@ exports.getActionsAndRecommendations = async (request) => {
     } else {
       acc.push({
         concept: item.concept_id,
-        topic_id: item.topic_id,  // Ensure to store topic_id
+        topic_id: item.topic_id,  
         questions: [item.question_id],
       });
     }
     return acc;
   }, []);
 
-  // Extract unique concept IDs and question IDs
   const conceptIdsSetA = [...new Set(allQuizQuestionSetA.map((item) => item.concept_id))];
   const questionIdsSetA = [...new Set(allQuizQuestionSetA.map((item) => item.question_id))];
 
-  // Fetch all questions by their IDs
   const questions = await new Promise((resolve, reject) => {
     questionRepository.fetchBulkQuestionsNameById(
       { question_id: questionIdsSetA },
@@ -1482,19 +1478,16 @@ exports.getActionsAndRecommendations = async (request) => {
     );
   });
 
-  // Fetch chapter data by chapter IDs
   const chapterIds = [...new Set(quizDataRes.Items.map((quiz) => quiz.chapter_id))];
   const chapterData = await chapterRepository.fetchBulkChaptersIDName2({
     unit_chapter_id: chapterIds,
   });
 
-  // Fetch topic names based on topics in quiz data
   const topicIdsSetA = [...new Set(allQuizQuestionSetA.map((item) => item.topic_id))];
   const topicData = await topicRepository.fetchBulkTopicsIDName2({
     unit_Topic_id: topicIdsSetA,
   });
 
-  // Fetch all quiz results for all quizzes in this subject
   const quizIds = quizDataRes.Items.map((val) => val.quiz_id);
   const quizResultsRes =
     quizIds.length &&
@@ -1502,15 +1495,13 @@ exports.getActionsAndRecommendations = async (request) => {
       unit_Quiz_id: quizIds,
     }));
 
-  // Aggregate marks of each student across all quizzes
   const quizResultMarksData = quizResultsRes.map((item) => {
     return {
-      marks: item.marks_details[0].qa_details, // Accessing qa_details
-      studentId: item.student_id, // Accessing student_id
+      marks: item.marks_details[0].qa_details, 
+      studentId: item.student_id,
     };
   });
 
-  // Collect marks of each student based on question ID
   const marksOfEachStudent = [];
   quizResultMarksData.map((qdata) => {
     qdata.marks.map((marks) => {
@@ -1533,7 +1524,6 @@ exports.getActionsAndRecommendations = async (request) => {
     });
   });
 
-  // Group marks by student ID
   const groupedMarks = marksOfEachStudent.reduce((acc, item) => {
     const existingStudent = acc.find((student) => student.studentid === item.studentid);
 
@@ -1557,32 +1547,27 @@ exports.getActionsAndRecommendations = async (request) => {
     return acc;
   }, []);
 
-  // Fetch concept names
   const conceptNames = await conceptRepository.fetchBulkConceptsIDName2({
     unit_Concept_id: conceptIdsSetA,
   });
 
-  // Identify concepts where students underperformed and add topic, chapter names, and learning type
   let conceptsToFocus = [];
   conceptAndQuestions.map((item) => {
     let studentsData = [];
     item.name = conceptNames.find((c) => c.concept_id == item.concept)?.display_name || "Unknown Concept";
 
-    // Find corresponding topic and chapter names
     const relatedTopic = topicData.find((topic) => topic.topic_id == item.topic_id);
     const relatedChapter = chapterData.find((chapter) => chapter.chapter_id === quizDataRes.Items.find((quiz) => quiz.chapter_id)?.chapter_id);
 
     item.topic_name = relatedTopic?.topic_title || "Unknown Topic";
     item.chapter_name = relatedChapter?.chapter_title || "Unknown Chapter";
 
-    // Access learningType and quiz_id from the quiz data
     const relatedQuiz = quizDataRes.Items.find((quiz) =>
       Object.values(quiz.question_track_details.qp_set_a).flat().some((q) => q.concept_id === item.concept)
     );
     item.learningType = relatedQuiz?.learningType || "Unknown Learning Type";
-    const quizId = relatedQuiz?.quiz_id; // Get the quiz_id
+    const quizId = relatedQuiz?.quiz_id; 
 
-    // Pass percentage based on learning type
     const passPercentage = item.learningType === "preLearning"
       ? schoolDataRes.Items[0].pre_quiz_config.class_percentage
       : schoolDataRes.Items[0].post_quiz_config.class_percentage;
@@ -1591,7 +1576,6 @@ exports.getActionsAndRecommendations = async (request) => {
       ? schoolDataRes.Items[0].pre_quiz_config.pct_of_student_for_reteach
       : schoolDataRes.Items[0].post_quiz_config.pct_of_student_for_reteach;
 
-    // Calculate total marks for the specific quiz
     const totalMarksForThisQuiz = relatedQuiz.question_track_details.qp_set_a.reduce(
       (total, question) => {
         const questionDetail = questions.Items.find(q => q.question_id === question.question_id);
@@ -1616,21 +1600,19 @@ exports.getActionsAndRecommendations = async (request) => {
     const countPassed = studentsData.filter((student) => student.passed).length;
     const passedPercentage = (countPassed / totalStudents) * 100;
 
-    // Add to focus list if pass percentage is lower than required
     if (passedPercentage < passPercentage) {
       conceptsToFocus.push({
         concept: item.name,
         topic: item.topic_name,
         chapter: item.chapter_name,
-        learningType: item.learningType, // Include learning type
-        passedPercentage: passedPercentage.toFixed(2), // Add passed percentage
-        quizDate: relatedQuiz?.created_ts, // Add quiz date from the corresponding quiz
-        quizId: quizId, // Include quiz_id in the output
+        learningType: item.learningType, 
+        passedPercentage: passedPercentage.toFixed(2), 
+        quizDate: relatedQuiz?.created_ts, 
+        quizId: quizId, 
       });
     }
   });
 
-  // Return the concepts, topics, chapters with quiz date, passed percentage, learning type, and quiz ID where students underperformed
   return {
     conceptsToFocus,
   };
@@ -1638,7 +1620,6 @@ exports.getActionsAndRecommendations = async (request) => {
 
 
 exports.getActionsAndRecommendationDetail = async (request) => {
-  // Fetch quiz data, quiz results, and school details
   const [quizData, quizResult, schoolDataRes] = await Promise.all([
     quizRepository.fetchQuizDataById2(request),
     quizResultRepository.fetchQuizResultByQuizId(request),
@@ -1661,7 +1642,6 @@ exports.getActionsAndRecommendationDetail = async (request) => {
       ? schoolDataRes.Items[0].pre_quiz_config.pct_of_student_for_reteach
       : schoolDataRes.Items[0].post_quiz_config.pct_of_student_for_reteach;
 
-  // Extract question set A for the specific quiz
   const questionSetA = [
     ...new Set(Object.values(quizData.Item.question_track_details.qp_set_a).flat())
   ];
@@ -1673,18 +1653,16 @@ exports.getActionsAndRecommendationDetail = async (request) => {
     } else {
       acc.push({
         concept: item.concept_id,
-        topic_id: item.topic_id, // Store topic_id
+        topic_id: item.topic_id,
         questions: [item.question_id],
       });
     }
     return acc;
   }, []);
 
-  // Extract unique concept and question IDs
   const conceptIdsSetA = questionSetA.map((item) => item.concept_id);
   const questionIdsSetA = questionSetA.map((item) => item.question_id);
 
-  // Fetch questions by their IDs
   const questions = await new Promise((resolve, reject) => {
     questionRepository.fetchBulkQuestionsNameById(
       { question_id: questionIdsSetA },
@@ -1698,12 +1676,10 @@ exports.getActionsAndRecommendationDetail = async (request) => {
     );
   });
 
-  // Fetch topics and chapters by their IDs
   const topicIdsSetA = [...new Set(questionSetA.map((item) => item.topic_id))];
   const topicData = await topicRepository.fetchBulkTopicsIDName2({ unit_Topic_id: topicIdsSetA });
   const chapterData = await chapterRepository.fetchBulkChaptersIDName2({ unit_chapter_id: [quizData.Item.chapter_id] });
 
-  // Get total students and their marks for each question
   const quizResultMarksData = quizResult.Items.map((item) => {
     return {
       marks: item.marks_details[0].qa_details,
@@ -1724,7 +1700,7 @@ exports.getActionsAndRecommendationDetail = async (request) => {
           const studentFullName = student ? `${student.user_firstname} ${student.user_lastname}` : "Unknown Student";
 
           marksOfEachStudent.push({
-            studentName: studentFullName,  // Replace studentid with full name
+            studentName: studentFullName, 
             marks: marksValue,
             questionId: question,
           });
@@ -1733,39 +1709,33 @@ exports.getActionsAndRecommendationDetail = async (request) => {
     });
   });
 
-  // Group marks by student name
   const groupedMarks = marksOfEachStudent.reduce((acc, item) => {
     const existingStudent = acc.find((student) => student.studentName === item.studentName);
     if (existingStudent) {
       existingStudent.details.push({ marks: item.marks, questionId: item.questionId });
     } else {
       acc.push({
-        studentName: item.studentName,  // Use studentName here
+        studentName: item.studentName,  
         details: [{ marks: item.marks, questionId: item.questionId }],
       });
     }
     return acc;
   }, []);
 
-  // Fetch concept names
   const conceptNames = await conceptRepository.fetchBulkConceptsIDName2({ unit_Concept_id: conceptIdsSetA });
 
-  // Initialize arrays for concepts to focus on and other information
   let conceptsToFocus = [];
  
   let chapterName = chapterData.find((chapter) => chapter.chapter_id === quizData.Item.chapter_id)?.chapter_title || "Unknown Chapter";
 
-  // Analyze and identify concepts to focus on
   conceptAndQuestions.forEach((item) => {
     let studentsData = [];
     let studentPerformance = [];
     item.name = conceptNames.find((c) => c.concept_id == item.concept)?.display_name || "Unknown Concept";
 
-    // Find corresponding topic name
     const relatedTopic = topicData.find((topic) => topic.topic_id == item.topic_id);
     item.topic_name = relatedTopic?.topic_title || "Unknown Topic";
 
-    // Calculate total marks for this quiz
     const totalMarksForThisQuiz = quizData.Item.question_track_details.qp_set_a.reduce(
       (total, question) => {
         const questionDetail = questions.Items.find(q => q.question_id === question.question_id);
@@ -1785,37 +1755,34 @@ exports.getActionsAndRecommendationDetail = async (request) => {
       let passed = marksPercentage >= studentPassPercentage;
       studentsData.push({ student: student.studentName, passed });
 
-      // Add student performance data
       studentPerformance.push({
-        student_name: student.studentName,  // Updated to show student name
-        marks_percentage: marksPercentage.toFixed(2), // Marks percentage
-        obtained_marks: marks.toFixed(2),              // Obtained marks
-        total_marks: totalMarksForThisQuiz.toFixed(2), // Total marks for the quiz
+        student_name: student.studentName,  
+        marks_percentage: marksPercentage.toFixed(2), 
+        obtained_marks: marks.toFixed(2),              
+        total_marks: totalMarksForThisQuiz.toFixed(2), 
       });
     });
 
     const countPassed = studentsData.filter((student) => student.passed).length;
     const passedPercentageValue = (countPassed / totalStudents) * 100;
 
-    // Add to conceptsToFocus if pass percentage is lower than required
     if (passedPercentageValue < passPercentage) {
       conceptsToFocus.push({
         concept: item.name,
         topic: item.topic_name,
         passedPercentage: passedPercentageValue.toFixed(2),
         quizDate: quizData.Item.created_ts,
-        student_performance: studentPerformance, // Added student performance
+        student_performance: studentPerformance, 
       });
     }
   });
 
-  // Return response with all relevant data
   return {
     conceptsToFocus,
-    learningType,          // Added learningType outside of conceptsToFocus
-    chapterName,           // Added chapter name outside of conceptsToFocus
-    passPercentage,        // Added passPercentage
-    studentPassPercentage, // Added studentPassPercentage
+    learningType,          
+    chapterName,           
+    passPercentage,        
+    studentPassPercentage, 
   };
 };
 
