@@ -390,4 +390,12 @@ functions:
       - http:
           path: /v1/comprehensivePerformanceConceptWise
           method: POST
-          cors: true  
+          cors: true 
+      - http:
+          path: /v1/getActionsAndRecommendations
+          method: POST
+          cors: true   
+      - http:
+          path: /v1/getActionsAndRecommendationDetail
+          method: POST
+          cors: true   

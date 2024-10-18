@@ -253,25 +253,33 @@ exports.getQuizBasedonStatus = function (request, callback) {
 }
 
 exports.getQuizBasedonStatus2 = async (request) => {
+
+    let filterExpression = "quiz_status = :quiz_status AND client_class_id = :client_class_id AND section_id = :section_id AND subject_id = :subject_id";
+
+    let expressionAttributeValues = {
+        ":common_id": constant.constValues.common_id,
+        ":client_class_id": request.data.client_class_id,
+        ":section_id": request.data.section_id,
+        ":subject_id": request.data.subject_id,
+        ":quiz_status": request.data.quiz_status
+    };
+    if (request.data.chapter_id) {
+        filterExpression += " AND chapter_id = :chapter_id";
+        expressionAttributeValues[":chapter_id"] = request.data.chapter_id;
+    }
     let params = {
         TableName: TABLE_NAMES.upschool_quiz_table,
-                IndexName: indexName.Indexes.common_id_index,
-                KeyConditionExpression: "common_id = :common_id",
-                FilterExpression: "quiz_status = :quiz_status AND client_class_id = :client_class_id AND section_id = :section_id AND subject_id = :subject_id AND chapter_id = :chapter_id",
-                ExpressionAttributeValues: {
-                    ":common_id": constant.constValues.common_id,
-                    ":client_class_id": request.data.client_class_id,
-                    ":section_id": request.data.section_id,
-                    ":subject_id": request.data.subject_id,
-                    ":chapter_id": request.data.chapter_id,
-                    ":quiz_status": request.data.quiz_status
-                },
-                ProjectionExpression: "quizMode, quiz_status, learningType, quiz_id, quiz_name, chapter_id"
-
+        IndexName: indexName.Indexes.common_id_index,
+        KeyConditionExpression: "common_id = :common_id",
+        FilterExpression: filterExpression,
+        ExpressionAttributeValues: expressionAttributeValues,
+        ProjectionExpression: "quizMode, quiz_status, learningType, quiz_id, quiz_name, chapter_id"
     };
+
     const data = await baseRepositoryNew.DATABASE_TABLE2.query(params);
     return data.Items;
-}
+};
+
 
 exports.fetchQuizDataById = function (request, callback) {
 
@@ -497,8 +505,8 @@ exports.fetchAllQuizBasedonSubject = function (request, callback) {
     });
 }
 exports.fetchAllQuizBasedonSubject2 = async (request) => {
-
     let filterExpression = "subject_id = :subject_id AND section_id = :section_id AND client_class_id = :client_class_id AND quiz_status = :quiz_status";
+
     let expressionAttributeValues = {
         ":common_id": constant.constValues.common_id,
         ":quiz_status": request.data.quiz_status,
@@ -512,6 +520,11 @@ exports.fetchAllQuizBasedonSubject2 = async (request) => {
         expressionAttributeValues[":learningType"] = request.data.learningType;
     }
 
+    if (request.data.quiz_id !== undefined && request.data.quiz_id !== "") {
+        filterExpression += " AND quiz_id = :quiz_id";
+        expressionAttributeValues[":quiz_id"] = request.data.quiz_id;
+    }
+
     let params = {
         TableName: TABLE_NAMES.upschool_quiz_table,
         IndexName: indexName.Indexes.common_id_index,
@@ -521,7 +534,8 @@ exports.fetchAllQuizBasedonSubject2 = async (request) => {
     };
 
     return await baseRepositoryNew.DATABASE_TABLE2.query(params);
-}
+};
+
 
 exports.getAllQuizData = function (request, callback) {
 
@@ -552,22 +566,30 @@ exports.getAllQuizData = function (request, callback) {
 }
 
 exports.fetchAllQuizBasedonChapter = async (request) => {
+    let filterExpression = "chapter_id = :chapter_id AND quiz_status = :quiz_status AND subject_id = :subject_id AND client_class_id = :client_class_id AND section_id = :section_id AND learningType = :learningType";
+    let expressionAttributeValues = {
+        ":common_id": constant.constValues.common_id,
+        ":client_class_id": request.data.client_class_id,
+        ":subject_id": request.data.subject_id,
+        ":section_id": request.data.section_id,
+        ":chapter_id": request.data.chapter_id,
+        ":learningType": request.data.learningType,
+        ":quiz_status": "Active",
+    };
+
+    if (request.data.quiz_id !== undefined && request.data.quiz_id !== "") {
+        filterExpression += " AND quiz_id = :quiz_id";
+        expressionAttributeValues[":quiz_id"] = request.data.quiz_id;
+    }
+
     let params = {
         TableName: TABLE_NAMES.upschool_quiz_table,
         IndexName: indexName.Indexes.common_id_index,
-        KeyConditionExpression: "common_id = :common_id",  
-        FilterExpression: "chapter_id = :chapter_id AND quiz_status = :quiz_status AND subject_id = :subject_id AND client_class_id = :client_class_id AND section_id = :section_id AND learningType = :learningType", 
-        ExpressionAttributeValues: {
-            ":common_id": constant.constValues.common_id,
-            ":client_class_id": request.data.client_class_id,
-            ":subject_id": request.data.subject_id,
-            ":section_id": request.data.section_id,
-            ":chapter_id": request.data.chapter_id,
-            ":learningType" : request.data.learningType,
-            ":quiz_status": "Active",
-        }
+        KeyConditionExpression: "common_id = :common_id",
+        FilterExpression: filterExpression,
+        ExpressionAttributeValues: expressionAttributeValues
     };
 
-    // Make the query call to DynamoDB
     return await baseRepositoryNew.DATABASE_TABLE2.query(params);
 };
+
